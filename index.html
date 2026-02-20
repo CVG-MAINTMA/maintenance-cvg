@@ -6,129 +6,479 @@
     <title>CVG | Maintenance Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
-        
         :root {
-            --primary: #002b5c;
-            --accent: #00d4ff;
-            --success: #10b981;
-            --danger: #ef4444;
-            --bg: #f8fafc;
-            --card: #ffffff;
+            --primary: #002b5c; --accent: #00d4ff; --bg: #f8fafc;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg); color: #1e293b; padding: 10px; overflow-x: hidden; }
-
-        /* Mobile Adjustments */
-        h1 { font-size: 1.5rem; }
-        .container { width: 100%; max-width: 1400px; margin: 0 auto; display: none; }
-
-        /* Header Responsive */
-        header {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            background: var(--card);
-            padding: 15px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            text-align: center;
+        /* T3dilat l-ktaba bach tji sghira f t-telephone */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        
+        body { 
+            background: var(--bg); 
+            padding: 10px; /* Sgher l-padding f mobile */
+            font-size: 14px; 
         }
 
-        @media (min-width: 768px) {
-            header { flex-direction: row; justify-content: space-between; text-align: left; padding: 20px 30px; }
-            body { padding: 20px; }
-        }
-
-        /* Login Box Responsive */
-        #login-overlay {
-            position: fixed; inset: 0; 
-            background: radial-gradient(circle at top right, #003a7d, #001a38);
-            display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px;
-        }
+        /* L-Login Box khassha t-adapté */
         .login-box { 
-            background: rgba(255, 255, 255, 0.95);
-            padding: 30px 20px; border-radius: 25px; 
-            width: 100%; max-width: 400px; text-align: center;
+            width: 95% !important; 
+            max-width: 380px; 
+            padding: 25px !important; 
         }
 
-        /* KPI Grid - Responsive */
+        /* L-Header i-t-stacka (wahed fou9 wahed) */
+        header { 
+            flex-direction: column !important; 
+            text-align: center; 
+            padding: 15px !important;
+        }
+
+        /* L-KPIs: 2 f s-ster f mobile */
         .kpi-grid { 
-            display: grid; 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 10px; 
-            margin-bottom: 20px; 
+            display: grid !important; 
+            grid-template-columns: 1fr 1fr !important; 
+            gap: 10px !important; 
         }
-        @media (min-width: 1024px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); gap: 20px; } }
 
-        .kpi-card { background: var(--card); padding: 15px; border-radius: 15px; border-left: 4px solid var(--primary); }
-        .kpi-card h3 { font-size: 0.65rem; color: #64748b; text-transform: uppercase; }
-        .kpi-card .val { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
-
-        /* Layout - Stack on mobile, Side-by-side on Desktop */
+        /* L-Layout: Formulaire fou9 Tableau */
         .main-layout { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 20px; 
-        }
-        @media (min-width: 1024px) { 
-            .main-layout { display: grid; grid-template-columns: 350px 1fr; } 
+            display: flex !important; 
+            flex-direction: column !important; 
+            width: 100% !important;
         }
 
-        .panel { background: var(--card); padding: 20px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .panel { 
+            width: 100% !important; 
+            margin-bottom: 15px; 
+            padding: 15px !important;
+        }
 
-        /* Table Responsive */
+        /* IMPORTANT: L-moshkil dial l-ktaba kbira f l-Tableau */
         .table-container { 
             width: 100%; 
-            overflow-x: auto; 
-            -webkit-overflow-scrolling: touch;
-            border-radius: 12px;
+            overflow-x: auto; /* Kaykhallik t-scroller b sbe3ek */
+            -webkit-overflow-scrolling: touch; 
         }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; font-size: 0.85rem; }
-        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #f1f5f9; }
 
-        /* Form Inputs */
-        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 10px; font-size: 16px; /* Prevents iOS zoom */ }
-        .btn-primary { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; }
+        table { 
+            width: 100%; 
+            min-width: 500px; /* Bach mayt-khnotouch l-a3mida */
+            font-size: 12px; 
+        }
 
-        /* Dashboard Pro Overlay */
-        #pro-analytics-overlay {
-            position: fixed; inset: 0; background: #f0f2f5; z-index: 10001;
-            display: none; padding: 20px; overflow-y: auto;
+        /* Les boutons kbar bach it-cliquaw b sbe3 */
+        .btn-primary, .btn-pro { 
+            padding: 15px !important; 
+            font-size: 16px !important; 
         }
-        .stats-grid { 
-            display: grid; 
-            grid-template-columns: 1fr; 
-            gap: 20px; 
-        }
-        @media (min-width: 768px) { .stats-grid { grid-template-columns: 1fr 1fr; } }
 
-        .alert-marquee {
-            background: #fee2e2; color: #ef4444; padding: 10px; border-radius: 10px;
-            margin-bottom: 15px; font-size: 0.8rem; font-weight: 800; border: 2px solid #ef4444; display: none;
+        /* Media Query l PC (bach yrje3 l-layout l-9dim) */
+        @media (min-width: 1024px) {
+            header { flex-direction: row !important; text-align: left; }
+            .main-layout { display: grid !important; grid-template-columns: 350px 1fr !important; gap: 20px; }
+            .kpi-grid { grid-template-columns: repeat(4, 1fr) !important; }
+            body { padding: 20px; }
         }
-        
-        /* Modal Responsive */
-        #closeModal > div { width: 95%; max-width: 450px; padding: 20px; }
     </style>
 </head>
 <body>
-    ```
 
+    <div id="closeModal">
+        <div class="panel" style="width:100%; max-width:450px; border-top: 5px solid var(--accent); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+            <h3 style="margin-bottom:20px; color:var(--primary)"><i class="fa-solid fa-file-signature"></i> Détails de Clôture</h3>
+            <input type="hidden" id="modal-id">
+            
+            <div class="form-group">
+                <label>Type d'arrêt</label>
+                <select id="modal-type">
+                    <option value="Mécanique">🔧 Mécanique</option>
+                    <option value="Électrique">⚡ Électrique</option>
+                    <option value="Process">⚙️ Process</option>
+                    <option value="Logistique">📦 Logistique</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Mochkil (Problème)</label>
+                <input type="text" id="modal-prob" placeholder="Expliquez la panne...">
+            </div>
+            <div class="form-group">
+                <label>L7al (Solution / Action)</label>
+                <input type="text" id="modal-action" placeholder="Action réalisée...">
+            </div>
+            <div class="form-group">
+                <label>Heure de FIN (HH:MM)</label>
+                <input type="text" id="modal-end">
+            </div>
 
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
+                <button class="btn-primary" onclick="confirmClosing()">VALIDER</button>
+                <button class="btn-primary" style="background:#64748b" onclick="document.getElementById('closeModal').style.display='none'">ANNULER</button>
+            </div>
+        </div>
+    </div>
 
-### 2. Chnou tbeddel f l-code dialek (Tips):
+    <div id="toast">✅ Arrêt ouvert avec succès !</div>
 
-1.  **L-Font Size f Mobile:** Dert f CSS wahed l-media query li katsgher l-ktaba f l-ecreans li sghar men **768px**.
-2.  **Input Focus Zoom:** F t-telephone (khousoussan iPhone), fach kat-cliki f chi `input`, l-ecran kay-zoomi bo7do. Bach t-fadi hadchi, dert `font-size: 16px` f les inputs.
-3.  **Table Scroll:** L-tableau dert lih `overflow-x: auto`. Ya3ni fach ghadi t-7elha f t-tel, ghadi t9der t-glissi l-tableau l-limen ou l-issar bla ma t-khrej l-ktaba 3la l-ecran.
-4.  **Meta Tag:** Zid had l-line darouri f l-`<head>` (ila kanti mbeddelha):
-    `<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">`
+    <div id="pro-analytics-overlay">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+            <h1 style="color:var(--primary); font-size: 2rem;"><i class="fa-solid fa-chart-pie"></i> Statistiques Avancées</h1>
+            <button class="btn-primary" style="width:auto; padding:10px 40px; background:var(--danger)" onclick="document.getElementById('pro-analytics-overlay').style.display='none'">FERMER</button>
+        </div>
+        
+        <div class="kpi-grid" id="pro-kpis"></div>
 
-### 3. Kifach t-tastiha f PC?
-F l-navigateur (Chrome awla Edge), dir **F12**, ou cliki 3la l-icon dial l-mobile (l-fo9 3la l-issar). Khtar masalan "iPhone 12" ou chouf kifach ghadi t-stacka l-ktaba.
+        <div class="stats-grid">
+            <div class="chart-container-pro">
+                <h3 style="margin-bottom:20px;">Minutes Perdues par Shift</h3>
+                <canvas id="chartShiftPro"></canvas>
+            </div>
+            <div class="chart-container-pro">
+                <h3 style="margin-bottom:20px;">Répartition par Type de Panne (Min)</h3>
+                <canvas id="chartTypesPro"></canvas>
+            </div>
+        </div>
+    </div>
 
-**T-reiglat lik l-ktaba daba awla ba9i chi blassa kiban fih dakchi mziyr?** (Goli masalan wach f l-Dashboard Pro awla l-Historique).
+    <div id="login-overlay">
+        <div class="login-box">
+            <div style="background: var(--primary); width: 70px; height: 70px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <i class="fa-solid fa-screwdriver-wrench fa-2x" style="color: white;"></i>
+            </div>
+            <h2>Bienvenue</h2>
+            <p>Connectez-vous pour gérer la maintenance</p>
+            <div class="input-group">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" id="u-name" placeholder="Utilisateur">
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" id="u-pass" placeholder="Mot de passe">
+            </div>
+            <button class="btn-login" onclick="handleLogin()">SE CONNECTER</button>
+            <div style="margin-top: 20px; font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px;">CVG Dynamics Pro v2.0</div>
+        </div>
+    </div>
+
+    <div class="container" id="app-content">
+        <header>
+            <div>
+                <h1 style="font-weight:800; color:var(--primary);">CVG <span style="color:var(--accent)">DYNAMICS</span></h1>
+                <div id="user-info" style="margin-top: 5px;"></div>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <button class="btn-pro" onclick="openProDashboard()"><i class="fa-solid fa-gauge-high"></i> DASHBOARD PRO</button>
+                <input type="date" id="hidden-date-picker" style="position:absolute; opacity:0; pointer-events:none;" onchange="processExport(this.value)">
+                <button onclick="toggleMode()" class="btn-switch" id="mode-btn"><i class="fa-solid fa-user-gear"></i> Switch to Admin</button>
+                <button id="export-btn" onclick="document.getElementById('hidden-date-picker').showPicker()" style="padding:10px 20px; border-radius:10px; border:1px solid #ddd; cursor:pointer; display:none;">
+                    <i class="fa-solid fa-file-csv"></i> Export CSV
+                </button>
+                <button onclick="location.reload()" style="padding:10px 20px; border-radius:10px; background:var(--danger); color:white; border:none; cursor:pointer;">Déconnexion</button>
+            </div>
+        </header>
+
+        <div id="dynamic-alert-box" class="alert-marquee"></div>
+
+        <div id="admin-panel">
+            <h3 style="margin-bottom:15px;"><i class="fa-solid fa-users-gear"></i> Administration Utilisateurs</h3>
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 150px; gap:15px;">
+                <input type="text" id="new-user" placeholder="Nom complet">
+                <input type="password" id="new-pass" placeholder="Mot de passe">
+                <select id="new-role"><option value="user">OPÉRATEUR</option><option value="admin">ADMINISTRATEUR</option></select>
+                <button class="btn-primary" style="padding:10px;" onclick="createUser()">AJOUTER</button>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card"><h3>Nombre d'Arrêts</h3><div class="val" id="kpi-count">0</div></div>
+            <div class="kpi-card"><h3>Temps Perdu (Min)</h3><div class="val" id="kpi-total">0</div></div>
+            <div class="kpi-card"><h3>MTTR Moyen</h3><div class="val" id="kpi-mttr">0</div></div>
+            <div class="kpi-card"><h3>Disponibilité</h3><div class="val" id="kpi-avail">100%</div></div>
+        </div>
+
+        <div class="main-layout">
+            <div class="panel">
+                <h3 style="margin-bottom:20px;"><i class="fa-solid fa-circle-plus"></i> Saisie Incident</h3>
+                <div class="form-group">
+                    <label>Projet / Ligne</label>
+                    <select id="in-proj" onchange="updateMachines()">
+                        <option value="">-- Sélectionner Projet --</option>
+                        <option value="SKODA">SKODA</option>
+                        <option value="CRAFTER">CRAFTER</option>
+                        <option value="G.CALIFORNIA">G.CALIFORNIA</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Machine / Equipement</label><select id="in-mach"><option value="">-- Choisir Projet d'abord --</option></select></div>
+                <div class="form-group"><label>START (Ex: 08:30)</label><input type="text" id="in-START" placeholder="HH:MM"></div>
+                <button class="btn-primary" onclick="submitEntry()">OUVRIR L'ARRÊT</button>
+                
+                <div style="margin-top:30px; height:220px;">
+                    <h4 style="font-size: 0.75rem; color: #64748b; margin-bottom: 10px; text-transform: uppercase;">Répartition par Projet (Min)</h4>
+                    <canvas id="factoryChart"></canvas>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h3><i class="fa-solid fa-clock-rotate-left"></i> Historique Dynamique</h3>
+                    <input type="text" id="searchTable" placeholder="Filtrer..." style="width:250px;" onkeyup="filterTable()">
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>HORODATAGE</th><th>PROJET</th><th>MACHINE</th><th>START</th><th>END</th><th>DURÉE</th><th>SHIFT</th><th>AUTEUR</th><th>ACTION</th></tr></thead>
+                        <tbody id="data-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const machineData = { "SKODA": ["80008172", "80008173", "80008174"], "CRAFTER": ["80008119", "80008122", "80008116"], "G.CALIFORNIA": ["80006953"] };
+        let users = JSON.parse(localStorage.getItem('cvg_pro_users')) || [{u: "admin", p: "cvg2024", role: "admin"}];
+        let db = JSON.parse(localStorage.getItem('cvg_pro_db')) || [];
+        let activeUser = null;
+        let chartObj = null;
+        let chartsPro = { s: null, m: null };
+
+        function updateMachines() {
+            const proj = document.getElementById('in-proj').value;
+            const machSelect = document.getElementById('in-mach');
+            machSelect.innerHTML = '<option value="">-- Sélectionner Machine --</option>';
+            if(proj && machineData[proj]) machineData[proj].forEach(m => { machSelect.innerHTML += `<option value="${m}">${m}</option>`; });
+        }
+
+        function handleLogin() {
+            const u = document.getElementById('u-name').value;
+            const p = document.getElementById('u-pass').value;
+            const user = users.find(x => x.u === u && x.p === p);
+            if(user) { activeUser = user; document.getElementById('login-overlay').style.display = 'none'; document.getElementById('app-content').style.display = 'block'; refreshUI(); }
+            else alert("Identifiants incorrects !");
+        }
+
+        function toggleMode() {
+            const pass = prompt("Entrez le mot de passe Admin :");
+            const adminAccount = users.find(u => u.role === 'admin' && u.p === pass);
+            if (adminAccount) {
+                if(activeUser.role === 'admin') {
+                    const regularUser = users.find(u => u.role === 'user');
+                    activeUser = regularUser ? regularUser : activeUser;
+                } else { activeUser = adminAccount; }
+                refreshUI();
+            } else alert("Mot de passe incorrect.");
+        }
+
+        function createUser() {
+            const u = document.getElementById('new-user').value;
+            const p = document.getElementById('new-pass').value;
+            const r = document.getElementById('new-role').value;
+            if(u && p) { users.push({u, p, role: r}); localStorage.setItem('cvg_pro_users', JSON.stringify(users)); alert(`Utilisateur ${u} créé !`); refreshUI(); }
+        }
+
+        function submitEntry() {
+            const p = document.getElementById('in-proj').value;
+            const m = document.getElementById('in-mach').value;
+            const s = document.getElementById('in-START').value;
+            if(!p || !m || !s) return alert("Remplir tout !");
+            
+            db.unshift({ id: Date.now(), ts: new Date().toLocaleString('fr-FR'), proj: p, mach: m, START: s, END: "-", dur: 0, SHIFT: "-", author: activeUser.u, status: "PENDING", type: "", prob: "", action: "" });
+            localStorage.setItem('cvg_pro_db', JSON.stringify(db));
+            
+            const toast = document.getElementById('toast');
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+
+            document.getElementById('in-proj').value = "";
+            document.getElementById('in-mach').innerHTML = '<option value="">-- Choisir Projet d\'abord --</option>';
+            document.getElementById('in-START').value = "";
+            
+            refreshUI();
+        }
+
+        function closeIncident(id) {
+            document.getElementById('modal-id').value = id;
+            const now = new Date();
+            document.getElementById('modal-end').value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            document.getElementById('closeModal').style.display = 'flex';
+        }
+
+        function confirmClosing() {
+            const id = parseInt(document.getElementById('modal-id').value);
+            const endH = document.getElementById('modal-end').value;
+            const type = document.getElementById('modal-type').value;
+            const prob = document.getElementById('modal-prob').value;
+            const act = document.getElementById('modal-action').value;
+
+            if(!endH || !prob || !act) return alert("Veuillez remplir tous les champs !");
+
+            const idx = db.findIndex(x => x.id === id);
+            if(idx !== -1) {
+                const [sH, sM] = db[idx].START.split(':').map(Number);
+                const [eH, eM] = endH.split(':').map(Number);
+                let diff = (eH * 60 + eM) - (sH * 60 + sM);
+                if(diff < 0) diff += 1440;
+
+                let autoShift = (eH*60+eM >= 360 && eH*60+eM < 840) ? "MATIN" : (eH*60+eM >= 840 && eH*60+eM < 1320) ? "SOIR" : "NUIT";
+                
+                db[idx].END = endH;
+                db[idx].dur = diff;
+                db[idx].SHIFT = autoShift;
+                db[idx].status = "DONE";
+                db[idx].type = type;
+                db[idx].prob = prob;
+                db[idx].action = act;
+
+                localStorage.setItem('cvg_pro_db', JSON.stringify(db));
+                document.getElementById('closeModal').style.display = 'none';
+                refreshUI();
+            }
+        }
+
+        function deleteRow(id) {
+            if(activeUser.role !== 'admin') return;
+            if(confirm("Supprimer ?")) { db = db.filter(x => x.id !== id); localStorage.setItem('cvg_pro_db', JSON.stringify(db)); refreshUI(); }
+        }
+
+        function refreshUI() {
+            const isAdmin = activeUser.role === 'admin';
+            const roleClass = isAdmin ? 'role-admin' : 'role-user';
+            document.getElementById('user-info').innerHTML = `<div class="user-badge"><span class="status-dot"></span><span style="font-size:0.85rem; color:#475569">Session: <b>${activeUser.u.toUpperCase()}</b></span> <span class="role-label ${roleClass}">${activeUser.role}</span></div>`;
+            document.getElementById('admin-panel').style.display = isAdmin ? 'block' : 'none';
+            document.getElementById('mode-btn').innerText = isAdmin ? 'Switch to User' : 'Switch to Admin';
+            document.getElementById('export-btn').style.display = isAdmin ? 'block' : 'none';
+            
+            const table = document.getElementById('data-table');
+            const totalMin = db.reduce((a,b) => a + b.dur, 0);
+            
+            table.innerHTML = db.map(x => `<tr><td style="font-size:0.75rem;">${x.ts}</td><td><b>${x.proj}</b></td><td>${x.mach}</td><td>${x.START}</td><td>${x.END}</td><td><span class="badge ${x.status==='DONE'?'badge-green':'badge-red'}" data-id="${x.id}">${x.dur} min</span></td><td style="font-weight:700;">${x.SHIFT}</td><td>${x.author}</td><td><div style="display:flex; align-items:center; gap:8px;">${(isAdmin && x.status==='PENDING') ? `<button class="btn-finish" onclick="closeIncident(${x.id})">FINIR</button>` : ''} <span style="font-weight:800; font-size:0.75rem; color:${x.status === 'DONE' ? 'var(--success)' : 'var(--danger)'}">${x.status === 'DONE' ? 'FERMÉ' : 'OUVERT'}</span> ${isAdmin ? `<i class="fa-solid fa-trash" style="cursor:pointer; color:#94a3b8" onclick="deleteRow(${x.id})"></i>` : ''}</div></td></tr>`).join('');
+            
+            document.getElementById('kpi-count').innerText = db.length;
+            document.getElementById('kpi-total').innerText = totalMin;
+            document.getElementById('kpi-mttr').innerText = db.length ? (totalMin / db.length).toFixed(1) : 0;
+            document.getElementById('kpi-avail').innerText = (100 - (totalMin/1440*100)).toFixed(1) + "%";
+            
+            updateChart();
+            checkAlerts();
+        }
+
+        function filterTable() {
+            const val = document.getElementById('searchTable').value.toUpperCase();
+            const rows = document.getElementById('data-table').getElementsByTagName('tr');
+            for (let row of rows) { row.style.display = row.innerText.toUpperCase().includes(val) ? "" : "none"; }
+        }
+
+        function processExport(dateVal) {
+            if (!dateVal) return;
+            const [y, m, d] = dateVal.split('-');
+            const targetDate = `${d}/${m}/${y}`; 
+            const filtered = db.filter(x => x.ts.includes(targetDate));
+            if (filtered.length === 0) { alert("Aucune donnée pour le " + targetDate); return; }
+
+            let csv = "Date,Projet,Machine,Start,End,Duree,Shift,Type,Mochkil,L7al,Auteur\n";
+            filtered.forEach(x => { csv += `${x.ts},${x.proj},${x.mach},${x.START},${x.END},${x.dur},${x.SHIFT},${x.type},${x.prob},${x.action},${x.author}\n`; });
+            const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+            const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob);
+            a.download = `Maintenance_${targetDate.replace(/\//g, '-')}.csv`; a.click();
+            document.getElementById('hidden-date-picker').value = ''; 
+        }
+
+        function updateChart() {
+            const factoryData = { "SKODA": 0, "CRAFTER": 0, "G.CALIFORNIA": 0 };
+            db.forEach(x => { if(factoryData.hasOwnProperty(x.proj)) factoryData[x.proj] += x.dur; });
+
+            const ctx = document.getElementById('factoryChart').getContext('2d');
+            if(chartObj) chartObj.destroy();
+            chartObj = new Chart(ctx, { 
+                type: 'bar', 
+                data: { 
+                    labels: Object.keys(factoryData), 
+                    datasets: [{ 
+                        label: 'Minutes', 
+                        data: Object.values(factoryData), 
+                        backgroundColor: ['#002b5c', '#00d4ff', '#10b981'],
+                        borderRadius: 5
+                    }] 
+                }, 
+                options: { 
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                } 
+            });
+        }
+
+        function openProDashboard() {
+            document.getElementById('pro-analytics-overlay').style.display = 'block';
+            const totalMin = db.reduce((a,b) => a + b.dur, 0);
+            const closed = db.filter(x => x.status === 'DONE').length;
+            
+            document.getElementById('pro-kpis').innerHTML = `
+                <div class="kpi-card" style="border-left-color:#6366f1"><h3>Total Minutes</h3><div class="val">${totalMin} min</div></div>
+                <div class="kpi-card" style="border-left-color:#f59e0b"><h3>Incidents Clos</h3><div class="val">${closed} / ${db.length}</div></div>
+                <div class="kpi-card" style="border-left-color:#10b981"><h3>Performance</h3><div class="val">${Math.round((closed/db.length)*100) || 0}%</div></div>
+                <div class="kpi-card" style="border-left-color:#ef4444"><h3>Impact Usine</h3><div class="val">${(totalMin/60).toFixed(1)} h</div></div>
+            `;
+
+            const shiftData = { "MATIN": 0, "SOIR": 0, "NUIT": 0 };
+            const typeMap = {}; // Nouvelle map pour les types de pannes
+            
+            db.forEach(x => {
+                if(shiftData.hasOwnProperty(x.SHIFT)) shiftData[x.SHIFT] += x.dur;
+                // On calcule le temps par type (Mécanique, Électrique...)
+                if(x.status === 'DONE' && x.type) {
+                    typeMap[x.type] = (typeMap[x.type] || 0) + x.dur;
+                }
+            });
+
+            if(chartsPro.s) chartsPro.s.destroy();
+            if(chartsPro.m) chartsPro.m.destroy();
+
+            chartsPro.s = new Chart(document.getElementById('chartShiftPro'), {
+                type: 'doughnut',
+                data: { labels: Object.keys(shiftData), datasets: [{ data: Object.values(shiftData), backgroundColor: ['#3b82f6', '#f59e0b', '#1e293b'] }] },
+                options: { maintainAspectRatio: false }
+            });
+
+            // Mise à jour du 2ème graphique pour afficher les types de pannes
+            chartsPro.m = new Chart(document.getElementById('chartTypesPro'), {
+                type: 'pie',
+                data: { 
+                    labels: Object.keys(typeMap), 
+                    datasets: [{ 
+                        data: Object.values(typeMap), 
+                        backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#6366f1'] 
+                    }] 
+                },
+                options: { maintainAspectRatio: false }
+            });
+        }
+
+        function checkAlerts() {
+            const alertBox = document.getElementById('dynamic-alert-box');
+            let criticalCount = 0;
+            let criticalMachines = [];
+
+            db.forEach(item => {
+                if (item.status === "PENDING") {
+                    const diffSeconds = (Date.now() - item.id) / 1000;
+                    if (diffSeconds >= 60) {
+                        criticalCount++;
+                        criticalMachines.push(item.mach);
+                        const badges = document.querySelectorAll(`.badge[data-id="${item.id}"]`);
+                        badges.forEach(b => b.classList.add('blink-danger'));
+                    }
+                }
+            });
+
+            if (criticalCount > 0) {
+                alertBox.style.display = 'block';
+                alertBox.innerHTML = `<marquee scrollamount="12">⚠️ ALERTE CRITIQUE: ${criticalCount} machine(s) (${criticalMachines.join(', ')}) en arrêt depuis plus d'une minute ! Veuillez clôturer les interventions.</marquee>`;
+            } else {
+                alertBox.style.display = 'none';
+            }
+        }
+
+        setInterval(checkAlerts, 2000);
+    </script>
+</body>
+</html>
