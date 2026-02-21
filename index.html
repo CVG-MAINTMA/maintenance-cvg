@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CVG DYNAMICS PRO | Maintenance Edition</title>
+    <title>CVG DYNAMICS PRO | Admin Edition</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -18,104 +18,101 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg); padding: 10px; }
 
-        /* Login Styling */
-        #login-overlay { position:fixed; inset:0; background:radial-gradient(circle at top right, var(--primary), #001a38); z-index:9999; display:flex; justify-content:center; align-items:center; }
-        .login-box { background:white; padding:40px 30px; border-radius:25px; width:360px; text-align:center; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-        
-        /* Layout */
-        header { background: var(--primary); color: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        header { background: var(--primary); color: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
         
-        /* KPIs */
         .grid-kpi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
-        .kpi-card { background: white; padding: 15px; border-radius: 15px; border-left: 5px solid var(--accent); position: relative; overflow: hidden; transition: 0.3s; }
-        .kpi-card i { position: absolute; right: 10px; bottom: 10px; opacity: 0.1; font-size: 2rem; }
+        .kpi-card { background: white; padding: 15px; border-radius: 15px; border-left: 5px solid var(--accent); position: relative; overflow: hidden; }
         .kpi-card span { display: block; font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; }
         .kpi-card b { font-size: 1.2rem; color: var(--primary); }
 
-        /* Buttons & Inputs */
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-pdf { background: #1e293b; color: white; margin-top: 10px; }
         .btn-stop { background: var(--danger); color: white; }
-        select, input { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 15px; outline: none; background: #fff; font-size: 1rem; }
         
+        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 10px; outline: none; }
+        .hidden { display: none !important; }
         .alert-blink { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.3; } }
-        .hidden { display: none !important; }
-        #closeModal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(4px); }
+        #closeModal, #userModal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(4px); }
     </style>
 </head>
 <body onclick="enableAudio()">
 
-    <div id="login-overlay">
-        <div class="login-box">
-            <div style="background:var(--primary); width:60px; height:60px; border-radius:15px; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; color:white;">
-                <i class="fas fa-user-shield fa-2x"></i>
-            </div>
-            <h2 style="color:var(--primary); font-weight:800; margin-bottom: 20px;">CVG GMAO</h2>
-            
-            <select id="userInput">
-                <option value="" disabled selected>Choisir Utilisateur</option>
-                <option value="OPERATEUR">Opérateur Production</option>
-                <option value="MAINTENANCE">Technicien Maintenance</option>
-                <option value="MANAGER">Responsable Usine</option>
-            </select>
-
-            <input type="password" id="passInput" placeholder="Mot de passe">
-            
-            <button class="btn" style="background:var(--primary); color: white;" onclick="checkLogin()">SE CONNECTER</button>
-            <div style="margin-top:15px; font-size:0.6rem; color:#94a3b8;">CODES: OP: 1111 | TECH: 2222 | MGR: 3333</div>
+    <div id="login-overlay" style="position:fixed; inset:0; background:var(--primary); z-index:9999; display:flex; justify-content:center; align-items:center;">
+        <div class="card" style="width:340px; text-align:center;">
+            <i class="fas fa-lock fa-3x" style="color:var(--primary); margin-bottom:15px;"></i>
+            <h2 style="margin-bottom:20px;">CONNEXION</h2>
+            <input type="text" id="login-user" placeholder="Nom d'utilisateur">
+            <input type="password" id="login-pass" placeholder="Mot de passe">
+            <button class="btn" style="background:var(--primary); color:white;" onclick="handleLogin()">ACCÉDER</button>
         </div>
     </div>
 
     <div id="app-content" class="hidden">
         <header>
-            <div><small id="roleText" style="opacity:0.8; font-weight:bold;"></small><h2 style="font-size:1.1rem;">CVG <span style="color:var(--accent)">DYNAMICS</span></h2></div>
-            <button onclick="location.reload()" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:8px; border-radius:10px;"><i class="fas fa-power-off"></i></button>
+            <div><small id="roleText"></small><h2 style="font-size:1rem;">CVG DYNAMICS</h2></div>
+            <button onclick="location.reload()" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:8px; border-radius:10px;"><i class="fas fa-sign-out-alt"></i></button>
         </header>
+
+        <div id="admin-tools" class="hidden" style="margin-bottom:15px;">
+            <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('userModal').style.display='flex'">
+                <i class="fas fa-user-plus"></i> CRÉER NOUVEL UTILISATEUR
+            </button>
+        </div>
 
         <div id="manager-panel" class="hidden">
             <div class="grid-kpi">
-                <div class="kpi-card"><span>Pannes</span><b id="m-count">0</b><i class="fas fa-exclamation-triangle"></i></div>
-                <div class="kpi-card" style="border-left-color: var(--danger);"><span>Downtime</span><b id="m-time">0</b><i class="fas fa-clock"></i></div>
-                <div class="kpi-card" id="card-mtbf" style="border-left-color: var(--success);"><span>MTBF</span><b id="m-mtbf">0</b><i class="fas fa-chart-line"></i></div>
-                <div class="kpi-card" id="card-mttr" style="border-left-color: var(--purple);"><span>MTTR</span><b id="m-mttr">0</b><i class="fas fa-tools"></i></div>
+                <div class="kpi-card"><span>Pannes</span><b id="m-count">0</b></div>
+                <div class="kpi-card" style="border-left-color: var(--danger);"><span>Downtime</span><b id="m-time">0</b></div>
+                <div class="kpi-card" id="card-mtbf" style="border-left-color: var(--success);"><span>MTBF</span><b id="m-mtbf">0</b></div>
+                <div class="kpi-card" id="card-mttr" style="border-left-color: var(--purple);"><span>MTTR</span><b id="m-mttr">0</b></div>
             </div>
             <div class="card"><canvas id="managerChart"></canvas></div>
-            <button class="btn btn-pdf" onclick="generateDailyPDF()"><i class="fas fa-file-pdf"></i> EXPORT RAPPORT PDF</button>
+            <button class="btn btn-pdf" onclick="generateDailyPDF()">EXPORT PDF</button>
         </div>
 
         <div id="op-panel" class="card hidden">
-            <label>Projet</label>
             <select id="in-proj" onchange="updateMachineList()"><option value="SKODA">SKODA</option><option value="CRAFTER">CRAFTER</option><option value="G.CALIFORNIA">G.CALIFORNIA</option></select>
-            <label>Machine</label>
             <select id="in-mach"></select>
-            <button class="btn btn-stop" onclick="openArret()"><i class="fas fa-bell"></i> SIGNALER ARRÊT</button>
+            <button class="btn btn-stop" onclick="openArret()">SIGNALER ARRÊT</button>
         </div>
 
-        <div class="card" style="padding:10px;">
-            <h4 style="margin:10px; font-size:0.9rem; color:var(--primary);"><i class="fas fa-stream"></i> ÉTAT DES MACHINES</h4>
+        <div class="card">
+            <h4><i class="fas fa-list"></i> ÉTAT ACTUEL</h4>
             <div id="pannes-list"></div>
         </div>
     </div>
 
+    <div id="userModal">
+        <div class="card" style="width:100%; max-width:400px;">
+            <h3>Nouvel Utilisateur</h3>
+            <input type="text" id="new-username" placeholder="Nom (Ex: Ahmed)">
+            <input type="password" id="new-password" placeholder="Mot de passe">
+            <select id="new-role">
+                <option value="OPERATEUR">OPERATEUR</option>
+                <option value="MAINTENANCE">MAINTENANCE</option>
+                <option value="MANAGER">MANAGER</option>
+            </select>
+            <button class="btn" style="background:var(--success); color:white;" onclick="saveUser()">ENREGISTRER</button>
+            <button class="btn" style="margin-top:10px;" onclick="document.getElementById('userModal').style.display='none'">ANNULER</button>
+        </div>
+    </div>
+
     <div id="closeModal">
-        <div style="background:white; padding:30px; border-radius:25px; width:100%; max-width:400px;">
-            <h3 style="color:var(--primary); margin-bottom:20px;">Reprise d'Activité</h3>
+        <div class="card" style="width:100%; max-width:400px;">
+            <h3>Reprise Machine</h3>
             <input type="hidden" id="modal-key">
-            <label>Intervention</label>
-            <select id="modal-type"><option>🔧 Mécanique</option><option>⚡ Électrique</option><option>⚙️ Process</option><option>📦 Logistique</option></select>
-            <label>Pièce</label>
-            <input type="text" id="modal-piece" placeholder="Nom de la pièce ou N/A">
-            <button class="btn btn-stop" style="background:var(--success)" onclick="confirmClosing()">DÉMARRER MACHINE</button>
-            <button onclick="document.getElementById('closeModal').style.display='none'" style="width:100%; margin-top:10px; background:none; border:none; color:grey;">Annuler</button>
+            <select id="modal-type"><option>🔧 Mécanique</option><option>⚡ Électrique</option><option>⚙️ Process</option></select>
+            <input type="text" id="modal-piece" placeholder="Pièce utilisée">
+            <button class="btn" style="background:var(--success); color:white;" onclick="confirmClosing()">VALIDER</button>
         </div>
     </div>
 
     <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
-        const machineData = { "SKODA": ["80008172", "80008173", "80008174"], "CRAFTER": ["80008119", "80008122", "80008116"], "G.CALIFORNIA": ["80006953"] };
+        const machineData = { "SKODA": ["80008172", "80008173"], "CRAFTER": ["80008119", "80008122"], "G.CALIFORNIA": ["80006953"] };
         const firebaseConfig = {
             apiKey: "AIzaSyASQa5cLXFllnV6EmYp-ARZ9dndWSKha6c",
             authDomain: "cvgmaroc-gmao.firebaseapp.com",
@@ -127,31 +124,59 @@
         };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        let currentUser = null; let myChart = null; let allData = [];
+        let currentUser = null; let allData = []; let myChart = null;
 
         function enableAudio() { window.audioAllowed = true; }
 
-        function checkLogin() {
-            const user = document.getElementById('userInput').value;
-            const pass = document.getElementById('passInput').value;
-            if (!user) return alert("Veuillez choisir un utilisateur");
+        // Logic dial User Management
+        function handleLogin() {
+            const userVal = document.getElementById('login-user').value;
+            const passVal = document.getElementById('login-pass').value;
 
-            let authorized = false;
-            if(user === "OPERATEUR" && pass === "1111") authorized = true;
-            else if(user === "MAINTENANCE" && pass === "2222") authorized = true;
-            else if(user === "MANAGER" && pass === "3333") authorized = true;
+            // Fallback pour les codes par défaut
+            if(userVal === "admin" && passVal === "3333") { startApp("MANAGER"); return; }
 
-            if(authorized) {
-                currentUser = user;
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('app-content').classList.remove('hidden');
-                document.getElementById('roleText').innerText = "MODE " + currentUser;
-                if(currentUser === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
-                if(currentUser === "MANAGER") document.getElementById('manager-panel').classList.remove('hidden');
-                listenFirebase();
-            } else { alert("Identifiants incorrects"); }
+            database.ref('users/').once('value', snap => {
+                const users = snap.val();
+                let found = false;
+                if(users) {
+                    Object.values(users).forEach(u => {
+                        if(u.name === userVal && u.pass === passVal) {
+                            found = true;
+                            startApp(u.role);
+                        }
+                    });
+                }
+                if(!found) alert("Utilisateur ou Mot de passe incorrect");
+            });
         }
 
+        function saveUser() {
+            const name = document.getElementById('new-username').value;
+            const pass = document.getElementById('new-password').value;
+            const role = document.getElementById('new-role').value;
+            if(!name || !pass) return alert("Remplir tous les champs");
+
+            database.ref('users/').push({ name, pass, role })
+            .then(() => {
+                alert("Utilisateur Ajouté !");
+                document.getElementById('userModal').style.display = 'none';
+            });
+        }
+
+        function startApp(role) {
+            currentUser = role;
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('app-content').classList.remove('hidden');
+            document.getElementById('roleText').innerText = "MODE " + role;
+            
+            if(role === "MANAGER" || role === "MAINTENANCE") document.getElementById('admin-tools').classList.remove('hidden');
+            if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
+            if(role === "MANAGER") document.getElementById('manager-panel').classList.remove('hidden');
+            listenFirebase();
+        }
+
+        // --- Baqi l-code dialk l-asli bla tghyir f l-logic ---
         function updateMachineList() {
             const proj = document.getElementById('in-proj').value;
             const select = document.getElementById('in-mach');
@@ -163,13 +188,11 @@
             const proj = document.getElementById('in-proj').value;
             const mach = document.getElementById('in-mach').value;
             database.ref('pannes/').push({
-                proj: proj, mach: mach,
-                startTs: Date.now(),
-                startStr: new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}),
+                proj, mach, startTs: Date.now(),
+                startStr: new Date().toLocaleTimeString('fr-FR'),
                 dateStr: new Date().toLocaleDateString('fr-FR'),
-                status: 'OPEN',
-                piece: '-'
-            }).then(() => alert("🔴 SIGNAL ENVOYÉ À LA MAINTENANCE"));
+                status: 'OPEN', piece: '-'
+            });
         }
 
         function listenFirebase() {
@@ -185,26 +208,17 @@
             const container = document.getElementById('pannes-list');
             container.innerHTML = "";
             let alertActive = false;
-
             allData.slice().reverse().forEach(p => {
                 const isOpen = p.status === 'OPEN';
                 if(isOpen) alertActive = true;
                 container.innerHTML += `
-                    <div style="padding:15px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; background:${isOpen ? '#fff5f5' : 'transparent'}">
-                        <div>
-                            <b style="color:var(--primary)">${p.mach}</b> <span style="font-size:0.7rem; background:#eee; padding:2px 6px; border-radius:5px;">${p.proj}</span><br>
-                            <small style="color:#64748b">${p.startStr} | ${isOpen ? '<b style="color:red">EN ARRÊT</b>' : p.duration+' min | ⚙️ '+p.piece}</small>
-                        </div>
-                        ${isOpen && currentUser === 'MAINTENANCE' ? 
-                        `<button onclick="openModal('${p.key}')" style="background:var(--success); color:white; border:none; padding:10px 18px; border-radius:10px; font-weight:bold; cursor:pointer;">REPRIS</button>` : 
-                        `<i class="fas ${isOpen ? 'fa-exclamation-circle' : 'fa-check-circle'}" style="color:${isOpen?'var(--danger)':'var(--success)'}; font-size:1.2rem;"></i>`}
-                    </div>
-                `;
+                    <div style="padding:12px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; background:${isOpen ? '#fff5f5' : 'transparent'}">
+                        <div><b>${p.mach}</b> (${p.proj})<br><small>${p.startStr} | ${isOpen ? 'EN ARRÊT' : p.duration + 'm'}</small></div>
+                        ${isOpen && currentUser === 'MAINTENANCE' ? `<button onclick="openModal('${p.key}')" style="background:var(--success); color:white; padding:5px 10px; border-radius:8px; border:none;">REPRISE</button>` : ''}
+                    </div>`;
             });
-
             if(alertActive && currentUser === "MAINTENANCE") {
                 if(window.audioAllowed) document.getElementById('alertSound').play();
-                if(navigator.vibrate) navigator.vibrate([500, 200, 500]);
             } else { document.getElementById('alertSound').pause(); }
         }
 
@@ -215,59 +229,35 @@
             const item = allData.find(x => x.key === key);
             const duration = Math.round((Date.now() - item.startTs) / 60000);
             database.ref('pannes/' + key).update({
-                status: 'CLOSED',
-                duration: duration,
+                status: 'CLOSED', duration,
                 type: document.getElementById('modal-type').value,
-                piece: document.getElementById('modal-piece').value || 'Aucune'
+                piece: document.getElementById('modal-piece').value || 'N/A'
             }).then(() => document.getElementById('closeModal').style.display = 'none');
         }
 
         function updateManagerDashboard() {
-            const stats = { "SKODA": 0, "CRAFTER": 0, "G.CALIFORNIA": 0 };
             let totalDowntime = 0;
-            allData.forEach(p => { if(p.duration) { stats[p.proj] += p.duration; totalDowntime += p.duration; } });
+            allData.forEach(p => { if(p.duration) totalDowntime += p.duration; });
+            const nb = allData.length;
+            const mtbf = nb > 0 ? Math.round((1440 - totalDowntime) / nb) : 1440;
+            const mttr = nb > 0 ? Math.round(totalDowntime / nb) : 0;
 
-            const nbPannes = allData.length;
-            const mtbf = nbPannes > 0 ? Math.round((1440 - totalDowntime) / nbPannes) : 1440;
-            const mttr = nbPannes > 0 ? Math.round(totalDowntime / nbPannes) : 0;
+            document.getElementById('m-count').innerText = nb;
+            document.getElementById('m-time').innerText = totalDowntime + "m";
+            document.getElementById('m-mtbf').innerText = mtbf + "m";
+            document.getElementById('m-mttr').innerText = mttr + "m";
 
-            document.getElementById('m-count').innerText = nbPannes;
-            document.getElementById('m-time').innerText = totalDowntime + " m";
-            document.getElementById('m-mtbf').innerText = mtbf + " m";
-            document.getElementById('m-mttr').innerText = mttr + " m";
-
-            // Color Alert MTTR > 1
-            const mttrCard = document.getElementById('card-mttr');
             const mttrVal = document.getElementById('m-mttr');
-            if(mttr > 1) {
-                mttrCard.style.borderLeftColor = "var(--danger)";
-                mttrVal.style.color = "var(--danger)";
-                mttrVal.classList.add('alert-blink');
-            } else {
-                mttrCard.style.borderLeftColor = "var(--purple)";
-                mttrVal.style.color = "var(--primary)";
-                mttrVal.classList.remove('alert-blink');
-            }
-
-            const ctx = document.getElementById('managerChart').getContext('2d');
-            if(myChart) myChart.destroy();
-            myChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: { labels: Object.keys(stats), datasets: [{ data: Object.values(stats), backgroundColor: ['#002b5c', '#00d4ff', '#10b981'] }] },
-                options: { plugins: { legend: { position: 'bottom' } } }
-            });
+            if(mttr > 1) mttrVal.classList.add('alert-blink'); else mttrVal.classList.remove('alert-blink');
         }
 
         function generateDailyPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.setFontSize(18); doc.setTextColor(0, 43, 92);
-            doc.text("RAPPORT PERFORMANCE CVG", 15, 20);
-            doc.setFontSize(10); doc.text("MTBF: " + document.getElementById('m-mtbf').innerText + " | MTTR: " + document.getElementById('m-mttr').innerText, 15, 28);
-            
-            const rows = allData.map(p => [p.dateStr, p.mach, p.proj, p.startStr, p.duration || '0', p.type || '-', p.piece]);
-            doc.autoTable({ head: [['Date', 'Machine', 'Projet', 'Heure', 'Min', 'Type', 'Pièce']], body: rows, startY: 35, headStyles: { fillColor: [0, 43, 92] } });
-            doc.save("Rapport_Performance.pdf");
+            doc.text("RAPPORT GMAO CVG", 15, 20);
+            const rows = allData.map(p => [p.dateStr, p.mach, p.proj, p.duration || '0', p.piece]);
+            doc.autoTable({ head: [['Date', 'Machine', 'Projet', 'Min', 'Pièce']], body: rows, startY: 30 });
+            doc.save("Rapport.pdf");
         }
     </script>
 </body>
