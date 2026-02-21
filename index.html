@@ -188,7 +188,7 @@
             const role = document.getElementById('new-user-role').value;
             if(!name || !pass || !role) return alert("Remplissez tous les champs !");
             database.ref('users/').push({ name, pass, role }).then(() => {
-                alert("Compte " + name + " créé avec succès !");
+                alert("Compte " + name + " créé !");
                 document.getElementById('new-user-name').value = "";
                 document.getElementById('new-user-pass').value = "";
                 document.getElementById('userModal').style.display = 'none';
@@ -245,11 +245,21 @@
             const container = document.getElementById('pannes-list'); container.innerHTML = "";
             const actives = allData.filter(p => p.status === 'OPEN' || p.status === 'IN_PROGRESS');
             document.getElementById('m-charge').innerText = actives.length;
+            
             actives.reverse().forEach(p => {
                 let statusHtml = p.status === 'OPEN' ? `<span class="status-tag tag-open">EN ARRÊT</span>` : `<span class="status-tag tag-progress">RÉPARATION...</span>`;
-                let actionBtn = (currentUser === 'MAINTENANCE' || currentUser === 'MANAGER') ? (p.status === 'OPEN' ? 
-                    `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">I'M GOING</button>` : 
-                    `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">DONE</button>`) : "";
+                
+                // RESTRICTION: Done button only for MAINTENANCE role
+                let actionBtn = "";
+                if(currentUser === 'MAINTENANCE') {
+                    actionBtn = p.status === 'OPEN' ? 
+                        `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">I'M GOING</button>` : 
+                        `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">DONE</button>`;
+                } else if(currentUser === 'MANAGER' && p.status === 'OPEN') {
+                    // Manager can only "I'm going" if they want, but usually just watches
+                    actionBtn = `<small style="color:#64748b"><i>En attente d'intervention...</i></small>`;
+                }
+
                 container.innerHTML += `<div class="card" style="border-left:5px solid ${p.status === 'OPEN' ? 'var(--danger)' : 'var(--warning)'}">
                     <div style="display:flex; justify-content:space-between"><b>${p.mach}</b>${statusHtml}</div>
                     <small>${p.proj} | ${p.dateStr}</small><br>${actionBtn}
