@@ -2,251 +2,226 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CVG | Maintenance Pro Sync</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CVG DYNAMICS | Cloud GMAO</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* Design dyalk lli m9ad */
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
-        :root { --primary: #002b5c; --accent: #00d4ff; --success: #10b981; --danger: #ef4444; --bg: #f8fafc; --card: #ffffff; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg); color: #1e293b; padding: 10px; }
-        
-        /* Layout */
-        .header { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .container { max-width: 1200px; margin: 0 auto; display: none; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        
-        /* Cards */
-        .panel { background: var(--card); padding: 20px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
-        .kpi { background: #eff6ff; padding: 15px; border-radius: 15px; text-align: center; border-left: 4px solid var(--primary); }
-        .kpi h4 { font-size: 0.7rem; color: #64748b; text-transform: uppercase; }
-        .kpi .val { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
 
-        /* Form & Table */
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; }
-        .btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s; }
-        .btn:active { transform: scale(0.98); }
-        .table-wrap { overflow-x: auto; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #f1f5f9; }
-        
-        /* Status */
-        .status { padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.7rem; }
-        .pending { background: #fee2e2; color: #ef4444; }
-        .done { background: #dcfce7; color: #10b981; }
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        :root { --primary: #002b5c; --accent: #00d4ff; --success: #10b981; --danger: #ef4444; --bg: #f8fafc; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); padding: 15px; }
 
         /* Login */
-        #login-screen { position: fixed; inset: 0; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 100; }
-        .login-box { background: white; padding: 40px; border-radius: 25px; width: 90%; max-width: 400px; text-align: center; }
-
-        /* Alerts */
-        .alert { background: #ef4444; color: white; padding: 10px; border-radius: 10px; margin-bottom: 15px; display: none; font-weight: bold; }
+        #login-overlay { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; justify-content: center; align-items: center; color: white; }
+        .login-box { background: white; padding: 30px; border-radius: 20px; width: 320px; text-align: center; color: #333; }
         
-        /* Modal */
-        #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 1000; }
+        /* Layout */
+        header { background: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
+        .kpi-card { background: white; padding: 15px; border-radius: 15px; border-bottom: 4px solid var(--primary); text-align: center; }
+        .kpi-card .val { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
+        
+        .main-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .btn-stop { width: 100%; padding: 15px; background: var(--danger); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1rem; cursor: pointer; }
+        
+        /* Table */
+        .table-container { background: white; border-radius: 15px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th { background: #f1f5f9; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        
+        .status-open { color: var(--danger); font-weight: 800; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+        
+        .btn-finish { background: var(--success); color: white; border: none; padding: 5px 10px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .hidden { display: none !important; }
+
+        /* Modal Clôture */
+        #closeModal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; }
     </style>
 </head>
-<body>
+<body onclick="enableAudio()">
 
-    <div id="login-screen">
+    <div id="login-overlay">
         <div class="login-box">
-            <h2 style="color:var(--primary); margin-bottom:20px;">CVG Login</h2>
-            <input type="text" id="user" placeholder="Utilisateur">
-            <input type="password" id="pass" placeholder="Mot de passe">
-            <button class="btn" onclick="login()">SE CONNECTER</button>
+            <h2 style="color:var(--primary)">CVG GMAO</h2>
+            <p style="font-size: 0.8rem; margin-bottom: 20px;">Entrez votre code PIN</p>
+            <input type="password" id="pinInput" placeholder="••••" style="width:100%; padding:12px; text-align:center; font-size:1.5rem; border-radius:10px; border:2px solid #ddd; margin-bottom:20px;">
+            <button class="btn-stop" style="background:var(--primary)" onclick="checkLogin()">DÉMARRER</button>
         </div>
     </div>
 
-    <div id="modal">
-        <div class="panel" style="width: 100%; max-width: 400px;">
-            <h3>Clôturer l'arrêt</h3>
-            <input type="hidden" id="m-id">
-            <input type="text" id="m-end" placeholder="Heure Fin (HH:MM)">
-            <input type="text" id="m-prob" placeholder="Mochkil (Problème)">
-            <input type="text" id="m-sol" placeholder="L7al (Solution)">
-            <button class="btn" onclick="saveClose()">VALIDER</button>
-            <button class="btn" style="background:#64748b; margin-top:10px;" onclick="document.getElementById('modal').style.display='none'">ANNULER</button>
-        </div>
-    </div>
-
-    <div class="container" id="main-app">
-        <div class="header">
-            <div>
-                <h2 style="color:var(--primary)">CVG <span style="color:var(--accent)">PRO</span></h2>
-                <small id="user-tag"></small>
-            </div>
-            <button onclick="location.reload()" style="padding:8px; border-radius:8px; background:#fee2e2; color:#ef4444; border:none;">Sortir</button>
-        </div>
-
-        <div id="alarm" class="alert">⚠️ MACHINE EN ARRÊT !</div>
-
-        <div class="grid">
-            <div class="panel">
-                <h3>Nouvel Arrêt</h3>
-                <select id="proj" onchange="updateMach()">
-                    <option value="">-- Projet --</option>
-                    <option value="SKODA">SKODA</option>
-                    <option value="CRAFTER">CRAFTER</option>
+    <div id="closeModal">
+        <div style="background:white; padding:25px; border-radius:20px; width:100%; max-width:400px;">
+            <h3 style="margin-bottom:15px; color:var(--primary)">Clôturer l'Arrêt</h3>
+            <input type="hidden" id="modal-key">
+            <div style="margin-bottom:15px;">
+                <label style="font-size:0.8rem; font-weight:bold;">Type de Panne:</label>
+                <select id="modal-type" style="width:100%; padding:10px; margin-top:5px; border-radius:8px;">
+                    <option value="Mécanique">🔧 Mécanique</option>
+                    <option value="Électrique">⚡ Électrique</option>
+                    <option value="Process">⚙️ Process</option>
                 </select>
-                <select id="mach"><option>-- Machine --</option></select>
-                <input type="text" id="start-time" placeholder="Heure Début (HH:MM)">
-                <button class="btn" onclick="addIncident()">OUVRIR L'ARRÊT</button>
-                <div style="height: 200px; margin-top: 20px;">
-                    <canvas id="myChart"></canvas>
-                </div>
             </div>
-
-            <div class="panel">
-                <div class="kpi-grid">
-                    <div class="kpi"><h4>Arrêts</h4><div class="val" id="count">0</div></div>
-                    <div class="kpi"><h4>Minutes</h4><div class="val" id="total-min">0</div></div>
-                </div>
-                <h3>Historique Live</h3>
-                <div class="table-wrap">
-                    <table>
-                        <thead><tr><th>Machine</th><th>Start</th><th>Duree</th><th>Action</th></tr></thead>
-                        <tbody id="live-table"></tbody>
-                    </table>
-                </div>
-            </div>
+            <button class="btn-stop" style="background:var(--success)" onclick="confirmClosing()">CONFIRMER START MACHINE</button>
+            <button onclick="document.getElementById('closeModal').style.display='none'" style="width:100%; margin-top:10px; background:none; border:none; color:#666;">Annuler</button>
         </div>
     </div>
 
-    <script type="module">
-        // Import Firebase (version CDN compatible)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <div id="app-content" class="hidden">
+        <header>
+            <h2 style="font-size:1rem; color:var(--primary)">CVG <span style="color:var(--accent)">DYNAMICS</span></h2>
+            <div id="roleBadge" style="font-size:0.7rem; background:#eee; padding:5px 10px; border-radius:10px; font-weight:800;"></div>
+        </header>
 
-        // T-config dyalk
+        <div class="kpi-grid">
+            <div class="kpi-card"><h3>Arrêts</h3><div class="val" id="kpi-count">0</div></div>
+            <div class="kpi-card"><h3>Downtime</h3><div class="val" id="kpi-total">0 min</div></div>
+        </div>
+
+        <div id="op-panel" class="main-card hidden">
+            <h4 style="margin-bottom:15px;">Signaler un Arrêt (STOP)</h4>
+            <select id="in-proj" style="width:100%; padding:12px; border-radius:10px; margin-bottom:10px;">
+                <option value="SKODA">SKODA</option>
+                <option value="CRAFTER">CRAFTER</option>
+                <option value="G.CALIFORNIA">G.CALIFORNIA</option>
+            </select>
+            <input type="text" id="in-mach" placeholder="Machine (Ex: 80008172)" style="width:100%; padding:12px; border-radius:10px; margin-bottom:15px; border:1px solid #ddd;">
+            <button class="btn-stop" onclick="openArret()">🛑 STOP MACHINE</button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr><th>Machine</th><th>Start</th><th>Duree</th><th>Status</th></tr>
+                </thead>
+                <tbody id="data-table"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
+    <script>
+        // --- CONFIGURATION FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyASQa5cLXFllnV6EmYp-ARZ9dndWSKha6c",
             authDomain: "cvgmaroc-gmao.firebaseapp.com",
+            databaseURL: "https://cvgmaroc-gmao-default-rtdb.firebaseio.com",
             projectId: "cvgmaroc-gmao",
             storageBucket: "cvgmaroc-gmao.firebasestorage.app",
             messagingSenderId: "72908747564",
             appId: "1:72908747564:web:82f646ef5dd209d03b7289"
         };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        let currentUser = null;
+        let audioActive = false;
+        const sound = document.getElementById('alertSound');
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const colRef = collection(db, "maintenance_logs");
+        function enableAudio() { audioActive = true; }
 
-        let currentData = [];
-        let myChart = null;
+        function checkLogin() {
+            const pin = document.getElementById('pinInput').value;
+            if(pin === "1111") { currentUser = {role: 'OPERATEUR'}; loadApp(); }
+            else if(pin === "2222") { currentUser = {role: 'MAINTENANCE'}; loadApp(); }
+            else { alert("PIN Erroné"); }
+        }
 
-        // Login Simple
-        window.login = () => {
-            const u = document.getElementById('user').value;
-            const p = document.getElementById('pass').value;
-            if(p === "cvg2024") {
-                window.currentUser = u;
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-app').style.display = 'block';
-                document.getElementById('user-tag').innerText = "User: " + u;
-                initRealtime();
-            } else { alert("Pass incorrect !"); }
-        };
+        function loadApp() {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('app-content').classList.remove('hidden');
+            document.getElementById('roleBadge').innerText = currentUser.role;
+            if(currentUser.role === 'OPERATEUR') document.getElementById('op-panel').classList.remove('hidden');
+            listenToFirebase();
+        }
 
-        // Realtime Sync (Hadchi lli kidir cominixion bin pc o tel)
-        function initRealtime() {
-            const q = query(colRef, orderBy("server_ts", "desc"));
-            onSnapshot(q, (snapshot) => {
-                currentData = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-                renderUI();
+        function openArret() {
+            const proj = document.getElementById('in-proj').value;
+            const mach = document.getElementById('in-mach').value;
+            if(!mach) return alert("Entrez le N° de machine");
+            
+            database.ref('pannes/').push({
+                proj: proj,
+                mach: mach,
+                startTs: Date.now(),
+                startStr: new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}),
+                status: 'OPEN',
+                duration: 0
+            }).then(() => { alert("Alerte envoyée !"); document.getElementById('in-mach').value = ""; });
+        }
+
+        function listenToFirebase() {
+            database.ref('pannes/').on('value', (snapshot) => {
+                const data = snapshot.val();
+                const table = document.getElementById('data-table');
+                table.innerHTML = "";
+                let hasActiveAlert = false;
+                let totalMin = 0;
+                let count = 0;
+
+                if(data) {
+                    Object.keys(data).reverse().forEach(key => {
+                        const p = data[key];
+                        count++;
+                        const isOpen = p.status === 'OPEN';
+                        if(isOpen) hasActiveAlert = true;
+                        if(p.duration) totalMin += p.duration;
+
+                        table.innerHTML += `
+                            <tr>
+                                <td><b>${p.mach}</b><br><small>${p.proj}</small></td>
+                                <td>${p.startStr}</td>
+                                <td>${isOpen ? '...' : p.duration + ' min'}</td>
+                                <td>
+                                    ${isOpen && currentUser.role === 'MAINTENANCE' ? 
+                                    `<button class="btn-finish" onclick="openModal('${key}')">START</button>` : 
+                                    `<span class="${isOpen ? 'status-open' : ''}" style="color:${isOpen ? 'red' : 'green'}">${isOpen ? 'ARRÊT' : 'OK'}</span>`}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+                
+                document.getElementById('kpi-count').innerText = count;
+                document.getElementById('totalMin').innerText = totalMin + " min";
+
+                // Alertes Sonores
+                if(hasActiveAlert && currentUser.role === 'MAINTENANCE') {
+                    if(audioActive) sound.play();
+                    if(navigator.vibrate) navigator.vibrate([500,200,500]);
+                } else {
+                    sound.pause();
+                }
             });
         }
 
-        // Add Incident
-        window.addIncident = async () => {
-            const p = document.getElementById('proj').value;
-            const m = document.getElementById('mach').value;
-            const s = document.getElementById('start-time').value;
-            if(!p || !m || !s) return alert("Kamal l-ma3loumat!");
-
-            await addDoc(colRef, {
-                proj: p, mach: m, start: s, end: "-", dur: 0,
-                status: "PENDING", user: window.currentUser,
-                server_ts: serverTimestamp(),
-                created_at: Date.now()
-            });
-            document.getElementById('start-time').value = "";
-        };
-
-        // Render UI
-        function renderUI() {
-            const table = document.getElementById('live-table');
-            let total = 0;
-            let pending = false;
-
-            table.innerHTML = currentData.map(item => {
-                total += item.dur;
-                if(item.status === "PENDING") pending = true;
-                return `
-                    <tr>
-                        <td><b>${item.mach}</b><br><small>${item.proj}</small></td>
-                        <td>${item.start}</td>
-                        <td><span class="status ${item.status === 'DONE' ? 'done' : 'pending'}">${item.dur} min</span></td>
-                        <td>
-                            ${item.status === 'PENDING' ? `<button onclick="openModal('${item.id}')" style="background:var(--accent); border:none; padding:5px; border-radius:5px; cursor:pointer;">FINIR</button>` : '✅'}
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            document.getElementById('count').innerText = currentData.length;
-            document.getElementById('total-min').innerText = total;
-            document.getElementById('alarm').style.display = pending ? 'block' : 'none';
-            updateChart(currentData);
+        function openModal(key) {
+            document.getElementById('modal-key').value = key;
+            document.getElementById('closeModal').style.display = 'flex';
         }
 
-        // Modal Control
-        window.openModal = (id) => {
-            document.getElementById('m-id').value = id;
-            document.getElementById('modal').style.display = 'flex';
-        };
-
-        window.saveClose = async () => {
-            const id = document.getElementById('m-id').value;
-            const end = document.getElementById('m-end').value;
-            const prob = document.getElementById('m-prob').value;
-            const sol = document.getElementById('m-sol').value;
-
-            const item = currentData.find(x => x.id === id);
-            const [sH, sM] = item.start.split(':').map(Number);
-            const [eH, eM] = end.split(':').map(Number);
-            let d = (eH * 60 + eM) - (sH * 60 + sM);
-            if(d < 0) d += 1440;
-
-            await updateDoc(doc(db, "maintenance_logs", id), {
-                end: end, dur: d, prob: prob, sol: sol, status: "DONE"
-            });
-            document.getElementById('modal').style.display = 'none';
-        };
-
-        // Utils
-        window.updateMach = () => {
-            const m = { "SKODA": ["80008172", "80008173"], "CRAFTER": ["80008119", "80008122"] };
-            const p = document.getElementById('proj').value;
-            const s = document.getElementById('mach');
-            s.innerHTML = m[p] ? m[p].map(x => `<option value="${x}">${x}</option>`).join('') : '<option>-- Machine --</option>';
-        };
-
-        function updateChart(data) {
-            const ctx = document.getElementById('myChart').getContext('2d');
-            const stats = { "SKODA": 0, "CRAFTER": 0 };
-            data.forEach(x => { if(stats.hasOwnProperty(x.proj)) stats[x.proj] += x.dur; });
-
-            if(myChart) myChart.destroy();
-            myChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(stats),
-                    datasets: [{ label: 'Min Perdues', data: Object.values(stats), backgroundColor: ['#002b5c', '#00d4ff'] }]
-                },
-                options: { maintainAspectRatio: false }
+        function confirmClosing() {
+            const key = document.getElementById('modal-key').value;
+            const type = document.getElementById('modal-type').value;
+            
+            database.ref('pannes/' + key).once('value').then(snap => {
+                const startTs = snap.val().startTs;
+                const duration = Math.round((Date.now() - startTs) / 60000);
+                
+                database.ref('pannes/' + key).update({
+                    status: 'CLOSED',
+                    duration: duration,
+                    type: type
+                }).then(() => {
+                    document.getElementById('closeModal').style.display = 'none';
+                });
             });
         }
     </script>
