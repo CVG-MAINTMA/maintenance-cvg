@@ -62,6 +62,10 @@
                 <div class="kpi-card"><span>MTBF (H)</span><b id="m-mtbf">0</b></div>
                 <div class="kpi-card"><span>MTTR (Min)</span><b id="m-mttr">0</b></div>
             </div>
+
+            <div class="card" style="padding:10px;">
+                <canvas id="downtimeChart" style="width:100%; max-height:200px;"></canvas>
+            </div>
             
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button class="btn" style="background:#0ea5e9; color:white;" onclick="document.getElementById('viewStockModal').style.display='flex'"><i class="fas fa-boxes-stacked"></i> STOCK</button>
@@ -148,7 +152,7 @@
 
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        let currentUser = null, allData = [];
+        let currentUser = null, allData = [], myChart = null;
 
         function handleLogin() {
             const u = document.getElementById('login-user').value.trim().toLowerCase(), p = document.getElementById('login-pass').value;
@@ -165,10 +169,7 @@
             document.getElementById('app-content').classList.remove('hidden');
             document.getElementById('roleText').innerText = role;
             listenFirebase(); listenStock();
-            if(role === "MANAGER") { 
-                listenUsers(); 
-                document.getElementById('manager-panel').classList.remove('hidden'); 
-            }
+            if(role === "MANAGER") { listenUsers(); document.getElementById('manager-panel').classList.remove('hidden'); }
             if(role === "MAINTENANCE") document.getElementById('manager-panel').classList.remove('hidden');
             if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
         }
@@ -179,6 +180,42 @@
                 renderUI(); 
                 renderArchives();
                 updateStats();
+                if(currentUser === "MANAGER") updateCharts(); // Mise à jour du graphique pour Manager
+            });
+        }
+
+        // --- NOUVELLE FONCTION GRAPHIQUE ---
+        function updateCharts() {
+            const ctx = document.getElementById('downtimeChart').getContext('2d');
+            const dataMap = {};
+            
+            // On calcule le downtime total par machine (Minutes)
+            allData.filter(p => p.status === 'CLOSED').forEach(p => {
+                const label = `${p.proj} - ${p.mach}`;
+                dataMap[label] = (dataMap[label] || 0) + (p.duration || 0);
+            });
+
+            const labels = Object.keys(dataMap);
+            const values = Object.values(dataMap);
+
+            if(myChart) myChart.destroy(); // On détruit l'ancien pour ne pas avoir de bug au survol
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Downtime Total (Min)',
+                        data: values,
+                        backgroundColor: '#00d4ff',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false }, title: { display: true, text: 'Temps d\'arrêt par Machine', color: '#002b5c' } },
+                    scales: { y: { beginAtZero: true } }
+                }
             });
         }
 
@@ -186,7 +223,6 @@
             const container = document.getElementById('pannes-list'); container.innerHTML = "";
             const actives = allData.filter(p => p.status === 'OPEN' || p.status === 'IN_PROGRESS');
             document.getElementById('m-charge').innerText = actives.length;
-
             actives.reverse().forEach(p => {
                 let statusHtml = p.status === 'OPEN' ? `<span class="status-tag tag-open">EN ARRÊT</span>` : `<span class="status-tag tag-progress">RÉPARATION...</span>`;
                 let actionBtn = "";
@@ -194,7 +230,6 @@
                     if(p.status === 'OPEN') actionBtn = `<button class="btn btn-warning" style="padding:8px; margin-top:8px;" onclick="takeCharge('${p.key}')">I'M GOING</button>`;
                     else actionBtn = `<button class="btn btn-success" style="padding:8px; margin-top:8px;" onclick="openRepriseModal('${p.key}')">DONE</button>`;
                 }
-
                 container.innerHTML += `<div class="card" style="border-left:5px solid ${p.status === 'OPEN' ? 'var(--danger)' : 'var(--warning)'}">
                     <div style="display:flex; justify-content:space-between"><b>${p.mach}</b>${statusHtml}</div>
                     <small>${p.proj} | ${p.dateStr}</small><br>${actionBtn}
