@@ -91,50 +91,32 @@
         </div>
     </div>
 
-    <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-        <div class="card" style="width:100%; max-width:400px;">
-            <div class="modal-header"><h3>Ajouter Pièce</h3><button onclick="document.getElementById('stockModal').style.display='none'">&times;</button></div>
-            <input type="text" id="new-p-name" placeholder="Nom">
-            <input type="number" id="new-p-qty" placeholder="Quantité">
-            <button class="btn btn-success" onclick="addNewStock()">VALIDER</button>
-        </div>
-    </div>
-
-    <div id="archiveModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-        <div class="card" style="width:100%; max-width:600px;">
-            <div class="modal-header"><h3>Archives</h3><button onclick="this.closest('.modal').style.display='none'">&times;</button></div>
-            <button class="btn btn-success" style="margin-bottom:10px" onclick="exportToPDF()">PDF REPORT</button>
-            <div id="archive-list"></div>
-        </div>
-    </div>
-
-    <div id="viewStockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-        <div class="card" style="width:100%; max-width:450px;">
-            <div class="modal-header"><h4>Stock Actuel</h4><button onclick="this.closest('.modal').style.display='none'">&times;</button></div>
-            <div id="stock-list"></div>
-        </div>
-    </div>
-
-    <div id="userModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-        <div class="card" style="width:100%; max-width:400px;">
-            <div class="modal-header"><h3>Users</h3><button onclick="this.closest('.modal').style.display='none'">&times;</button></div>
-            <input type="text" id="u-name" placeholder="Nom"><input type="password" id="u-pass" placeholder="Pass">
-            <select id="u-role"><option value="MAINTENANCE">MAINTENANCE</option><option value="OPERATEUR">OPERATEUR</option><option value="MANAGER">MANAGER</option></select>
-            <button class="btn btn-success" onclick="addNewUser()">CRÉER</button>
-            <div id="users-list-ui" style="margin-top:10px"></div>
-        </div>
-    </div>
-
     <div id="closeModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
             <h3>Validation Reprise</h3>
-            <input list="spareparts" id="modal-piece" placeholder="Pièce utilisée"><datalist id="spareparts"></datalist>
-            <input type="number" id="modal-qty" value="1">
+            <input type="hidden" id="modal-key">
+            <input list="spareparts" id="modal-piece" placeholder="Pièce utilisée">
+            <datalist id="spareparts"></datalist>
+            <input type="number" id="modal-qty" value="1" placeholder="Quantité">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
                 <button class="btn btn-success" onclick="confirmClosing()">OK</button>
                 <button class="btn btn-ghost" onclick="document.getElementById('closeModal').style.display='none'">ANNULER</button>
             </div>
         </div>
+    </div>
+
+    <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
+        <div class="card" style="width:100%; max-width:400px;"><div class="modal-header"><h3>Pièce</h3><button onclick="document.getElementById('stockModal').style.display='none'">&times;</button></div>
+        <input type="text" id="new-p-name" placeholder="Nom"><input type="number" id="new-p-qty" placeholder="Quantité"><button class="btn btn-success" onclick="addNewStock()">VALIDER</button></div>
+    </div>
+    <div id="archiveModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
+        <div class="card" style="width:100%; max-width:600px;"><div class="modal-header"><h3>Archives</h3><button onclick="this.closest('.modal').style.display='none'">&times;</button></div><div id="archive-list"></div></div>
+    </div>
+    <div id="viewStockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
+        <div class="card" style="width:100%; max-width:450px;"><div class="modal-header"><h4>Stock</h4><button onclick="this.closest('.modal').style.display='none'">&times;</button></div><div id="stock-list"></div></div>
+    </div>
+    <div id="userModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
+        <div class="card" style="width:100%; max-width:400px;"><div class="modal-header"><h3>Users</h3><button onclick="this.closest('.modal').style.display='none'">&times;</button></div><input type="text" id="u-name"><input type="password" id="u-pass"><select id="u-role"><option value="MAINTENANCE">MAINTENANCE</option><option value="OPERATEUR">OPERATEUR</option><option value="MANAGER">MANAGER</option></select><button class="btn btn-success" onclick="addNewUser()">CRÉER</button><div id="users-list-ui"></div></div>
     </div>
 
     <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
@@ -178,22 +160,16 @@
         function listenFirebase() {
             database.ref('pannes/').on('value', snap => {
                 allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
-                renderUI(); renderArchives();
+                renderUI();
                 if(currentUser === "MANAGER" || currentUser === "MAINTENANCE") { updateManagerDashboard(); updateCharts(); }
             });
         }
 
-        // --- TA3DIL: REPRISE GHIR L-MAINTENANCE ---
+        // --- SLA7NA Had L-Bouton Dabba ---
         function renderUI() {
             const container = document.getElementById('pannes-list'); container.innerHTML = "";
             let alertOn = false; const openPannes = allData.filter(p => p.status === 'OPEN');
-            document.getElementById('m-charge').innerText = openPannes.length;
-            const ind = document.getElementById('charge-indicator');
             
-            if(openPannes.length > 3) { ind.innerText = "Saturé"; ind.style.background = "var(--danger)"; }
-            else if(openPannes.length > 0) { ind.innerText = "Actif"; ind.style.background = "var(--warning)"; }
-            else { ind.innerText = "Repos"; ind.style.background = "var(--success)"; }
-
             openPannes.slice(-10).reverse().forEach(p => {
                 alertOn = true;
                 container.innerHTML += `<div class="card" style="border-left:5px solid var(--danger)">
@@ -202,14 +178,44 @@
                         ${(currentUser === 'MANAGER') ? `<button class="btn-del" onclick="deletePanne('${p.key}')"><i class="fas fa-trash"></i></button>` : ''}
                     </div>
                     <small>${p.proj} | ${p.dateStr}</small><br>
-                    ${(currentUser === 'MAINTENANCE') ? `<button class="btn btn-success" style="padding:5px; margin-top:5px; font-size:0.7rem" onclick="openRepriseModal('${p.key}')">REPRISE INTERVENTION</button>` : ''}
-                    ${(currentUser === 'MANAGER') ? `<small style="color:var(--warning); font-weight:bold;">En cours de réparation...</small>` : ''}
+                    ${(currentUser === 'MAINTENANCE') ? `<button class="btn btn-success" style="padding:8px; margin-top:8px; font-size:0.75rem; width:auto;" onclick="openRepriseModal('${p.key}')">REPRISE INTERVENTION</button>` : ''}
+                    ${(currentUser === 'MANAGER') ? `<small style="color:var(--warning); font-weight:bold;">Intervention en cours...</small>` : ''}
                 </div>`;
             });
             if (openPannes.length === 0) container.innerHTML = "<p style='text-align:center;color:#94a3b8'>Tout est opérationnel</p>";
             if(alertOn && (currentUser === "MAINTENANCE" || currentUser === "MANAGER")) document.getElementById('alertSound').play().catch(()=>{}); else document.getElementById('alertSound').pause();
         }
 
+        function openRepriseModal(key) {
+            document.getElementById('modal-key').value = key; 
+            document.getElementById('closeModal').style.display = 'flex';
+        }
+
+        function confirmClosing() {
+            const key = document.getElementById('modal-key').value;
+            const piece = document.getElementById('modal-piece').value.toUpperCase().trim();
+            const qtyUsed = parseInt(document.getElementById('modal-qty').value) || 1;
+            
+            const item = allData.find(x => x.key === key);
+            if(!item) return;
+            
+            const duration = Math.round((Date.now() - item.startTs) / 60000);
+            
+            database.ref('pannes/' + key).update({ 
+                status: 'CLOSED', 
+                duration: duration, 
+                piece: piece || 'N/A' 
+            }).then(() => {
+                if(piece && piece !== 'N/A') {
+                    const sRef = database.ref('stock/' + piece);
+                    sRef.once('value', s => { if (s.exists()) sRef.set({ qty: Math.max(0, s.val().qty - qtyUsed) }); });
+                }
+                document.getElementById('closeModal').style.display = 'none';
+                document.getElementById('modal-piece').value = ""; // Reset
+            });
+        }
+
+        // Baki l-Functions (PDF, Charts, Stock, etc.)
         function renderArchives() {
             const list = document.getElementById('archive-list'); list.innerHTML = "";
             allData.filter(p => p.status === 'CLOSED').reverse().forEach(p => {
@@ -219,80 +225,16 @@
                 </div>`;
             });
         }
-
-        function exportToPDF() {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF();
-            doc.text("RAPPORT GMAO - CVG", 14, 15);
-            const rows = allData.filter(p => p.status === 'CLOSED').map(p => [p.dateStr, p.mach, p.proj, p.duration + " min", p.piece]);
-            doc.autoTable({ head: [['Date', 'Machine', 'Projet', 'Temps', 'Pièce']], body: rows, startY: 25 });
-            doc.save("Report.pdf");
-        }
-
-        function updateCharts() {
-            const ctx = document.getElementById('machineChart').getContext('2d');
-            const counts = {}; allData.forEach(p => counts[p.mach] = (counts[p.mach] || 0) + 1);
-            if (myChart) myChart.destroy();
-            myChart = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(counts), datasets: [{ label: 'Pannes', data: Object.values(counts), backgroundColor: '#00d4ff' }] }, options: { responsive: true, maintainAspectRatio: false }});
-        }
-
-        function handlePanneSignal() {
-            const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value;
-            database.ref('pannes/').push({ proj, mach, status: 'OPEN', startTs: Date.now(), dateStr: new Date().toLocaleString() });
-        }
-
-        function updateManagerDashboard() {
-            let totalMin = 0, countClosed = 0;
-            allData.forEach(p => { if (p.status === 'CLOSED' && p.duration) { totalMin += parseInt(p.duration); countClosed++; }});
-            document.getElementById('m-count').innerText = countClosed;
-            document.getElementById('m-mtbf').innerText = countClosed > 0 ? Math.round((720 - (totalMin/60)) / countClosed) : 720;
-            document.getElementById('m-mttr').innerText = countClosed > 0 ? Math.round(totalMin / countClosed) : 0;
-        }
-
-        function listenStock() {
-            database.ref('stock/').on('value', snap => {
-                const list = document.getElementById('stock-list'); list.innerHTML = "";
-                if(snap.val()) Object.entries(snap.val()).forEach(([name, data]) => {
-                    list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee"><span>${name}</span><b>${data.qty}</b></div>`;
-                });
-            });
-        }
-
-        function addNewStock() {
-            const n = document.getElementById('new-p-name').value.toUpperCase().trim(), q = parseInt(document.getElementById('new-p-qty').value);
-            if(n && !isNaN(q)) database.ref('stock/'+n).set({qty: q}).then(() => document.getElementById('stockModal').style.display='none');
-        }
-
-        function listenUsers() {
-            database.ref('users/').on('value', snap => {
-                const div = document.getElementById('users-list-ui'); div.innerHTML = "";
-                if(snap.val()) Object.entries(snap.val()).forEach(([key, u]) => { div.innerHTML += `<div style="font-size:0.7rem; display:flex; justify-content:space-between">${u.name} <button onclick="database.ref('users/${key}').remove()">X</button></div>`; });
-            });
-        }
-
-        function addNewUser() {
-            const n = document.getElementById('u-name').value, p = document.getElementById('u-pass').value, r = document.getElementById('u-role').value;
-            if(n && p) database.ref('users/').push({name:n, pass:p, role:r});
-        }
-
-        function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display = 'flex'; }
-
-        function confirmClosing() {
-            const key = document.getElementById('modal-key').value, piece = document.getElementById('modal-piece').value.toUpperCase().trim(), qtyUsed = parseInt(document.getElementById('modal-qty').value) || 1;
-            const item = allData.find(x => x.key === key), duration = Math.round((Date.now() - item.startTs) / 60000);
-            database.ref('pannes/' + key).update({ status: 'CLOSED', duration, piece: piece || 'N/A' }).then(() => {
-                if(piece && piece !== 'N/A') {
-                    const sRef = database.ref('stock/' + piece);
-                    sRef.once('value', s => { if (s.exists()) sRef.set({ qty: Math.max(0, s.val().qty - qtyUsed) }); });
-                }
-                document.getElementById('closeModal').style.display = 'none';
-            });
-        }
-
+        function exportToPDF() { const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.text("REPORT", 14, 15); const rows = allData.filter(p => p.status === 'CLOSED').map(p => [p.dateStr, p.mach, p.proj, p.duration + " min", p.piece]); doc.autoTable({ head: [['Date', 'Machine', 'Projet', 'Temps', 'Pièce']], body: rows, startY: 25 }); doc.save("Report.pdf"); }
+        function updateCharts() { const ctx = document.getElementById('machineChart').getContext('2d'); const counts = {}; allData.forEach(p => counts[p.mach] = (counts[p.mach] || 0) + 1); if (myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(counts), datasets: [{ label: 'Pannes', data: Object.values(counts), backgroundColor: '#00d4ff' }] }, options: { responsive: true, maintainAspectRatio: false }}); }
+        function handlePanneSignal() { const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value; database.ref('pannes/').push({ proj, mach, status: 'OPEN', startTs: Date.now(), dateStr: new Date().toLocaleString() }); }
+        function updateManagerDashboard() { let totalMin = 0, countClosed = 0; allData.forEach(p => { if (p.status === 'CLOSED' && p.duration) { totalMin += parseInt(p.duration); countClosed++; }}); document.getElementById('m-count').innerText = countClosed; document.getElementById('m-mtbf').innerText = countClosed > 0 ? Math.round((720 - (totalMin/60)) / countClosed) : 720; document.getElementById('m-mttr').innerText = countClosed > 0 ? Math.round(totalMin / countClosed) : 0; }
+        function listenStock() { database.ref('stock/').on('value', snap => { const list = document.getElementById('stock-list'); list.innerHTML = ""; if(snap.val()) Object.entries(snap.val()).forEach(([name, data]) => { list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee"><span>${name}</span><b>${data.qty}</b></div>`; }); }); }
+        function addNewStock() { const n = document.getElementById('new-p-name').value.toUpperCase().trim(), q = parseInt(document.getElementById('new-p-qty').value); if(n && !isNaN(q)) database.ref('stock/'+n).set({qty: q}).then(() => document.getElementById('stockModal').style.display='none'); }
+        function listenUsers() { database.ref('users/').on('value', snap => { const div = document.getElementById('users-list-ui'); div.innerHTML = ""; if(snap.val()) Object.entries(snap.val()).forEach(([key, u]) => { div.innerHTML += `<div style="font-size:0.7rem; display:flex; justify-content:space-between">${u.name} <button onclick="database.ref('users/${key}').remove()">X</button></div>`; }); }); }
+        function addNewUser() { const n = document.getElementById('u-name').value, p = document.getElementById('u-pass').value, r = document.getElementById('u-role').value; if(n && p) database.ref('users/').push({name:n, pass:p, role:r}); }
         function deletePanne(key) { if(confirm("Supprimer?")) database.ref('pannes/'+key).remove(); }
-        function updateMachineList() {
-            const p = document.getElementById('in-proj').value, s = document.getElementById('in-mach'); s.innerHTML = "";
-            machineData[p].forEach(m => s.innerHTML += `<option value="${m}">${m}</option>`);
-        }
+        function updateMachineList() { const p = document.getElementById('in-proj').value, s = document.getElementById('in-mach'); s.innerHTML = ""; machineData[p].forEach(m => s.innerHTML += `<option value="${m}">${m}</option>`); }
         function enableAudio() { window.audioAllowed = true; }
     </script>
 </body>
