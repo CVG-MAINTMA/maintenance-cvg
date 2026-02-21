@@ -114,26 +114,21 @@
 
     <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
         <div class="card" style="width:100%; max-width:400px;">
-            <h3>Nouveau Catalogue</h3>
-            <input type="text" id="new-p-name" placeholder="Nom">
+            <h3>Ajouter au Stock</h3>
+            <input type="text" id="new-p-name" placeholder="Nom de la pièce">
             <input type="number" id="new-p-qty" placeholder="Quantité">
-            <button class="btn btn-success" onclick="addNewStock()">AJOUTER</button>
+            <button class="btn btn-success" onclick="addNewStock()">VALIDER</button>
         </div>
     </div>
 
     <div id="userModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
         <div class="card" style="width:100%; max-width:400px;">
-            <h3>Gestion Utilisateurs</h3>
+            <h3>Utilisateurs</h3>
             <input type="text" id="u-name" placeholder="Nom">
-            <input type="password" id="u-pass" placeholder="Password">
-            <select id="u-role">
-                <option value="MAINTENANCE">MAINTENANCE</option>
-                <option value="OPERATEUR">OPERATEUR</option>
-                <option value="MANAGER">MANAGER</option>
-            </select>
+            <input type="password" id="u-pass" placeholder="Pass">
+            <select id="u-role"><option value="MAINTENANCE">MAINTENANCE</option><option value="OPERATEUR">OPERATEUR</option><option value="MANAGER">MANAGER</option></select>
             <button class="btn btn-success" onclick="addNewUser()">CRÉER</button>
-            <hr style="margin:15px 0;">
-            <div id="users-list-ui"></div>
+            <div id="users-list-ui" style="margin-top:10px;"></div>
         </div>
     </div>
 
@@ -170,7 +165,10 @@
             document.getElementById('app-content').classList.remove('hidden');
             document.getElementById('roleText').innerText = role;
             listenFirebase(); listenStock();
-            if(role === "MANAGER") { listenUsers(); document.getElementById('manager-panel').classList.remove('hidden'); }
+            if(role === "MANAGER") { 
+                listenUsers(); 
+                document.getElementById('manager-panel').classList.remove('hidden'); 
+            }
             if(role === "MAINTENANCE") document.getElementById('manager-panel').classList.remove('hidden');
             if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
         }
@@ -179,7 +177,7 @@
             database.ref('pannes/').on('value', snap => {
                 allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
                 renderUI(); 
-                renderArchives(); // Sla7t had l-appel hna
+                renderArchives();
                 updateStats();
             });
         }
@@ -205,23 +203,16 @@
             if(actives.some(p => p.status === 'OPEN') && currentUser !== 'OPERATEUR') document.getElementById('alertSound').play().catch(()=>{}); else document.getElementById('alertSound').pause();
         }
 
-        // --- SLA7T HAD L-PARTIE NICHAN ---
         function renderArchives() {
-            const list = document.getElementById('archive-list'); 
-            if(!list) return; // Sécurité
+            const list = document.getElementById('archive-list'); if(!list) return;
             list.innerHTML = "";
             const archives = allData.filter(p => p.status === 'CLOSED');
-            
             archives.reverse().forEach(p => {
                 list.innerHTML += `<div class="card" style="padding:10px; margin-bottom:8px; border-left:5px solid var(--success); display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <b style="color:var(--primary)">${p.mach}</b> <span style="font-size:0.6rem; color:var(--success); font-weight:800;">DONE</span><br>
-                        <small>${p.dateStr} | ${p.duration}min | Pièce: ${p.piece || 'N/A'}</small>
-                    </div>
-                    ${(currentUser === 'MANAGER') ? `<button class="btn-del" onclick="deletePanne('${p.key}')" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-trash"></i></button>` : ''}
+                    <div><b>${p.mach}</b> <span style="color:var(--success); font-weight:800; font-size:0.7rem;">DONE</span><br><small>${p.dateStr} | ${p.duration}min | ${p.piece}</small></div>
+                    ${currentUser === 'MANAGER' ? `<button class="btn-del" onclick="deletePanne('${p.key}')"><i class="fas fa-trash"></i></button>` : ''}
                 </div>`;
             });
-            if(archives.length === 0) list.innerHTML = "<p style='text-align:center;color:#94a3b8'>Aucun historique</p>";
         }
 
         function updateStats() {
@@ -239,7 +230,7 @@
                 const dl = document.getElementById('spareparts'); if(!dl) return;
                 dl.innerHTML = "";
                 if(snap.val()) Object.entries(snap.val()).forEach(([name, data]) => {
-                    list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #eee;"><span>${name}</span><b>${data.qty}</b></div>`;
+                    list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;"><span>${name}</span><b>${data.qty}</b></div>`;
                     dl.innerHTML += `<option value="${name}">`;
                 });
             });
@@ -249,7 +240,7 @@
             database.ref('users/').on('value', snap => {
                 const div = document.getElementById('users-list-ui'); if(!div) return;
                 div.innerHTML = "";
-                if(snap.val()) Object.entries(snap.val()).forEach(([key, u]) => { div.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:5px;">${u.name} (${u.role}) <button onclick="database.ref('users/${key}').remove()" style="color:red; border:none; background:none;">&times;</button></div>`; });
+                if(snap.val()) Object.entries(snap.val()).forEach(([key, u]) => { div.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>${u.name}</span> <button onclick="database.ref('users/${key}').remove()" style="color:red; border:none; background:none;">&times;</button></div>`; });
             });
         }
 
@@ -257,20 +248,14 @@
         function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display = 'flex'; }
         
         function confirmClosing() {
-            const key = document.getElementById('modal-key').value;
-            const piece = document.getElementById('modal-piece').value.toUpperCase().trim();
-            const qtyUsed = parseInt(document.getElementById('modal-qty').value) || 1;
-            const item = allData.find(x => x.key === key);
-            if(!item) return;
-            const duration = Math.round((Date.now() - item.startTs) / 60000);
-            
+            const key = document.getElementById('modal-key').value, piece = document.getElementById('modal-piece').value.toUpperCase().trim(), qtyUsed = parseInt(document.getElementById('modal-qty').value) || 1;
+            const item = allData.find(x => x.key === key), duration = Math.round((Date.now() - item.startTs) / 60000);
             database.ref('pannes/' + key).update({ status: 'CLOSED', duration, piece: piece || 'N/A' }).then(() => {
                 if(piece && piece !== 'N/A') {
                     const sRef = database.ref('stock/' + piece);
                     sRef.once('value', s => { if(s.exists()) sRef.set({ qty: Math.max(0, s.val().qty - qtyUsed) }); });
                 }
                 document.getElementById('closeModal').style.display = 'none';
-                document.getElementById('modal-piece').value = "";
             });
         }
 
