@@ -2,130 +2,124 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CVG DYNAMICS | Smart Intelligence</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CVG DYNAMICS | Smart Analytics</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-        :root { --primary: #0f172a; --accent: #38bdf8; --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --bg: #f1f5f9; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg); color: var(--primary); }
-
-        /* Modern Sidebar/Header */
-        .header-pro { background: var(--primary); color: white; padding: 20px; border-radius: 0 0 25px 25px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
         
-        .main-container { padding: 15px; max-width: 1200px; margin: auto; }
-        
-        /* Intelligence Cards */
-        .smart-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; }
-        .smart-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: relative; border-top: 4px solid var(--accent); }
-        .smart-card span { font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-        .smart-card h3 { font-size: 1.5rem; margin-top: 5px; font-weight: 800; }
-        .trend { font-size: 0.7rem; margin-top: 5px; display: flex; align-items: center; gap: 5px; }
+        :root {
+            --bg-dark: #050b18;
+            --card-bg: #0f172a;
+            --neon-blue: #00d4ff;
+            --neon-purple: #9d50bb;
+            --neon-green: #10b981;
+            --text-main: #f8fafc;
+        }
 
-        /* Graphics Section */
-        .chart-section { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 20px; }
-        .chart-container { background: white; padding: 20px; border-radius: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        body { 
+            background: var(--bg-dark); 
+            color: var(--text-main); 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0; padding: 10px;
+        }
 
-        .top-machines { background: #fff; padding: 20px; border-radius: 20px; margin-top: 20px; }
-        .machine-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 10px;
+        }
 
-        .btn-pro { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 700; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
-        
-        .hidden { display: none !important; }
-        #login-overlay { position: fixed; inset: 0; background: var(--primary); z-index: 10000; display: flex; align-items: center; justify-content: center; }
-        .login-card { background: white; padding: 40px; border-radius: 30px; width: 90%; max-width: 380px; text-align: center; }
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .glass-card:hover { transform: translateY(-5px); border-color: var(--neon-blue); }
+
+        h2, h3 { font-family: 'Orbitron', sans-serif; letter-spacing: 2px; text-transform: uppercase; }
+
+        /* Gauge Styling */
+        .gauge-container { position: relative; width: 200px; margin: 0 auto; }
+        .gauge-value {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.8rem; font-weight: 800; color: var(--neon-blue);
+        }
+
+        /* Status Badges */
+        .status-pill {
+            padding: 5px 12px; border-radius: 50px; font-size: 0.7rem; font-weight: 800;
+            background: rgba(0, 212, 255, 0.1); border: 1px solid var(--neon-blue); color: var(--neon-blue);
+        }
+
+        #login-screen {
+            position: fixed; inset: 0; background: var(--bg-dark); z-index: 1000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .btn-neon {
+            background: transparent; border: 2px solid var(--neon-blue); color: var(--neon-blue);
+            padding: 15px 40px; border-radius: 50px; cursor: pointer; font-weight: 800;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+
+        canvas { filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.1)); }
     </style>
 </head>
-<body onclick="enableAudio()">
+<body>
 
-    <div id="login-overlay">
-        <div class="login-card">
-            <h1 style="color:var(--primary); margin-bottom:10px;">CVG Intelligence</h1>
-            <p style="color:#64748b; margin-bottom:30px;">Système de Management Digital</p>
-            <input type="password" id="pinInput" placeholder="••••" maxlength="4" style="width:100%; padding:20px; border-radius:15px; border:2px solid #e2e8f0; font-size:2rem; text-align:center; margin-bottom:20px;">
-            <button class="btn-pro" onclick="checkLogin()">ACCÉDER AU PANEL</button>
-        </div>
+    <div id="login-screen">
+        <h1 style="font-family: 'Orbitron'; color: var(--neon-blue); margin-bottom: 30px;">CVG CORE ENGINE</h1>
+        <input type="password" id="pinInput" placeholder="ENTER ACCESS PIN" style="background: transparent; border: none; border-bottom: 2px solid white; color: white; text-align: center; font-size: 2rem; margin-bottom: 30px; outline: none; width: 250px;">
+        <button class="btn-neon" onclick="checkLogin()">INITIATE SYSTEM</button>
     </div>
 
-    <div id="app-content" class="hidden">
-        <div class="header-pro">
-            <div>
-                <small id="userBadge" style="background: var(--accent); color: var(--primary); padding: 4px 10px; border-radius: 50px; font-weight: 800; font-size: 0.6rem;"></small>
-                <h2 style="font-weight: 800; letter-spacing: -1px;">DASHBOARD <span style="color:var(--accent)">PRO</span></h2>
-            </div>
-            <i class="fas fa-microchip fa-2x" style="color:var(--accent)"></i>
-        </div>
+    <div id="app-content" style="display:none;">
+        <header style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div class="status-pill">SYSTEM: ACTIVE</div>
+            <h3>CVG <span style="color:var(--neon-blue)">DYNAMICS</span> ANALYTICS</h3>
+            <div id="timer" style="font-family: 'Orbitron'; font-size: 0.8rem;"></div>
+        </header>
 
-        <div class="main-container">
-            
-            <div id="manager-view" class="hidden">
-                <div class="smart-grid">
-                    <div class="smart-card">
-                        <span>Disponibilité</span>
-                        <h3 id="m-dispo">0%</h3>
-                        <div class="trend" style="color:var(--success)"><i class="fas fa-arrow-up"></i> Live OEE</div>
-                    </div>
-                    <div class="smart-card" style="border-top-color: var(--danger);">
-                        <span>MTTR (Moy Reparation)</span>
-                        <h3 id="m-mttr">0 min</h3>
-                        <div class="trend" style="color:var(--warning)"><i class="fas fa-wrench"></i> Temps moyen</div>
-                    </div>
+        <div class="dashboard-grid">
+            <div class="glass-card">
+                <h3>Disponibilité OEE</h3>
+                <div class="gauge-container">
+                    <canvas id="oeeGauge"></canvas>
+                    <div class="gauge-value" id="oeeText">0%</div>
                 </div>
-
-                <div class="chart-section">
-                    <div class="chart-container">
-                        <h4 style="margin-bottom:15px;">Analyse d'Arrêts par Projet</h4>
-                        <canvas id="pieChart"></canvas>
-                    </div>
-                    <div class="chart-container">
-                        <h4 style="margin-bottom:15px;">Fréquence des Pannes</h4>
-                        <canvas id="lineChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="top-machines">
-                    <h4 style="margin-bottom:15px;"><i class="fas fa-fire" style="color:red"></i> Top 3 Machines Critiques</h4>
-                    <div id="bad-machines"></div>
-                </div>
-
-                <button class="btn-pro" style="background:#1e293b; margin-top:20px;" onclick="generateDailyPDF()">
-                    <i class="fas fa-download"></i> EXPORTER ANALYSE PDF
-                </button>
+                <p style="text-align: center; color: #64748b; font-size: 0.8rem;">Basé sur 480min de production / Shift</p>
             </div>
 
-            <div id="op-view" class="hidden">
-                <div class="smart-card" style="margin-bottom:20px;">
-                    <label style="font-weight:800; font-size:0.8rem;">PROJET</label>
-                    <select id="in-proj" onchange="updateMachineList()" style="width:100%; padding:15px; margin:10px 0; border-radius:12px; border:1px solid #ddd;"></select>
-                    <label style="font-weight:800; font-size:0.8rem;">MACHINE / POSTE</label>
-                    <select id="in-mach" style="width:100%; padding:15px; margin:10px 0; border-radius:12px; border:1px solid #ddd;"></select>
-                    <button class="btn-pro" style="background:var(--danger); height:70px; font-size:1.2rem;" onclick="openArret()">
-                        <i class="fas fa-skull-crossbones"></i> SIGNALER ARRÊT
-                    </button>
-                </div>
+            <div class="glass-card">
+                <h3>Arrêts par Projet (min)</h3>
+                <canvas id="projectChart"></canvas>
             </div>
 
-            <div class="smart-card">
-                <h4 style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
-                    Activités Récentes <span style="font-size:0.6rem; color:var(--success)">● LIVE</span>
-                </h4>
-                <div id="pannes-list"></div>
+            <div class="glass-card">
+                <h3>Nature des Pannes</h3>
+                <canvas id="typeChart"></canvas>
+            </div>
+
+            <div class="glass-card">
+                <h3>Criticités Machines</h3>
+                <div id="bad-machines-list"></div>
             </div>
         </div>
     </div>
-
-    <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
-        const machineData = { "SKODA": ["80008172", "80008173", "80008174"], "CRAFTER": ["80008119", "80008122", "80008116"], "G.CALIFORNIA": ["80006953"] };
         const firebaseConfig = {
             apiKey: "AIzaSyASQa5cLXFllnV6EmYp-ARZ9dndWSKha6c",
             authDomain: "cvgmaroc-gmao.firebaseapp.com",
@@ -140,103 +134,115 @@
         let charts = {};
 
         function checkLogin() {
-            const pin = document.getElementById('pinInput').value;
-            const roles = {"1111": "OPERATEUR", "2222": "MAINTENANCE", "3333": "MANAGER"};
-            if(!roles[pin]) return alert("PIN Incorrect");
-            
-            const role = roles[pin];
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('app-content').classList.remove('hidden');
-            document.getElementById('userBadge').innerText = role;
-            
-            if(role === "MANAGER") document.getElementById('manager-view').classList.remove('hidden');
-            else { 
-                document.getElementById('op-view').classList.remove('hidden');
-                initSelects();
-            }
-            listenFirebase(role);
+            if(document.getElementById('pinInput').value === "3333") {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-content').style.display = 'block';
+                startAnalytics();
+            } else { alert("ACCESS DENIED"); }
         }
 
-        function initSelects() {
-            const projSelect = document.getElementById('in-proj');
-            projSelect.innerHTML = Object.keys(machineData).map(p => `<option value="${p}">${p}</option>`).join('');
-            updateMachineList();
-        }
-
-        function updateMachineList() {
-            const p = document.getElementById('in-proj').value;
-            document.getElementById('in-mach').innerHTML = machineData[p].map(m => `<option value="${m}">${m}</option>`).join('');
-        }
-
-        function listenFirebase(role) {
+        function startAnalytics() {
             database.ref('pannes/').on('value', snap => {
-                const data = snap.val() ? Object.entries(snap.val()).map(([k, v]) => ({...v, key: k})) : [];
-                renderList(data, role);
-                if(role === "MANAGER") updateIntelligence(data);
+                const data = snap.val() ? Object.values(snap.val()) : [];
+                updateVisuals(data);
             });
+            setInterval(() => { document.getElementById('timer').innerText = new Date().toLocaleTimeString(); }, 1000);
         }
 
-        function renderList(data, role) {
-            const list = document.getElementById('pannes-list');
-            list.innerHTML = data.slice(-5).reverse().map(p => `
-                <div style="padding:12px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between;">
-                    <div><b>${p.mach}</b> <small>${p.proj}</small><br><span style="font-size:0.7rem;">${p.status === 'OPEN' ? '🛑 En cours...' : '✅ '+p.duration+' min'}</span></div>
-                    ${p.status === 'OPEN' && role === 'MAINTENANCE' ? `<button onclick="closePanne('${p.key}')" style="background:var(--success); color:white; border:none; padding:5px 10px; border-radius:8px;">FIXED</button>` : ''}
+        function updateVisuals(data) {
+            const finished = data.filter(p => p.status === 'CLOSED');
+            
+            // 1. CALCUL OEE (Gauge)
+            const totalDown = finished.reduce((acc, p) => acc + (p.duration || 0), 0);
+            const oee = Math.round(((480 - totalDown) / 480) * 100);
+            document.getElementById('oeeText').innerText = oee + "%";
+            renderGauge(oee);
+
+            // 2. PROJECT CHART (With Gradients)
+            const projStats = { SKODA: 0, CRAFTER: 0, "G.CALIFORNIA": 0 };
+            finished.forEach(p => { if(projStats[p.proj] !== undefined) projStats[p.proj] += p.duration; });
+            renderBarChart(projStats);
+
+            // 3. TYPE CHART (Nature of issues)
+            const typeStats = {};
+            finished.forEach(p => { if(p.type) typeStats[p.type] = (typeStats[p.type] || 0) + 1; });
+            renderPieChart(typeStats);
+
+            // 4. CRITICAL MACHINES
+            const machStats = {};
+            data.forEach(p => { machStats[p.mach] = (machStats[p.mach] || 0) + 1; });
+            const top3 = Object.entries(machStats).sort((a,b) => b[1] - a[1]).slice(0,3);
+            document.getElementById('bad-machines-list').innerHTML = top3.map(m => `
+                <div style="display:flex; justify-content:space-between; padding:15px 0; border-bottom:1px solid #1e293b;">
+                    <span><i class="fas fa-robot" style="color:var(--neon-blue)"></i> ${m[0]}</span>
+                    <b style="color:var(--danger)">${m[1]} ARRÊTS</b>
                 </div>
             `).join('');
         }
 
-        function updateIntelligence(data) {
-            const finished = data.filter(p => p.status === 'CLOSED');
-            
-            // OEE - Disponibilité (Hypothèse Production 8h = 480min)
-            const totalDowntime = finished.reduce((acc, p) => acc + (p.duration || 0), 0);
-            const dispo = Math.max(0, ((480 - totalDowntime) / 480) * 100).toFixed(1);
-            document.getElementById('m-dispo').innerText = dispo + "%";
-
-            // MTTR
-            const mttr = finished.length > 0 ? Math.round(totalDowntime / finished.length) : 0;
-            document.getElementById('m-mttr').innerText = mttr + " min";
-
-            // Chart Pannes par Projet
-            const projStats = {};
-            data.forEach(p => projStats[p.proj] = (projStats[p.proj] || 0) + 1);
-            renderCharts(projStats);
-
-            // Top Bad Machines
-            const machStats = {};
-            data.forEach(p => machStats[p.mach] = (machStats[p.mach] || 0) + 1);
-            const sorted = Object.entries(machStats).sort((a,b) => b[1] - a[1]).slice(0,3);
-            document.getElementById('bad-machines').innerHTML = sorted.map(m => `
-                <div class="machine-row"><span>${m[0]}</span><b style="color:var(--danger)">${m[1]} pannes</b></div>
-            `).join('');
-        }
-
-        function renderCharts(projData) {
-            const ctxPie = document.getElementById('pieChart').getContext('2d');
-            if(charts.pie) charts.pie.destroy();
-            charts.pie = new Chart(ctxPie, {
+        function renderGauge(val) {
+            const ctx = document.getElementById('oeeGauge').getContext('2d');
+            if(charts.gauge) charts.gauge.destroy();
+            charts.gauge = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: Object.keys(projData),
-                    datasets: [{ data: Object.values(projData), backgroundColor: ['#0f172a', '#38bdf8', '#22c55e'] }]
+                    datasets: [{
+                        data: [val, 100 - val],
+                        backgroundColor: [val > 80 ? '#10b981' : '#ef4444', '#1e293b'],
+                        borderWidth: 0,
+                        circumference: 270,
+                        rotation: 225
+                    }]
                 },
-                options: { cutout: '70%', plugins: { legend: { position: 'bottom' } } }
+                options: { cutout: '85%', plugins: { legend: { display: false } } }
             });
         }
 
-        function openArret() {
-            database.ref('pannes/').push({
-                proj: document.getElementById('in-proj').value,
-                mach: document.getElementById('in-mach').value,
-                startTs: Date.now(),
-                status: 'OPEN'
+        function renderBarChart(stats) {
+            const ctx = document.getElementById('projectChart').getContext('2d');
+            const grad = ctx.createLinearGradient(0, 0, 0, 400);
+            grad.addColorStop(0, '#00d4ff');
+            grad.addColorStop(1, '#9d50bb');
+
+            if(charts.bar) charts.bar.destroy();
+            charts.bar = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(stats),
+                    datasets: [{
+                        label: 'Minutes',
+                        data: Object.values(stats),
+                        backgroundColor: grad,
+                        borderRadius: 10
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } },
+                        x: { ticks: { color: '#64748b' } }
+                    }
+                }
             });
         }
 
-        function closePanne(key) {
-            const duration = Math.round((Date.now() - Date.now()) / 60000) + 5; // Simulation
-            database.ref('pannes/' + key).update({ status: 'CLOSED', duration: duration, piece: 'Vérifié' });
+        function renderPieChart(stats) {
+            const ctx = document.getElementById('typeChart').getContext('2d');
+            if(charts.pie) charts.pie.destroy();
+            charts.pie = new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: Object.keys(stats),
+                    datasets: [{
+                        data: Object.values(stats),
+                        backgroundColor: ['rgba(0, 212, 255, 0.5)', 'rgba(157, 80, 187, 0.5)', 'rgba(16, 185, 129, 0.5)']
+                    }]
+                },
+                options: {
+                    scales: { r: { grid: { color: '#1e293b' }, ticks: { display: false } } },
+                    plugins: { legend: { position: 'bottom', labels: { color: 'white' } } }
+                }
+            });
         }
     </script>
 </body>
