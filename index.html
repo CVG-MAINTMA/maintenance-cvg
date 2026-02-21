@@ -2,252 +2,188 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CVG DYNAMICS PRO | Analytics Edition</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GMAO CVG - Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
-        :root { --primary: #002b5c; --accent: #00d4ff; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --bg: #f8fafc; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg); padding: 10px; }
-
-        header { background: var(--primary); color: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        :root {
+            --primary: #1a2a6c;
+            --danger: #b21f1f;
+            --success: #1d976c;
+            --bg: #f4f7f6;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: var(--bg); }
         
-        /* Manager KPIs */
-        .grid-kpi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
-        .kpi-card { background: white; padding: 15px; border-radius: 15px; border-left: 5px solid var(--accent); position: relative; overflow: hidden; }
-        .kpi-card i { position: absolute; right: 10px; bottom: 10px; opacity: 0.1; font-size: 2rem; }
-        .kpi-card span { display: block; font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; }
-        .kpi-card b { font-size: 1.2rem; color: var(--primary); }
+        /* Navigation */
+        nav { background: var(--primary); display: flex; justify-content: space-around; padding: 15px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        nav button { background: rgba(255,255,255,0.1); border: 1px solid white; color: white; padding: 10px 20px; border-radius: 25px; cursor: pointer; transition: 0.3s; }
+        nav button:hover { background: white; color: var(--primary); }
 
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .btn-pdf { background: #1e293b; color: white; margin-top: 10px; }
-        .btn-stop { background: var(--danger); color: white; }
-        
-        select, input { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 10px; outline: none; background: #fff; }
-        .hidden { display: none !important; }
-        #closeModal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(4px); }
+        .container { padding: 20px; max-width: 1000px; margin: auto; }
+        .interface { display: none; animation: fadeIn 0.4s; }
+        .active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Formulaire */
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-submit { background: var(--danger); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        /* Tickets Maintenance */
+        .ticket { background: white; border-left: 8px solid var(--danger); padding: 15px; margin-bottom: 15px; border-radius: 8px; position: relative; display: flex; justify-content: space-between; align-items: center; }
+        .ticket.terminé { border-left-color: var(--success); opacity: 0.7; }
+        .ticket-info h3 { margin: 0; color: var(--primary); }
+        .btn-fix { background: var(--success); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
+
+        /* Manager Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; text-align: center; border-bottom: 4px solid var(--primary); }
+        .stat-card h1 { margin: 10px 0; font-size: 2.5rem; color: var(--primary); }
     </style>
 </head>
-<body onclick="enableAudio()">
+<body>
 
-    <div id="login-overlay" style="position:fixed; inset:0; background:radial-gradient(circle at top right, var(--primary), #001a38); z-index:9999; display:flex; justify-content:center; align-items:center;">
-        <div style="background:white; padding:40px 30px; border-radius:25px; width:340px; text-align:center; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
-            <div style="background:var(--primary); width:60px; height:60px; border-radius:15px; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; color:white;">
-                <i class="fas fa-tools fa-2x"></i>
+<nav>
+    <button onclick="switchTab('op')">👨‍🔧 Opérateur</button>
+    <button onclick="switchTab('maint')">🛠️ Maintenance</button>
+    <button onclick="switchTab('mgr')">📊 Manager</button>
+</nav>
+
+<div class="container">
+    <section id="op" class="interface active">
+        <div class="card">
+            <h2>Signaler un Arrêt Machine</h2>
+            <form id="pannesForm">
+                <input type="text" id="machine" placeholder="Code Machine (ex: MC-01)" required>
+                <select id="type">
+                    <option value="Coupure">Problème Coupure</option>
+                    <option value="Sertissage">Sertissage / Crimp</option>
+                    <option value="Electrique">Panne Électrique</option>
+                    <option value="Mecanique">Panne Mécanique</option>
+                </select>
+                <textarea id="description" placeholder="Description du problème..."></textarea>
+                <button type="submit" class="btn-submit">ENVOYER L'ALERTE</button>
+            </form>
+        </div>
+    </section>
+
+    <section id="maint" class="interface">
+        <h2>Alertes Maintenance en Direct</h2>
+        <div id="ticketsList">
             </div>
-            <h2 style="color:var(--primary); font-weight:800;">CVG GMAO</h2>
-            <input type="password" id="pinInput" placeholder="PIN CODE" maxlength="4" style="margin-top:20px; text-align:center; font-size:1.8rem; letter-spacing:10px; border:2px solid #eee;">
-            <button class="btn btn-stop" style="background:var(--primary)" onclick="checkLogin()">IDENTIFICATION</button>
-            <div style="margin-top:15px; font-size:0.6rem; color:#94a3b8;">OP: 1111 | TECH: 2222 | MGR: 3333</div>
-        </div>
-    </div>
+    </section>
 
-    <div id="app-content" class="hidden">
-        <header>
-            <div><small id="roleText" style="opacity:0.8; font-weight:bold;"></small><h2 style="font-size:1.1rem;">CVG <span style="color:var(--accent)">DYNAMICS</span></h2></div>
-            <button onclick="location.reload()" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:8px; border-radius:10px;"><i class="fas fa-power-off"></i></button>
-        </header>
-
-        <div id="manager-panel" class="hidden">
-            <div class="grid-kpi">
-                <div class="kpi-card"><span>Total Pannes</span><b id="m-count">0</b><i class="fas fa-exclamation-triangle"></i></div>
-                <div class="kpi-card" style="border-left-color: var(--danger);"><span>Downtime (Min)</span><b id="m-time">0</b><i class="fas fa-clock"></i></div>
-                <div class="kpi-card" style="border-left-color: var(--success);"><span>MTBF (Moy)</span><b id="m-mtbf">0</b><i class="fas fa-chart-line"></i></div>
-                <div class="kpi-card" style="border-left-color: var(--warning);"><span>Pièces Util.</span><b id="m-parts">0</b><i class="fas fa-cog"></i></div>
+    <section id="mgr" class="interface">
+        <h2>Performance de l'Usine (KPIs)</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <p>Total Arrêts</p>
+                <h1 id="totalArrets">0</h1>
             </div>
-            <div class="card">
-                <canvas id="managerChart"></canvas>
+            <div class="stat-card">
+                <p>MTTR Moyen (min)</p>
+                <h1 id="mttrValue">0</h1>
             </div>
-            <button class="btn btn-pdf" onclick="generateDailyPDF()"><i class="fas fa-file-pdf"></i> EXPORT RAPPORT PDF</button>
         </div>
-
-        <div id="op-panel" class="card hidden">
-            <label>Sélectionnez Projet</label>
-            <select id="in-proj" onchange="updateMachineList()"><option value="SKODA">SKODA</option><option value="CRAFTER">CRAFTER</option><option value="G.CALIFORNIA">G.CALIFORNIA</option></select>
-            <label>Sélectionnez Machine</label>
-            <select id="in-mach"></select>
-            <button class="btn btn-stop" onclick="openArret()"><i class="fas fa-bell"></i> SIGNALER ARRÊT</button>
+        <div class="card">
+            <canvas id="kpiChart"></canvas>
         </div>
+    </section>
+</div>
 
-        <div class="card" style="padding:10px;">
-            <h4 style="margin:10px; font-size:0.9rem; color:var(--primary);"><i class="fas fa-stream"></i> ÉTAT DES MACHINES</h4>
-            <div id="pannes-list"></div>
-        </div>
-    </div>
+<script type="module">
+    // L-app dyalk deja m-connectya m3a Firebase (config dyalk khass t-kon hna)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    <div id="closeModal">
-        <div style="background:white; padding:30px; border-radius:25px; width:100%; max-width:400px; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
-            <h3 style="color:var(--primary); margin-bottom:20px;">Reprise d'Activité</h3>
-            <input type="hidden" id="modal-key">
-            <label>Type d'Intervention</label>
-            <select id="modal-type"><option>🔧 Mécanique</option><option>⚡ Électrique</option><option>⚙️ Process</option><option>📦 Logistique</option></select>
-            <label>Pièce de Rechange</label>
-            <input type="text" id="modal-piece" placeholder="Nom de la pièce ou N/A">
-            <button class="btn btn-stop" style="background:var(--success)" onclick="confirmClosing()">DÉMARRER MACHINE</button>
-            <button onclick="document.getElementById('closeModal').style.display='none'" style="width:100%; margin-top:10px; background:none; border:none; color:grey;">Annuler</button>
-        </div>
-    </div>
+    const firebaseConfig = {
+        // Hna khass t-kon l-config dyalk lli mkhlliha f-Firebase Console
+        apiKey: "VOTRE_API_KEY",
+        authDomain: "votre-projet.firebaseapp.com",
+        projectId: "votre-projet-id",
+        storageBucket: "votre-projet.appspot.com",
+        messagingSenderId: "...",
+        appId: "..."
+    };
 
-    <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const pannesCol = collection(db, "pannes_cvg");
 
-    <script>
-        const machineData = { "SKODA": ["80008172", "80008173", "80008174"], "CRAFTER": ["80008119", "80008122", "80008116"], "G.CALIFORNIA": ["80006953"] };
-        const firebaseConfig = {
-            apiKey: "AIzaSyASQa5cLXFllnV6EmYp-ARZ9dndWSKha6c",
-            authDomain: "cvgmaroc-gmao.firebaseapp.com",
-            databaseURL: "https://cvgmaroc-gmao-default-rtdb.firebaseio.com",
-            projectId: "cvgmaroc-gmao",
-            storageBucket: "cvgmaroc-gmao.firebasestorage.app",
-            messagingSenderId: "72908747564",
-            appId: "1:72908747564:web:82f646ef5dd209d03b7289"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        let currentUser = null; let myChart = null; let allData = [];
+    // NAVIGATION
+    window.switchTab = (id) => {
+        document.querySelectorAll('.interface').forEach(el => el.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    };
 
-        function enableAudio() { window.audioAllowed = true; }
+    // OPERATEUR: Envoi
+    document.getElementById('pannesForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await addDoc(pannesCol, {
+            machine: document.getElementById('machine').value,
+            type: document.getElementById('type').value,
+            desc: document.getElementById('description').value,
+            status: "Ouvert",
+            startTime: Date.now(),
+            createdAt: serverTimestamp()
+        });
+        alert("Alerte envoyée !");
+        e.target.reset();
+    });
 
-        function checkLogin() {
-            const pin = document.getElementById('pinInput').value;
-            if(pin === "1111") currentUser = "OPERATEUR";
-            else if(pin === "2222") currentUser = "MAINTENANCE";
-            else if(pin === "3333") currentUser = "MANAGER";
-            else return alert("Code PIN Incorrect");
-            
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('app-content').classList.remove('hidden');
-            document.getElementById('roleText').innerText = "MODE " + currentUser;
-            if(currentUser === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
-            if(currentUser === "MANAGER") document.getElementById('manager-panel').classList.remove('hidden');
-            listenFirebase();
-        }
+    // MAINTENANCE & MANAGER: Récupération Real-time
+    const q = query(pannesCol, orderBy("createdAt", "desc"));
+    onSnapshot(q, (snapshot) => {
+        const list = document.getElementById('ticketsList');
+        list.innerHTML = "";
+        let dataForKpi = [];
 
-        function updateMachineList() {
-            const proj = document.getElementById('in-proj').value;
-            const select = document.getElementById('in-mach');
-            select.innerHTML = "";
-            machineData[proj].forEach(m => select.innerHTML += `<option value="${m}">${m}</option>`);
-        }
+        snapshot.forEach(docSnap => {
+            const item = { id: docSnap.id, ...docSnap.data() };
+            dataForKpi.push(item);
 
-        function openArret() {
-            const proj = document.getElementById('in-proj').value;
-            const mach = document.getElementById('in-mach').value;
-            database.ref('pannes/').push({
-                proj: proj, mach: mach,
-                startTs: Date.now(),
-                startStr: new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}),
-                dateStr: new Date().toLocaleDateString('fr-FR'),
-                status: 'OPEN',
-                piece: '-'
-            }).then(() => alert("🔴 SIGNAL ENVOYÉ À LA MAINTENANCE"));
-        }
+            // Create Ticket UI
+            const div = document.createElement('div');
+            div.className = `ticket ${item.status === 'Terminé' ? 'terminé' : ''}`;
+            div.innerHTML = `
+                <div class="ticket-info">
+                    <h3>${item.machine} - ${item.type}</h3>
+                    <p>${item.desc}</p>
+                    <small>Statut: <strong>${item.status}</strong></small>
+                </div>
+                ${item.status === 'Ouvert' ? `<button class="btn-fix" onclick="cloturer('${item.id}')">Réparé ✅</button>` : ''}
+            `;
+            list.appendChild(div);
+        });
 
-        function listenFirebase() {
-            database.ref('pannes/').on('value', snap => {
-                const data = snap.val();
-                allData = data ? Object.entries(data).map(([key, val]) => ({key, ...val})) : [];
-                renderUI();
-                if(currentUser === "MANAGER") updateManagerDashboard();
-            });
-        }
+        updateKPIs(dataForKpi);
+    });
 
-        function renderUI() {
-            const container = document.getElementById('pannes-list');
-            container.innerHTML = "";
-            let alertActive = false;
+    // MAINTENANCE: Fermer le ticket
+    window.cloturer = async (id) => {
+        const ticketRef = doc(db, "pannes_cvg", id);
+        await updateDoc(ticketRef, {
+            status: "Terminé",
+            endTime: Date.now()
+        });
+    };
 
-            allData.slice().reverse().forEach(p => {
-                const isOpen = p.status === 'OPEN';
-                if(isOpen) alertActive = true;
-                container.innerHTML += `
-                    <div style="padding:15px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; background:${isOpen ? '#fff5f5' : 'transparent'}">
-                        <div>
-                            <b style="color:var(--primary)">${p.mach}</b> <span style="font-size:0.7rem; background:#eee; padding:2px 6px; border-radius:5px;">${p.proj}</span><br>
-                            <small style="color:#64748b">${p.startStr} | ${isOpen ? '<b style="color:red">EN ARRÊT</b>' : p.duration+' min | ⚙️ '+p.piece}</small>
-                        </div>
-                        ${isOpen && currentUser === 'MAINTENANCE' ? 
-                        `<button onclick="openModal('${p.key}')" style="background:var(--success); color:white; border:none; padding:10px 18px; border-radius:10px; font-weight:bold; cursor:pointer;">REPRIS</button>` : 
-                        `<i class="fas ${isOpen ? 'fa-exclamation-circle' : 'fa-check-circle'}" style="color:${isOpen?'var(--danger)':'var(--success)'}; font-size:1.2rem;"></i>`}
-                    </div>
-                `;
-            });
+    // MANAGER: Calcul KPIs
+    function updateKPIs(data) {
+        document.getElementById('totalArrets').innerText = data.length;
+        
+        let totalMttr = 0;
+        let countTerminé = 0;
+        data.forEach(d => {
+            if(d.endTime) {
+                totalMttr += (d.endTime - d.startTime) / 60000;
+                countTerminé++;
+            }
+        });
+        document.getElementById('mttrValue').innerText = countTerminé > 0 ? (totalMttr / countTerminé).toFixed(1) : 0;
+    }
+</script>
 
-            if(alertActive && currentUser === "MAINTENANCE") {
-                if(window.audioAllowed) document.getElementById('alertSound').play();
-                if(navigator.vibrate) navigator.vibrate([500, 200, 500]);
-            } else { document.getElementById('alertSound').pause(); }
-        }
-
-        function openModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display = 'flex'; }
-
-        function confirmClosing() {
-            const key = document.getElementById('modal-key').value;
-            const item = allData.find(x => x.key === key);
-            const duration = Math.round((Date.now() - item.startTs) / 60000);
-            database.ref('pannes/' + key).update({
-                status: 'CLOSED',
-                duration: duration,
-                type: document.getElementById('modal-type').value,
-                piece: document.getElementById('modal-piece').value || 'Aucune'
-            }).then(() => document.getElementById('closeModal').style.display = 'none');
-        }
-
-        function updateManagerDashboard() {
-            const stats = { "SKODA": 0, "CRAFTER": 0, "G.CALIFORNIA": 0 };
-            let totalTime = 0; let partsCount = 0;
-            
-            allData.forEach(p => { 
-                if(p.duration) { stats[p.proj] += p.duration; totalTime += p.duration; }
-                if(p.piece && p.piece !== '-' && p.piece !== 'Aucune') partsCount++;
-            });
-
-            // Calcul MTBF (Hypothèse: 1440 min de production par jour)
-            const mtbf = allData.length > 0 ? Math.round(1440 / allData.length) : 1440;
-            
-            document.getElementById('m-count').innerText = allData.length;
-            document.getElementById('m-time').innerText = totalTime + " min";
-            document.getElementById('m-mtbf').innerText = mtbf + " min";
-            document.getElementById('m-parts').innerText = partsCount;
-
-            const ctx = document.getElementById('managerChart').getContext('2d');
-            if(myChart) myChart.destroy();
-            myChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: { 
-                    labels: Object.keys(stats), 
-                    datasets: [{ data: Object.values(stats), backgroundColor: ['#002b5c', '#00d4ff', '#10b981'] }] 
-                },
-                options: { plugins: { legend: { position: 'bottom' } } }
-            });
-        }
-
-        function generateDailyPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.setFontSize(18); doc.setTextColor(0, 43, 92);
-            doc.text("RAPPORT QUOTIDIEN GMAO - CVG", 15, 20);
-            doc.setFontSize(10); doc.setTextColor(100);
-            doc.text("Généré le: " + new Date().toLocaleString(), 15, 28);
-            
-            const rows = allData.map(p => [p.dateStr, p.mach, p.proj, p.startStr, p.duration || '0', p.type || '-', p.piece]);
-            doc.autoTable({
-                head: [['Date', 'Machine', 'Projet', 'Start', 'Durée', 'Type', 'Pièce']],
-                body: rows,
-                startY: 35,
-                theme: 'striped',
-                headStyles: { fillColor: [0, 43, 92] }
-            });
-            doc.save(`Rapport_CVG_${new Date().toLocaleDateString()}.pdf`);
-        }
-    </script>
 </body>
 </html>
