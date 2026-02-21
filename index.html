@@ -32,7 +32,7 @@
         .hidden { display: none !important; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(5px); }
         .btn-del { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 1rem; }
-        #archive-list { max-height: 400px; overflow-y: auto; }
+        #archive-list { max-height: 450px; overflow-y: auto; padding: 5px; }
         .status-tag { font-size: 0.7rem; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; }
         .tag-open { background: #fee2e2; color: #ef4444; }
         .tag-progress { background: #fef3c7; color: #d97706; }
@@ -57,8 +57,8 @@
 
         <div id="manager-panel" class="hidden">
             <div class="grid-kpi">
-                <div class="kpi-card"><span>Interventions</span><b id="m-count">0</b></div>
-                <div class="kpi-card"><span>Charge</span><b id="m-charge">0</b></div>
+                <div class="kpi-card"><span>Interventions Done</span><b id="m-count">0</b></div>
+                <div class="kpi-card"><span>Charge Actuelle</span><b id="m-charge">0</b></div>
             </div>
             
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
@@ -85,7 +85,7 @@
             <input type="hidden" id="modal-key">
             <input list="spareparts" id="modal-piece" placeholder="Pièce utilisée">
             <datalist id="spareparts"></datalist>
-            <input type="number" id="modal-qty" value="1">
+            <input type="number" id="modal-qty" value="1" placeholder="Quantité">
             <button class="btn btn-success" onclick="confirmClosing()">TERMINER (DONE)</button>
             <button class="btn btn-ghost" onclick="document.getElementById('closeModal').style.display='none'">RETOUR</button>
         </div>
@@ -93,7 +93,10 @@
 
     <div id="archiveModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
         <div class="card" style="width:100%; max-width:600px;">
-            <h3>Archives (Historique)</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3>Archives (Historique)</h3>
+                <button onclick="document.getElementById('archiveModal').style.display='none'" style="border:none; background:none; font-size:1.5rem;">&times;</button>
+            </div>
             <div id="archive-list"></div>
         </div>
     </div>
@@ -101,8 +104,8 @@
     <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
         <div class="card" style="width:100%; max-width:400px;">
             <h3>Ajouter Pièce</h3>
-            <input type="text" id="new-p-name" placeholder="Nom">
-            <input type="number" id="new-p-qty" placeholder="Quantité">
+            <input type="text" id="new-p-name" placeholder="Nom de la pièce">
+            <input type="number" id="new-p-qty" placeholder="Quantité initiale">
             <button class="btn btn-success" onclick="addNewStock()">VALIDER</button>
         </div>
     </div>
@@ -147,13 +150,14 @@
         function listenFirebase() {
             database.ref('pannes/').on('value', snap => {
                 allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
-                renderUI(); renderArchives();
+                renderUI(); 
+                renderArchives(); // Kat-update automatique fach kiy-tzad ay arret jdid
             });
         }
 
         function renderUI() {
             const container = document.getElementById('pannes-list'); container.innerHTML = "";
-            const actives = allData.filter(p => p.status !== 'CLOSED');
+            const actives = allData.filter(p => p.status === 'OPEN' || p.status === 'IN_PROGRESS');
             document.getElementById('m-charge').innerText = actives.length;
 
             actives.reverse().forEach(p => {
@@ -162,27 +166,44 @@
 
                 if(p.status === 'OPEN') {
                     statusHtml = `<span class="status-tag tag-open">EN ARRÊT</span>`;
-                    if(currentUser === 'MAINTENANCE') actionBtn = `<button class="btn btn-warning" style="padding:6px; margin-top:8px; font-size:0.7rem;" onclick="takeCharge('${p.key}')">I'M GOING (JAY)</button>`;
+                    if(currentUser === 'MAINTENANCE') actionBtn = `<button class="btn btn-warning" style="padding:8px; margin-top:8px; font-size:0.75rem;" onclick="takeCharge('${p.key}')">I'M GOING (JAY)</button>`;
                 } else if(p.status === 'IN_PROGRESS') {
-                    statusHtml = `<span class="status-tag tag-progress">EN COURS DE RÉPARATION...</span>`;
-                    if(currentUser === 'MAINTENANCE') actionBtn = `<button class="btn btn-success" style="padding:6px; margin-top:8px; font-size:0.7rem;" onclick="openRepriseModal('${p.key}')">FINALISER (REPRISE)</button>`;
+                    statusHtml = `<span class="status-tag tag-progress">EN RÉPARATION...</span>`;
+                    if(currentUser === 'MAINTENANCE') actionBtn = `<button class="btn btn-success" style="padding:8px; margin-top:8px; font-size:0.75rem;" onclick="openRepriseModal('${p.key}')">DONE (FINALISER)</button>`;
                 }
 
                 container.innerHTML += `<div class="card" style="border-left:5px solid ${p.status === 'OPEN' ? 'var(--danger)' : 'var(--warning)'}">
-                    <div style="display:flex; justify-content:space-between">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
                         <b>${p.mach}</b>
                         ${statusHtml}
                     </div>
                     <small>${p.proj} | ${p.dateStr}</small><br>
                     ${actionBtn}
+                    ${(currentUser === 'MANAGER' && p.status === 'IN_PROGRESS') ? `<small style="color:var(--warning); font-weight:800;">Technicien en route...</small>` : ''}
                 </div>`;
             });
 
-            if (actives.length === 0) container.innerHTML = "<p style='text-align:center;color:#94a3b8'>Rien à signaler</p>";
-            
-            // Sound only for new OPEN pannes
-            if(actives.some(p => p.status === 'OPEN') && (currentUser !== "OPERATEUR")) document.getElementById('alertSound').play().catch(()=>{});
-            else document.getElementById('alertSound').pause();
+            if (actives.length === 0) container.innerHTML = "<p style='text-align:center;color:#94a3b8'>Tout est opérationnel</p>";
+            if(actives.some(p => p.status === 'OPEN') && (currentUser !== "OPERATEUR")) document.getElementById('alertSound').play().catch(()=>{}); else document.getElementById('alertSound').pause();
+        }
+
+        // --- SLA7NA Had L-Function Bach L-Archive I-khdam S7i7 ---
+        function renderArchives() {
+            const list = document.getElementById('archive-list'); 
+            list.innerHTML = "";
+            const archives = allData.filter(p => p.status === 'CLOSED');
+            document.getElementById('m-count').innerText = archives.length;
+
+            archives.reverse().forEach(p => {
+                list.innerHTML += `<div class="card" style="padding:10px; margin-bottom:8px; border-left:5px solid var(--success); display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <b style="font-size:0.9rem;">${p.mach}</b> <span style="color:var(--success); font-size:0.7rem; font-weight:800;">[DONE]</span><br>
+                        <small>${p.dateStr} | Durée: <b>${p.duration} min</b><br>Pièce: ${p.piece || 'Aucune'}</small>
+                    </div>
+                    ${(currentUser === 'MANAGER') ? `<button class="btn-del" onclick="deletePanne('${p.key}')"><i class="fas fa-trash"></i></button>` : ''}
+                </div>`;
+            });
+            if(archives.length === 0) list.innerHTML = "<p style='text-align:center; color:#94a3b8;'>Aucun historique</p>";
         }
 
         function takeCharge(key) {
@@ -198,26 +219,32 @@
             const key = document.getElementById('modal-key').value;
             const piece = document.getElementById('modal-piece').value.toUpperCase().trim();
             const item = allData.find(x => x.key === key);
+            if(!item) return;
             const duration = Math.round((Date.now() - item.startTs) / 60000);
             
-            database.ref('pannes/' + key).update({ status: 'CLOSED', duration, piece: piece || 'N/A' }).then(() => {
+            database.ref('pannes/' + key).update({ 
+                status: 'CLOSED', 
+                duration: duration, 
+                piece: piece || 'N/A' 
+            }).then(() => {
                 document.getElementById('closeModal').style.display = 'none';
-            });
-        }
-
-        function renderArchives() {
-            const list = document.getElementById('archive-list'); list.innerHTML = "";
-            allData.filter(p => p.status === 'CLOSED').reverse().slice(0, 20).forEach(p => {
-                list.innerHTML += `<div style="font-size:0.8rem; padding:10px; border-bottom:1px solid #eee;">
-                    <b>${p.mach}</b> - <span style="color:var(--success)">DONE</span> (${p.duration} min)<br>
-                    <small>${p.dateStr} | Piece: ${p.piece}</small>
-                </div>`;
+                document.getElementById('modal-piece').value = "";
             });
         }
 
         function handlePanneSignal() {
             const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value;
             database.ref('pannes/').push({ proj, mach, status: 'OPEN', startTs: Date.now(), dateStr: new Date().toLocaleString() });
+        }
+
+        function deletePanne(key) { if(confirm("Supprimer cet archive?")) database.ref('pannes/'+key).remove(); }
+        
+        function addNewStock() {
+            const n = document.getElementById('new-p-name').value.toUpperCase().trim(), q = parseInt(document.getElementById('new-p-qty').value);
+            if(n && !isNaN(q)) database.ref('stock/'+n).set({qty: q}).then(() => {
+                document.getElementById('stockModal').style.display='none';
+                document.getElementById('new-p-name').value = "";
+            });
         }
 
         function updateMachineList() {
