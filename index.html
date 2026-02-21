@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -70,6 +71,7 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button class="btn" style="background:#0ea5e9; color:white;" onclick="document.getElementById('viewStockModal').style.display='flex'"><i class="fas fa-boxes-stacked"></i> STOCK</button>
                 <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('archiveModal').style.display='flex'"><i class="fas fa-archive"></i> ARCHIVES</button>
+                <button class="btn" style="background:#16a34a; color:white;" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> EXCEL</button>
                 <button class="btn" style="background:#64748b; color:white;" onclick="document.getElementById('stockModal').style.display='flex'"><i class="fas fa-plus"></i> CATALOGUE</button>
                 <button id="btn-users-ui" class="btn" style="background:#1e293b; color:white;" onclick="document.getElementById('userModal').style.display='flex'"><i class="fas fa-users"></i> USERS</button>
             </div>
@@ -180,42 +182,27 @@
                 renderUI(); 
                 renderArchives();
                 updateStats();
-                if(currentUser === "MANAGER") updateCharts(); // Mise à jour du graphique pour Manager
+                if(currentUser === "MANAGER" || currentUser === "MAINTENANCE") updateCharts();
             });
         }
 
-        // --- NOUVELLE FONCTION GRAPHIQUE ---
         function updateCharts() {
             const ctx = document.getElementById('downtimeChart').getContext('2d');
             const dataMap = {};
-            
-            // On calcule le downtime total par machine (Minutes)
             allData.filter(p => p.status === 'CLOSED').forEach(p => {
                 const label = `${p.proj} - ${p.mach}`;
                 dataMap[label] = (dataMap[label] || 0) + (p.duration || 0);
             });
-
             const labels = Object.keys(dataMap);
             const values = Object.values(dataMap);
-
-            if(myChart) myChart.destroy(); // On détruit l'ancien pour ne pas avoir de bug au survol
-
+            if(myChart) myChart.destroy();
             myChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Downtime Total (Min)',
-                        data: values,
-                        backgroundColor: '#00d4ff',
-                        borderRadius: 8
-                    }]
+                    datasets: [{ label: 'Downtime (Min)', data: values, backgroundColor: '#00d4ff', borderRadius: 8 }]
                 },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false }, title: { display: true, text: 'Temps d\'arrêt par Machine', color: '#002b5c' } },
-                    scales: { y: { beginAtZero: true } }
-                }
+                options: { responsive: true, plugins: { legend: { display: false } } }
             });
         }
 
@@ -258,6 +245,32 @@
             document.getElementById('m-mtbf').innerText = closed.length > 0 ? Math.round(720 / closed.length) : 720;
         }
 
+        // --- NOUVELLE FONCTION EXCEL ---
+        function exportToExcel() {
+            const closedData = allData.filter(p => p.status === 'CLOSED').map(p => ({
+                'Date': p.dateStr,
+                'Projet': p.proj,
+                'Machine': p.mach,
+                'Durée (Min)': p.duration,
+                'Pièce Utilisée': p.piece,
+                'Status': 'TERMINÉ'
+            }));
+            if(closedData.length === 0) return alert("Archive vide!");
+            const worksheet = XLSX.utils.json_to_sheet(closedData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Maintenance");
+            XLSX.writeFile(workbook, "Rapport_GMAO_" + new Date().toLocaleDateString() + ".xlsx");
+        }
+
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            doc.text("Rapport Maintenance CVG", 14, 15);
+            const rows = allData.filter(p => p.status === 'CLOSED').map(p => [p.dateStr, p.proj, p.mach, p.duration + "m", p.piece]);
+            doc.autoTable({ head: [['Date', 'Projet', 'Machine', 'Temps', 'Pièce']], body: rows, startY: 25 });
+            doc.save("Rapport_GMAO.pdf");
+        }
+
+        // Functions for database actions
         function listenStock() {
             database.ref('stock/').on('value', snap => {
                 const list = document.getElementById('stock-list'); if(!list) return;
@@ -302,7 +315,6 @@
         function addNewUser() { const n = document.getElementById('u-name').value, p = document.getElementById('u-pass').value, r = document.getElementById('u-role').value; if(n && p) database.ref('users/').push({name:n, pass:p, role:r}); }
         function deletePanne(key) { if(confirm("Supprimer?")) database.ref('pannes/'+key).remove(); }
         function updateMachineList() { const p = document.getElementById('in-proj').value, s = document.getElementById('in-mach'); s.innerHTML = ""; machineData[p].forEach(m => s.innerHTML += `<option value="${m}">${m}</option>`); }
-        function exportToPDF() { const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.text("Rapport GMAO", 14, 15); const rows = allData.filter(p => p.status === 'CLOSED').map(p => [p.dateStr, p.mach, p.duration + "m", p.piece]); doc.autoTable({ head: [['Date', 'Machine', 'Temps', 'Pièce']], body: rows, startY: 25 }); doc.save("Rapport.pdf"); }
         function enableAudio() { window.audioAllowed = true; }
     </script>
 </body>
