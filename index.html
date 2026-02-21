@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CVG DYNAMICS PRO | Analytics Edition</title>
+    <title>CVG DYNAMICS PRO | Maintenance Edition</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -18,38 +18,53 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg); padding: 10px; }
 
+        /* Login Styling */
+        #login-overlay { position:fixed; inset:0; background:radial-gradient(circle at top right, var(--primary), #001a38); z-index:9999; display:flex; justify-content:center; align-items:center; }
+        .login-box { background:white; padding:40px 30px; border-radius:25px; width:360px; text-align:center; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        
+        /* Layout */
         header { background: var(--primary); color: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
         
+        /* KPIs */
         .grid-kpi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
         .kpi-card { background: white; padding: 15px; border-radius: 15px; border-left: 5px solid var(--accent); position: relative; overflow: hidden; transition: 0.3s; }
         .kpi-card i { position: absolute; right: 10px; bottom: 10px; opacity: 0.1; font-size: 2rem; }
         .kpi-card span { display: block; font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; }
         .kpi-card b { font-size: 1.2rem; color: var(--primary); }
 
+        /* Buttons & Inputs */
         .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-pdf { background: #1e293b; color: white; margin-top: 10px; }
         .btn-stop { background: var(--danger); color: white; }
+        select, input { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 15px; outline: none; background: #fff; font-size: 1rem; }
         
         .alert-blink { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.3; } }
-
-        select, input { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 10px; outline: none; background: #fff; }
         .hidden { display: none !important; }
         #closeModal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(4px); }
     </style>
 </head>
 <body onclick="enableAudio()">
 
-    <div id="login-overlay" style="position:fixed; inset:0; background:radial-gradient(circle at top right, var(--primary), #001a38); z-index:9999; display:flex; justify-content:center; align-items:center;">
-        <div style="background:white; padding:40px 30px; border-radius:25px; width:340px; text-align:center; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+    <div id="login-overlay">
+        <div class="login-box">
             <div style="background:var(--primary); width:60px; height:60px; border-radius:15px; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; color:white;">
-                <i class="fas fa-tools fa-2x"></i>
+                <i class="fas fa-user-shield fa-2x"></i>
             </div>
-            <h2 style="color:var(--primary); font-weight:800;">CVG GMAO</h2>
-            <input type="password" id="pinInput" placeholder="PIN CODE" maxlength="4" style="margin-top:20px; text-align:center; font-size:1.8rem; letter-spacing:10px; border:2px solid #eee;">
-            <button class="btn btn-stop" style="background:var(--primary)" onclick="checkLogin()">IDENTIFICATION</button>
-            <div style="margin-top:15px; font-size:0.6rem; color:#94a3b8;">OP: 1111 | TECH: 2222 | MGR: 3333</div>
+            <h2 style="color:var(--primary); font-weight:800; margin-bottom: 20px;">CVG GMAO</h2>
+            
+            <select id="userInput">
+                <option value="" disabled selected>Choisir Utilisateur</option>
+                <option value="OPERATEUR">Opérateur Production</option>
+                <option value="MAINTENANCE">Technicien Maintenance</option>
+                <option value="MANAGER">Responsable Usine</option>
+            </select>
+
+            <input type="password" id="passInput" placeholder="Mot de passe">
+            
+            <button class="btn" style="background:var(--primary); color: white;" onclick="checkLogin()">SE CONNECTER</button>
+            <div style="margin-top:15px; font-size:0.6rem; color:#94a3b8;">CODES: OP: 1111 | TECH: 2222 | MGR: 3333</div>
         </div>
     </div>
 
@@ -61,21 +76,19 @@
 
         <div id="manager-panel" class="hidden">
             <div class="grid-kpi">
-                <div class="kpi-card" id="card-pannes"><span>Total Pannes</span><b id="m-count">0</b><i class="fas fa-exclamation-triangle"></i></div>
-                <div class="kpi-card" id="card-time" style="border-left-color: var(--danger);"><span>Downtime (Min)</span><b id="m-time">0</b><i class="fas fa-clock"></i></div>
-                <div class="kpi-card" id="card-mtbf" style="border-left-color: var(--success);"><span>MTBF (Moy)</span><b id="m-mtbf">0</b><i class="fas fa-chart-line"></i></div>
-                <div class="kpi-card" id="card-mttr" style="border-left-color: var(--purple);"><span>MTTR (Répar.)</span><b id="m-mttr">0</b><i class="fas fa-tools"></i></div>
+                <div class="kpi-card"><span>Pannes</span><b id="m-count">0</b><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="kpi-card" style="border-left-color: var(--danger);"><span>Downtime</span><b id="m-time">0</b><i class="fas fa-clock"></i></div>
+                <div class="kpi-card" id="card-mtbf" style="border-left-color: var(--success);"><span>MTBF</span><b id="m-mtbf">0</b><i class="fas fa-chart-line"></i></div>
+                <div class="kpi-card" id="card-mttr" style="border-left-color: var(--purple);"><span>MTTR</span><b id="m-mttr">0</b><i class="fas fa-tools"></i></div>
             </div>
-            <div class="card">
-                <canvas id="managerChart"></canvas>
-            </div>
-            <button class="btn btn-pdf" onclick="generateDailyPDF()"><i class="fas fa-file-pdf"></i> EXPORT RAPPORT PERFORMANCE</button>
+            <div class="card"><canvas id="managerChart"></canvas></div>
+            <button class="btn btn-pdf" onclick="generateDailyPDF()"><i class="fas fa-file-pdf"></i> EXPORT RAPPORT PDF</button>
         </div>
 
         <div id="op-panel" class="card hidden">
-            <label>Sélectionnez Projet</label>
+            <label>Projet</label>
             <select id="in-proj" onchange="updateMachineList()"><option value="SKODA">SKODA</option><option value="CRAFTER">CRAFTER</option><option value="G.CALIFORNIA">G.CALIFORNIA</option></select>
-            <label>Sélectionnez Machine</label>
+            <label>Machine</label>
             <select id="in-mach"></select>
             <button class="btn btn-stop" onclick="openArret()"><i class="fas fa-bell"></i> SIGNALER ARRÊT</button>
         </div>
@@ -87,12 +100,12 @@
     </div>
 
     <div id="closeModal">
-        <div style="background:white; padding:30px; border-radius:25px; width:100%; max-width:400px; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+        <div style="background:white; padding:30px; border-radius:25px; width:100%; max-width:400px;">
             <h3 style="color:var(--primary); margin-bottom:20px;">Reprise d'Activité</h3>
             <input type="hidden" id="modal-key">
-            <label>Type d'Intervention</label>
+            <label>Intervention</label>
             <select id="modal-type"><option>🔧 Mécanique</option><option>⚡ Électrique</option><option>⚙️ Process</option><option>📦 Logistique</option></select>
-            <label>Pièce de Rechange</label>
+            <label>Pièce</label>
             <input type="text" id="modal-piece" placeholder="Nom de la pièce ou N/A">
             <button class="btn btn-stop" style="background:var(--success)" onclick="confirmClosing()">DÉMARRER MACHINE</button>
             <button onclick="document.getElementById('closeModal').style.display='none'" style="width:100%; margin-top:10px; background:none; border:none; color:grey;">Annuler</button>
@@ -119,18 +132,24 @@
         function enableAudio() { window.audioAllowed = true; }
 
         function checkLogin() {
-            const pin = document.getElementById('pinInput').value;
-            if(pin === "1111") currentUser = "OPERATEUR";
-            else if(pin === "2222") currentUser = "MAINTENANCE";
-            else if(pin === "3333") currentUser = "MANAGER";
-            else return alert("Code PIN Incorrect");
-            
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('app-content').classList.remove('hidden');
-            document.getElementById('roleText').innerText = "MODE " + currentUser;
-            if(currentUser === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
-            if(currentUser === "MANAGER") document.getElementById('manager-panel').classList.remove('hidden');
-            listenFirebase();
+            const user = document.getElementById('userInput').value;
+            const pass = document.getElementById('passInput').value;
+            if (!user) return alert("Veuillez choisir un utilisateur");
+
+            let authorized = false;
+            if(user === "OPERATEUR" && pass === "1111") authorized = true;
+            else if(user === "MAINTENANCE" && pass === "2222") authorized = true;
+            else if(user === "MANAGER" && pass === "3333") authorized = true;
+
+            if(authorized) {
+                currentUser = user;
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('app-content').classList.remove('hidden');
+                document.getElementById('roleText').innerText = "MODE " + currentUser;
+                if(currentUser === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
+                if(currentUser === "MANAGER") document.getElementById('manager-panel').classList.remove('hidden');
+                listenFirebase();
+            } else { alert("Identifiants incorrects"); }
         }
 
         function updateMachineList() {
@@ -206,26 +225,18 @@
         function updateManagerDashboard() {
             const stats = { "SKODA": 0, "CRAFTER": 0, "G.CALIFORNIA": 0 };
             let totalDowntime = 0;
-            const tempsProductionTotal = 1440; // 24h en min
-
-            allData.forEach(p => { 
-                if(p.duration) { 
-                    stats[p.proj] += p.duration; 
-                    totalDowntime += p.duration; 
-                }
-            });
+            allData.forEach(p => { if(p.duration) { stats[p.proj] += p.duration; totalDowntime += p.duration; } });
 
             const nbPannes = allData.length;
-            const mtbf = nbPannes > 0 ? Math.round((tempsProductionTotal - totalDowntime) / nbPannes) : tempsProductionTotal;
+            const mtbf = nbPannes > 0 ? Math.round((1440 - totalDowntime) / nbPannes) : 1440;
             const mttr = nbPannes > 0 ? Math.round(totalDowntime / nbPannes) : 0;
 
-            // Affichage des valeurs
             document.getElementById('m-count').innerText = nbPannes;
-            document.getElementById('m-time').innerText = totalDowntime + " min";
-            document.getElementById('m-mtbf').innerText = mtbf + " min";
-            document.getElementById('m-mttr').innerText = mttr + " min";
+            document.getElementById('m-time').innerText = totalDowntime + " m";
+            document.getElementById('m-mtbf').innerText = mtbf + " m";
+            document.getElementById('m-mttr').innerText = mttr + " m";
 
-            // Alerte Visuelle MTTR > 1 min
+            // Color Alert MTTR > 1
             const mttrCard = document.getElementById('card-mttr');
             const mttrVal = document.getElementById('m-mttr');
             if(mttr > 1) {
@@ -242,10 +253,7 @@
             if(myChart) myChart.destroy();
             myChart = new Chart(ctx, {
                 type: 'doughnut',
-                data: { 
-                    labels: Object.keys(stats), 
-                    datasets: [{ data: Object.values(stats), backgroundColor: ['#002b5c', '#00d4ff', '#10b981'] }] 
-                },
+                data: { labels: Object.keys(stats), datasets: [{ data: Object.values(stats), backgroundColor: ['#002b5c', '#00d4ff', '#10b981'] }] },
                 options: { plugins: { legend: { position: 'bottom' } } }
             });
         }
@@ -254,24 +262,12 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             doc.setFontSize(18); doc.setTextColor(0, 43, 92);
-            doc.text("RAPPORT PERFORMANCE GMAO - CVG", 15, 20);
-            
-            doc.setFontSize(11); doc.setTextColor(50);
-            const summary = `Pannes: ${allData.length} | Downtime: ${document.getElementById('m-time').innerText} | MTBF: ${document.getElementById('m-mtbf').innerText} | MTTR: ${document.getElementById('m-mttr').innerText}`;
-            doc.text(summary, 15, 30);
-
-            doc.setFontSize(10); doc.setTextColor(100);
-            doc.text("Généré le: " + new Date().toLocaleString(), 15, 38);
+            doc.text("RAPPORT PERFORMANCE CVG", 15, 20);
+            doc.setFontSize(10); doc.text("MTBF: " + document.getElementById('m-mtbf').innerText + " | MTTR: " + document.getElementById('m-mttr').innerText, 15, 28);
             
             const rows = allData.map(p => [p.dateStr, p.mach, p.proj, p.startStr, p.duration || '0', p.type || '-', p.piece]);
-            doc.autoTable({
-                head: [['Date', 'Machine', 'Projet', 'Heure', 'Durée(m)', 'Type', 'Pièce']],
-                body: rows,
-                startY: 45,
-                theme: 'striped',
-                headStyles: { fillColor: [0, 43, 92] }
-            });
-            doc.save(`Performance_CVG_${new Date().toLocaleDateString()}.pdf`);
+            doc.autoTable({ head: [['Date', 'Machine', 'Projet', 'Heure', 'Min', 'Type', 'Pièce']], body: rows, startY: 35, headStyles: { fillColor: [0, 43, 92] } });
+            doc.save("Rapport_Performance.pdf");
         }
     </script>
 </body>
