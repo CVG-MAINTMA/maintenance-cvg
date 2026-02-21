@@ -11,7 +11,7 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
-        :root { --primary: #002b5c; --accent: #00d4ff; --success: #10b981; --danger: #ef4444; --bg: #f8fafc; --purple: #8b5cf6; }
+        :root { --primary: #002b5c; --accent: #00d4ff; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --bg: #f8fafc; --purple: #8b5cf6; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg); padding: 10px; color: #1e293b; }
         header { background: var(--primary); color: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -20,19 +20,29 @@
         .kpi-card { background: white; padding: 12px; border-radius: 15px; border-left: 5px solid var(--accent); }
         .kpi-card span { display: block; font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
         .kpi-card b { font-size: 1.1rem; color: var(--primary); }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); }
         .btn-stop { background: var(--danger); color: white; }
         .btn-success { background: var(--success); color: white; }
-        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 10px; outline: none; }
+        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 10px; outline: none; background: #fff; }
         .hidden { display: none !important; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(5px); }
         .btn-del { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 1rem; }
         .alert-box { background: #b91c1c; color: white; padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 0.8rem; font-weight: bold; }
 
-        /* Style dyal l-list wast l-modal */
-        #stock-list { max-height: 350px; overflow-y: auto; padding-right: 5px; }
-        #stock-list::-webkit-scrollbar { width: 4px; }
-        #stock-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        /* --- TAHSSIN STOCK LIST --- */
+        #stock-list { max-height: 400px; overflow-y: auto; padding-right: 5px; }
+        .stock-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 12px 5px; border-bottom: 1px solid #f1f5f9; 
+        }
+        .stock-item span { font-weight: 600; font-size: 0.9rem; }
+        .badge-qty { padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 800; }
+        .badge-low { background: #fee2e2; color: #ef4444; }
+        .badge-ok { background: #dcfce7; color: #10b981; }
+        
+        #stock-search { border: 2px solid #e2e8f0; border-radius: 15px; margin-bottom: 15px; background: #f8fafc; font-size: 0.85rem; }
+        #stock-search:focus { border-color: var(--accent); background: #fff; }
     </style>
 </head>
 <body onclick="enableAudio()">
@@ -82,12 +92,12 @@
     </div>
 
     <div id="viewStockModal" class="modal">
-        <div class="card" style="width:100%; max-width:450px;">
+        <div class="card" style="width:100%; max-width:450px; border-radius: 25px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h4><i class="fas fa-warehouse"></i> ÉTAT DU STOCK</h4>
-                <button onclick="this.closest('.modal').style.display='none'" style="border:none;background:none;font-size:1.5rem">&times;</button>
+                <h3 style="color:var(--primary)"><i class="fas fa-warehouse"></i> État du Stock</h3>
+                <button onclick="this.closest('.modal').style.display='none'" style="border:none;background:none;font-size:1.8rem; color:#64748b;">&times;</button>
             </div>
-            <input type="text" id="stock-search" onkeyup="filterStock()" placeholder="Chercher une pièce..." style="margin-bottom:10px;">
+            <input type="text" id="stock-search" onkeyup="filterStock()" placeholder="Rechercher une pièce par nom...">
             <div id="stock-list"></div>
         </div>
     </div>
@@ -95,19 +105,19 @@
     <div id="stockModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
             <div style="display:flex; justify-content:space-between"><h3>Ajouter au Catalogue</h3><button onclick="this.closest('.modal').style.display='none'" style="border:none;background:none;font-size:1.5rem">&times;</button></div><br>
-            <input type="text" id="new-p-name" placeholder="Nom pièce">
-            <input type="number" id="new-p-qty" placeholder="Quantité initiale">
+            <input type="text" id="new-p-name" placeholder="Nom de la pièce">
+            <input type="number" id="new-p-qty" placeholder="Quantité de départ">
             <button class="btn btn-success" onclick="addNewStock()">ENREGISTRER</button>
         </div>
     </div>
 
     <div id="userModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
-            <div style="display:flex; justify-content:space-between"><h3>Gestion Users</h3><button onclick="this.closest('.modal').style.display='none'" style="border:none;background:none;font-size:1.5rem">&times;</button></div><br>
-            <input type="text" id="u-name" placeholder="Nom">
-            <input type="password" id="u-pass" placeholder="Pass">
+            <div style="display:flex; justify-content:space-between"><h3>Gestion Utilisateurs</h3><button onclick="this.closest('.modal').style.display='none'" style="border:none;background:none;font-size:1.5rem">&times;</button></div><br>
+            <input type="text" id="u-name" placeholder="Nom complet">
+            <input type="password" id="u-pass" placeholder="Mot de passe">
             <select id="u-role"><option value="MAINTENANCE">MAINTENANCE</option><option value="OPERATEUR">OPERATEUR</option><option value="MANAGER">MANAGER</option></select>
-            <button class="btn" style="background:var(--primary); color:white" onclick="addNewUser()">CRÉER</button>
+            <button class="btn" style="background:var(--primary); color:white" onclick="addNewUser()">CRÉER LE COMPTE</button>
             <div id="users-list-ui" style="max-height:150px; overflow-y:auto; margin-top:10px;"></div>
         </div>
     </div>
@@ -116,16 +126,17 @@
         <div class="card" style="width:100%; max-width:400px;">
             <input type="hidden" id="modal-key">
             <h3>Fin d'intervention</h3><br>
-            <input list="spareparts" id="modal-piece" placeholder="Pièce utilisée">
+            <input list="spareparts" id="modal-piece" placeholder="Sélectionner la pièce utilisée">
             <datalist id="spareparts"></datalist>
-            <input type="number" id="modal-qty" value="1">
-            <button class="btn btn-success" onclick="confirmClosing()">VALIDER REPRISE</button>
+            <input type="number" id="modal-qty" value="1" placeholder="Quantité">
+            <button class="btn btn-success" onclick="confirmClosing()">VALIDER LA REPRISE</button>
         </div>
     </div>
 
     <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
+        // Logique Asliya 100%
         const machineData = { "SKODA": ["80008172", "80008173"], "CRAFTER": ["80008119", "80008122"], "G.CALIFORNIA": ["80006953"] };
         const firebaseConfig = {
             apiKey: "AIzaSyASQa5cLXFllnV6EmYp-ARZ9dndWSKha6c",
@@ -149,7 +160,7 @@
                 if(snap.val()) Object.values(snap.val()).forEach(usr => {
                     if(usr.name.toLowerCase() === u && usr.pass === p) { found = true; startApp(usr.role); }
                 });
-                if(!found) alert("Incorrect");
+                if(!found) alert("Accès refusé");
             });
         }
 
@@ -159,18 +170,9 @@
             document.getElementById('app-content').classList.remove('hidden');
             document.getElementById('roleText').innerText = role;
             listenFirebase(); listenStock();
-            if(role === "MANAGER") { 
-                listenUsers(); 
-                document.getElementById('manager-panel').classList.remove('hidden');
-                document.getElementById('btn-users-ui').classList.remove('hidden');
-            }
-            if(role === "MAINTENANCE") {
-                document.getElementById('manager-panel').classList.remove('hidden');
-            }
-            if(role === "OPERATEUR") { 
-                document.getElementById('op-panel').classList.remove('hidden'); 
-                updateMachineList(); 
-            }
+            if(role === "MANAGER") { listenUsers(); document.getElementById('manager-panel').classList.remove('hidden'); document.getElementById('btn-users-ui').classList.remove('hidden'); }
+            if(role === "MAINTENANCE") { document.getElementById('manager-panel').classList.remove('hidden'); }
+            if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
         }
 
         function listenFirebase() {
@@ -184,7 +186,6 @@
         function handlePanneSignal() {
             const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value;
             database.ref('pannes/').push({ proj, mach, status: 'OPEN', startTs: Date.now(), dateStr: new Date().toLocaleString() });
-            alert("Signal envoyé !");
         }
 
         function updateManagerDashboard() {
@@ -204,8 +205,9 @@
                 container.innerHTML += `<div class="card" style="border-left:5px solid ${isOpen?'var(--danger)':'var(--success)'}">
                     <div style="display:flex; justify-content:space-between"><b>${p.mach}</b>
                     ${(currentUser==='MANAGER'||currentUser==='MAINTENANCE') ? `<button class="btn-del" onclick="deletePanne('${p.key}')"><i class="fas fa-trash"></i></button>` : ''}</div>
-                    <small>${p.proj} | ${isOpen ? 'EN COURS' : (p.duration || 0) + ' min'}</small><br>
-                    ${isOpen && (currentUser === 'MAINTENANCE' || currentUser === 'MANAGER') ? `<button class="btn btn-success" style="padding:5px; margin-top:5px; font-size:0.7rem" onclick="openRepriseModal('${p.key}')">REPRISE</button>` : ''}
+                    <small>${p.proj} | ${isOpen ? 'EN ATTENTE' : (p.duration || 0) + ' min'}</small><br>
+                    <small style="color:#94a3b8">${p.dateStr} ${!isOpen ? ' | Piece: '+p.piece : ''}</small><br>
+                    ${isOpen && (currentUser === 'MAINTENANCE' || currentUser === 'MANAGER') ? `<button class="btn btn-success" style="padding:8px; margin-top:8px; font-size:0.75rem" onclick="openRepriseModal('${p.key}')">VALIDER REPRISE</button>` : ''}
                 </div>`;
             });
             if(alertOn && (currentUser === "MAINTENANCE" || currentUser === "MANAGER")) document.getElementById('alertSound').play().catch(()=>{});
@@ -218,9 +220,14 @@
                 list.innerHTML = ""; datalist.innerHTML = ""; if(currentUser==='MANAGER') alertDiv.innerHTML = "";
                 if(snap.val()) {
                     Object.entries(snap.val()).forEach(([name, data]) => {
-                        list.innerHTML += `<div class="stock-item" style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee"><span>${name}</span><b>${data.qty}</b></div>`;
+                        const isLow = data.qty <= 2;
+                        const badgeClass = isLow ? 'badge-low' : 'badge-ok';
+                        list.innerHTML += `<div class="stock-item">
+                            <span>${name}</span>
+                            <b class="badge-qty ${badgeClass}">${data.qty}</b>
+                        </div>`;
                         datalist.innerHTML += `<option value="${name}">`;
-                        if(currentUser==='MANAGER' && data.qty <= 0) alertDiv.innerHTML += `<div class="alert-box">RUPTURE STOCK: ${name}</div>`;
+                        if(currentUser==='MANAGER' && data.qty <= 0) alertDiv.innerHTML += `<div class="alert-box">RUPTURE DE STOCK CRITIQUE: ${name}</div>`;
                     });
                 }
             });
@@ -236,9 +243,7 @@
         function addNewStock() {
             const n = document.getElementById('new-p-name').value.toUpperCase().trim(), q = parseInt(document.getElementById('new-p-qty').value);
             if(n && !isNaN(q)) database.ref('stock/'+n).set({qty: q}).then(() => { 
-                alert("Ajouté au catalogue"); 
-                document.getElementById('new-p-name').value=""; 
-                document.getElementById('new-p-qty').value=""; 
+                document.getElementById('new-p-name').value=""; document.getElementById('new-p-qty').value=""; 
                 document.getElementById('stockModal').style.display='none';
             });
         }
@@ -247,14 +252,14 @@
             database.ref('users/').on('value', snap => {
                 const div = document.getElementById('users-list-ui'); div.innerHTML = "";
                 if(snap.val()) Object.entries(snap.val()).forEach(([key, u]) => {
-                    div.innerHTML += `<div style="font-size:0.75rem; border-bottom:1px solid #eee; padding:8px 0; display:flex; justify-content:space-between">${u.name} (${u.role}) <button onclick="database.ref('users/${key}').remove()" style="color:red; border:none; background:none">X</button></div>`;
+                    div.innerHTML += `<div style="font-size:0.75rem; border-bottom:1px solid #eee; padding:10px 0; display:flex; justify-content:space-between">${u.name} (${u.role}) <button onclick="database.ref('users/${key}').remove()" style="color:red; border:none; background:none"><i class="fas fa-user-minus"></i></button></div>`;
                 });
             });
         }
 
         function addNewUser() {
             const n = document.getElementById('u-name').value, p = document.getElementById('u-pass').value, r = document.getElementById('u-role').value;
-            if(n && p) database.ref('users/').push({name:n, pass:p, role:r}).then(() => alert("Utilisateur créé"));
+            if(n && p) database.ref('users/').push({name:n, pass:p, role:r}).then(() => alert("Utilisateur créé avec succès"));
         }
 
         function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display = 'flex'; }
@@ -271,7 +276,7 @@
             });
         }
 
-        function deletePanne(key) { if(confirm("Supprimer?")) database.ref('pannes/'+key).remove(); }
+        function deletePanne(key) { if(confirm("Supprimer cet enregistrement ?")) database.ref('pannes/'+key).remove(); }
         function updateMachineList() {
             const p = document.getElementById('in-proj').value, s = document.getElementById('in-mach'); s.innerHTML = "";
             machineData[p].forEach(m => s.innerHTML += `<option value="${m}">${m}</option>`);
