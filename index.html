@@ -3,72 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CVG GMAO - Live Vibration</title>
+    <title>CVG GMAO - Time Tracking</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        :root { --primary: #002b5c; --danger: #ef4444; --success: #22c55e; --bg: #f8fafc; }
+        :root { --primary: #002b5c; --danger: #ef4444; --success: #22c55e; --warning: #f59e0b; --bg: #f1f5f9; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background: var(--bg); padding: 10px; }
-        .app-container { max-width: 500px; margin: 0 auto; }
-        header { background: var(--primary); color: white; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #64748b; font-size: 0.9rem; }
-        select { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #e2e8f0; font-size: 16px; margin-bottom: 15px; background: white; }
-        .btn-send { width: 100%; padding: 18px; background: var(--danger); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 0 #b91c1c; }
-        .btn-send:active { transform: translateY(2px); box-shadow: 0 2px 0 #b91c1c; }
+        body { background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 15px; }
+        .container { width: 100%; max-width: 450px; }
         
-        #notifList { margin-top: 20px; }
-        .notif-item { 
-            background: white; border-left: 8px solid var(--danger); padding: 15px; border-radius: 12px; 
-            margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; 
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.1); animation: alertShake 0.5s infinite alternate;
-        }
+        #login-screen { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        input[type="password"] { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #e2e8f0; font-size: 1.2rem; text-align: center; margin-bottom: 20px; }
+        .btn-login { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; }
 
-        @keyframes alertShake {
-            from { transform: translateX(0); }
-            to { transform: translateX(5px); }
-        }
-
-        .btn-ok { background: var(--success); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .info-box { font-size: 0.7rem; color: #94a3b8; text-align: center; margin-top: 10px; }
+        #app-screen { display: none; width: 100%; }
+        header { background: var(--primary); color: white; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        select { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #e2e8f0; font-size: 16px; margin-bottom: 15px; }
+        .btn-stop { width: 100%; padding: 18px; background: var(--danger); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
+        
+        .notif-item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-left: 8px solid; }
+        .status-open { border-left-color: var(--danger); }
+        .status-closed { border-left-color: var(--success); opacity: 0.8; }
+        
+        .btn-start { background: var(--success); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .duration { font-size: 0.8rem; font-weight: bold; color: var(--primary); background: #e0f2fe; padding: 2px 8px; border-radius: 4px; }
+        .hidden { display: none !important; }
     </style>
 </head>
-<body onclick="enableAudio()"> <div class="app-container">
-        <header>
-            <h3>CVG GMAO <span style="font-size: 0.6rem; color: #38bdf8;">PRO-VIBE</span></h3>
-            <div id="connection-status" style="font-size: 0.7rem; color: #22c55e;"><i class="fas fa-circle"></i> Live</div>
-        </header>
+<body onclick="enableAudio()">
 
-        <div class="card">
-            <label><i class="fas fa-industry"></i> Machine</label>
-            <select id="machineSelect">
-                <option value="KOMAX-01">KOMAX 01</option>
-                <option value="SCHUNK-04">SCHUNK 04</option>
-                <option value="BAN-TEST-02">BANC TEST 02</option>
-                <option value="PRESS-03">PRESSE 03</option>
-            </select>
-            <label><i class="fas fa-exclamation-circle"></i> Type de Panne</label>
-            <select id="panneType">
-                <option value="Mécanique">🔧 Mécanique</option>
-                <option value="Électrique">⚡ Électrique</option>
-                <option value="Qualité">❌ Qualité</option>
-            </select>
-            <button class="btn-send" onclick="sendAlert()">SAYFAT ALERTE <i class="fas fa-bullhorn"></i></button>
-            <p class="info-box">Cliquer n'importe où pour activer le son</p>
+    <div class="container">
+        <div id="login-screen">
+            <div style="font-size:1.5rem; font-weight:800; color:var(--primary); margin-bottom:20px;">CVG GMAO</div>
+            <input type="password" id="pinCode" placeholder="Code PIN" maxlength="4">
+            <button class="btn-login" onclick="checkLogin()">CONNEXION</button>
         </div>
 
-        <div id="notifList"></div>
+        <div id="app-screen">
+            <header>
+                <h3 id="userTitle">Interface</h3>
+                <button onclick="location.reload()" style="background:none; border:none; color:white;"><i class="fas fa-sign-out-alt"></i></button>
+            </header>
+
+            <div id="operator-view" class="card hidden">
+                <label>Machine</label>
+                <select id="machineSelect">
+                    <option value="KOMAX-01">KOMAX 01</option>
+                    <option value="SCHUNK-04">SCHUNK 04</option>
+                    <option value="BAN-TEST-02">BANC TEST 02</option>
+                </select>
+                <label>Problème</label>
+                <select id="panneType">
+                    <option value="Mécanique">🔧 Mécanique</option>
+                    <option value="Électrique">⚡ Électrique</option>
+                </select>
+                <button class="btn-stop" onclick="startArret()">🛑 STOP MACHINE (ARRET)</button>
+            </div>
+
+            <div id="tech-view" class="hidden">
+                <div id="notifList"></div>
+            </div>
+        </div>
     </div>
 
     <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
-        // --- CONFIGURATION FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyASQa5cLXFllnV6EmYp-ARZ9dndWSKha6c",
             authDomain: "cvgmaroc-gmao.firebaseapp.com",
@@ -76,8 +81,7 @@
             projectId: "cvgmaroc-gmao",
             storageBucket: "cvgmaroc-gmao.firebasestorage.app",
             messagingSenderId: "72908747564",
-            appId: "1:72908747564:web:82f646ef5dd209d03b7289",
-            measurementId: "G-FP17SNE4VB"
+            appId: "1:72908747564:web:82f646ef5dd209d03b7289"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -85,67 +89,79 @@
         const sound = document.getElementById('alertSound');
         let audioEnabled = false;
 
-        function enableAudio() {
-            audioEnabled = true;
-            console.log("Audio Enabled");
+        function enableAudio() { audioEnabled = true; }
+
+        function checkLogin() {
+            const pin = document.getElementById('pinCode').value;
+            if (pin === "1111") { showApp("operator-view", "Opérateur"); }
+            else if (pin === "2222") { showApp("tech-view", "Maintenance"); startTechListener(); }
+            else { alert("PIN Incorrect"); }
         }
 
-        // 1. Sift Alerte
-        function sendAlert() {
+        function showApp(viewId, title) {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-screen').style.display = 'block';
+            document.getElementById(viewId).classList.remove('hidden');
+            document.getElementById('userTitle').innerText = title;
+        }
+
+        // --- L'Opérateur clike sur STOP ---
+        function startArret() {
             const machine = document.getElementById('machineSelect').value;
             const type = document.getElementById('panneType').value;
-            const time = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+            const startTime = Date.now(); // Temps en millisecondes
             
             database.ref('pannes/').push({
                 machine: machine,
                 type: type,
-                time: time,
-                status: 'OPEN'
-            }).then(() => {
-                if (navigator.vibrate) navigator.vibrate(200);
+                startTime: startTime,
+                startTimeStr: new Date(startTime).toLocaleTimeString('fr-FR'),
+                status: 'OPEN',
+                duration: ''
+            }).then(() => alert("Machine Arrêtée ! Alerte envoyée."));
+        }
+
+        // --- Le Technicien clike sur START (Sali l'islah) ---
+        function stopArret(key, startTime) {
+            const endTime = Date.now();
+            const diffMs = endTime - startTime;
+            const diffMins = Math.round(diffMs / 60000); // Convertir en minutes
+
+            database.ref('pannes/' + key).update({
+                status: 'CLOSED',
+                endTimeStr: new Date(endTime).toLocaleTimeString('fr-FR'),
+                duration: diffMins + " min"
             });
         }
 
-        // 2. Iisti9bal Alertes (Real-time)
-        database.ref('pannes/').on('value', (snapshot) => {
-            const data = snapshot.val();
-            const container = document.getElementById('notifList');
-            container.innerHTML = "";
-            let activeAlerts = false;
+        function startTechListener() {
+            database.ref('pannes/').on('value', (snapshot) => {
+                const data = snapshot.val();
+                const container = document.getElementById('notifList');
+                container.innerHTML = "";
+                let hasAlert = false;
 
-            if (data) {
-                Object.keys(data).reverse().forEach(key => {
-                    const p = data[key];
-                    if(p.status === 'OPEN') {
-                        activeAlerts = true;
+                if (data) {
+                    Object.keys(data).reverse().forEach(key => {
+                        const p = data[key];
+                        const isClosed = p.status === 'CLOSED';
+                        if(!isClosed) hasAlert = true;
+
                         container.innerHTML += `
-                            <div class="notif-item">
+                            <div class="notif-item ${isClosed ? 'status-closed' : 'status-open'}">
                                 <div>
-                                    <b style="color:var(--primary); font-size:1.1rem;">${p.machine}</b><br>
-                                    <span style="color:var(--danger); font-weight:bold;">${p.type}</span><br>
-                                    <small><i class="far fa-clock"></i> ${p.time}</small>
+                                    <b>${p.machine}</b> ${isClosed ? '✅' : '🚨'}<br>
+                                    <small>${p.type} | Stop: ${p.startTimeStr}</small><br>
+                                    ${isClosed ? `<span class="duration">Durée: ${p.duration}</span>` : ''}
                                 </div>
-                                <button class="btn-ok" onclick="closeP('${key}')">REÇU</button>
+                                ${!isClosed ? `<button class="btn-start" onclick="stopArret('${key}', ${p.startTime})">⚙️ START (FIN)</button>` : ''}
                             </div>`;
-                    }
-                });
-            }
-
-            // Trigger Sawt & Vibration ila kayna alert
-            if (activeAlerts) {
-                if (audioEnabled) sound.play();
-                if (navigator.vibrate) {
-                    // Pattern: Vibre 500ms, sber 200ms, vibre 500ms
-                    navigator.vibrate([500, 200, 500, 200, 500]);
+                    });
                 }
-            } else {
-                sound.pause();
-                sound.currentTime = 0;
-            }
-        });
-
-        function closeP(key) {
-            database.ref('pannes/' + key).update({status: 'CLOSED'});
+                
+                if (hasAlert) { if(audioEnabled) sound.play(); navigator.vibrate([500,200,500]); } 
+                else { sound.pause(); }
+            });
         }
     </script>
 </body>
