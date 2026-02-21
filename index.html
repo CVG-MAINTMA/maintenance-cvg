@@ -35,6 +35,7 @@
         .alert-box { background: #b91c1c; color: white; padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 0.8rem; animation: pulse 2s infinite; font-weight: bold; }
         @keyframes pulse { 0% {box-shadow: 0 0 0 0 rgba(185, 28, 28, 0.7);} 70% {box-shadow: 0 0 0 10px rgba(185, 28, 28, 0);} 100% {box-shadow: 0 0 0 0 rgba(185, 28, 28, 0);} }
         .btn-plus { background: var(--success); color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; border: none; cursor: pointer; }
+        .btn-del { color: var(--danger); background: none; border: none; font-size: 1rem; cursor: pointer; padding: 5px; }
     </style>
 </head>
 <body onclick="enableAudio()">
@@ -99,29 +100,6 @@
         </div>
     </div>
 
-    <div id="stockModal" class="modal">
-        <div class="card" style="width:100%; max-width:400px;">
-            <h3>Ajouter Nouvelle Pièce</h3>
-            <input type="text" id="new-part-name" placeholder="Nom de la pièce">
-            <input type="number" id="new-part-qty" placeholder="Quantité initiale">
-            <button class="btn btn-success" onclick="addNewPart()">AJOUTER</button>
-            <button class="btn" style="background:none;" onclick="document.getElementById('stockModal').style.display='none'">Fermer</button>
-        </div>
-    </div>
-
-    <div id="userModal" class="modal">
-        <div class="card" style="width:100%; max-width:400px;">
-            <h3>Utilisateurs</h3>
-            <input type="text" id="new-u-name" placeholder="Nom"><input type="password" id="new-u-pass" placeholder="Pass">
-            <select id="new-u-role"><option value="OPERATEUR">OPERATEUR</option><option value="MAINTENANCE">MAINTENANCE</option></select>
-            <button class="btn btn-success" onclick="addUser()">CRÉER</button>
-            <div id="u-list" style="margin-top:10px; max-height:100px; overflow-y:auto;"></div>
-            <button class="btn" onclick="document.getElementById('userModal').style.display='none'">Fermer</button>
-        </div>
-    </div>
-
-    <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
-
     <script>
         const machineData = { "SKODA": ["80008172", "80008173"], "CRAFTER": ["80008119", "80008122"], "G.CALIFORNIA": ["80006953"] };
         const firebaseConfig = {
@@ -158,7 +136,7 @@
             document.getElementById('roleText').innerText = role;
             if(role !== "OPERATEUR") { document.getElementById('stock-panel').classList.remove('hidden'); listenStock(); }
             if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
-            if(role === "MANAGER") { document.getElementById('manager-panel').classList.remove('hidden'); document.getElementById('alert-panel').classList.remove('hidden'); loadUsers(); }
+            if(role === "MANAGER") { document.getElementById('manager-panel').classList.remove('hidden'); document.getElementById('alert-panel').classList.remove('hidden'); }
             listenFirebase();
         }
 
@@ -168,6 +146,12 @@
                 startTs: Date.now(), dateStr: new Date().toLocaleDateString('fr-FR'),
                 monthStr: new Date().toISOString().slice(0, 7), status: 'OPEN'
             });
+        }
+
+        function deleteArrêt(key) {
+            if(confirm("Supprimer cet arrêt définitivement ?")) {
+                database.ref('pannes/' + key).remove();
+            }
         }
 
         function listenFirebase() {
@@ -180,11 +164,15 @@
 
         function renderUI() {
             const container = document.getElementById('pannes-list'); container.innerHTML = ""; let alertOn = false;
-            allData.slice(-10).reverse().forEach(p => {
+            allData.slice(-15).reverse().forEach(p => {
                 const isOpen = p.status === 'OPEN'; if(isOpen) alertOn = true;
                 container.innerHTML += `<div class="card" style="border-left:5px solid ${isOpen?'red':'green'}">
-                    <b>${p.mach}</b> | <small>${p.proj}</small><br>
-                    ${isOpen && currentUser === 'MAINTENANCE' ? `<button class="btn btn-success" style="padding:5px; margin-top:5px;" onclick="openRepriseModal('${p.key}')">REPRISE</button>` : `<small>${p.duration || 0} min | ${p.piece || 'S/S'}</small>`}
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <b>${p.mach}</b>
+                        ${currentUser === 'MAINTENANCE' || currentUser === 'MANAGER' ? `<button class="btn-del" onclick="deleteArrêt('${p.key}')"><i class="fas fa-trash-alt"></i></button>` : ''}
+                    </div>
+                    <small>${p.proj} | ${isOpen ? 'EN COURS' : p.duration+' min'}</small><br>
+                    ${isOpen && currentUser === 'MAINTENANCE' ? `<button class="btn btn-success" style="padding:5px; margin-top:5px;" onclick="openRepriseModal('${p.key}')">REPRISE</button>` : ''}
                 </div>`;
             });
             if(alertOn && currentUser === "MAINTENANCE") document.getElementById('alertSound').play();
@@ -193,29 +181,6 @@
 
         function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display = 'flex'; }
 
-        // --- STOCK LOGIC ---
-        function addNewPart() {
-            const name = document.getElementById('new-part-name').value.toUpperCase().trim();
-            const qty = parseInt(document.getElementById('new-part-qty').value);
-            if(name && !isNaN(qty)) {
-                database.ref('stock/' + name).set({ qty: qty }).then(() => {
-                    document.getElementById('stockModal').style.display = 'none';
-                    document.getElementById('new-part-name').value = "";
-                });
-            }
-        }
-
-        function restock(name) {
-            const add = prompt("Combien de pièces ajouter pour " + name + " ?");
-            if(add && !isNaN(add)) {
-                const sRef = database.ref('stock/' + name);
-                sRef.once('value', s => {
-                    const current = s.val() ? s.val().qty : 0;
-                    sRef.set({ qty: current + parseInt(add) });
-                });
-            }
-        }
-
         function listenStock() {
             database.ref('stock/').on('value', snap => {
                 const list = document.getElementById('stock-list');
@@ -223,7 +188,6 @@
                 const alertDiv = document.getElementById('alert-panel');
                 list.innerHTML = ""; datalist.innerHTML = ""; 
                 if(currentUser === "MANAGER") alertDiv.innerHTML = "";
-
                 if(snap.val()) {
                     Object.entries(snap.val()).forEach(([name, data]) => {
                         let isZero = data.qty <= 0;
@@ -235,12 +199,18 @@
                             </div>
                         </div>`;
                         datalist.innerHTML += `<option value="${name}">`;
-                        if(currentUser === "MANAGER" && isZero) {
-                            alertDiv.innerHTML += `<div class="alert-box"><i class="fas fa-exclamation-triangle"></i> RUPTURE : ${name}</div>`;
-                        }
+                        if(currentUser === "MANAGER" && isZero) alertDiv.innerHTML += `<div class="alert-box">RUPTURE : ${name}</div>`;
                     });
                 }
             });
+        }
+
+        function restock(name) {
+            const add = prompt("Quantité à ajouter pour " + name + " ?");
+            if(add && !isNaN(add)) {
+                const sRef = database.ref('stock/' + name);
+                sRef.once('value', s => { sRef.set({ qty: (s.val()?s.val().qty:0) + parseInt(add) }); });
+            }
         }
 
         function confirmClosing() {
@@ -248,13 +218,10 @@
             const piece = document.getElementById('modal-piece').value.toUpperCase().trim();
             const qtyUsed = parseInt(document.getElementById('modal-qty').value) || 1;
             const duration = Math.round((Date.now() - allData.find(x=>x.key===key).startTs)/60000);
-
             database.ref('pannes/'+key).update({ status:'CLOSED', duration, piece:piece||'N/A' }).then(() => {
                 if(piece && piece !== 'N/A') {
                     const sRef = database.ref('stock/'+piece);
-                    sRef.once('value', s => {
-                        if(s.exists()) sRef.set({ qty: Math.max(0, s.val().qty - qtyUsed) });
-                    });
+                    sRef.once('value', s => { if(s.exists()) sRef.set({ qty: Math.max(0, s.val().qty - qtyUsed) }); });
                 }
                 document.getElementById('closeModal').style.display='none';
             });
@@ -266,20 +233,6 @@
             document.getElementById('m-time').innerText = total;
             document.getElementById('m-mtbf').innerText = allData.length > 0 ? Math.round((720 - total/60)/allData.length) : 720;
             document.getElementById('m-mttr').innerText = allData.length > 0 ? Math.round(total/allData.length) : 0;
-        }
-
-        function addUser() {
-            const n = document.getElementById('new-u-name').value, p = document.getElementById('new-u-pass').value, r = document.getElementById('new-u-role').value;
-            if(n && p) database.ref('users/').push({name:n, pass:p, role:r});
-        }
-
-        function loadUsers() {
-            database.ref('users/').on('value', snap => {
-                const div = document.getElementById('u-list'); div.innerHTML = "";
-                if(snap.val()) Object.entries(snap.val()).forEach(([k, u]) => {
-                    div.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px; font-size:0.7rem;"><span>${u.name}</span><i class="fas fa-trash" onclick="database.ref('users/${k}').remove()"></i></div>`;
-                });
-            });
         }
 
         function updateMachineList() {
