@@ -94,16 +94,12 @@
         <div class="card" style="width:100%; max-width:400px;">
             <h3>Rapport d'Intervention</h3>
             <input type="hidden" id="modal-key">
-            
             <textarea id="modal-problem" placeholder="Description du problème (Mouchkil)"></textarea>
             <textarea id="modal-solution" placeholder="Solution apportée (L-7al)"></textarea>
-            
             <label style="font-size: 0.7rem; font-weight: 800; color: #64748b;">PIÈCE DÉTACHÉE :</label>
             <input list="spareparts" id="modal-piece" placeholder="Nom de la pièce (Optionnel)">
             <datalist id="spareparts"></datalist>
-            
-            <input type="number" id="modal-qty" value="1">
-            
+            <input type="number" id="modal-qty" value="1" placeholder="Quantité">
             <button class="btn btn-success" onclick="confirmClosing()">TERMINER (DONE)</button>
             <button class="btn btn-ghost" onclick="document.getElementById('closeModal').style.display='none'">ANNULER</button>
         </div>
@@ -124,7 +120,7 @@
     </div>
 
     <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-        <div class="card" style="width:100%; max-width:400px;"><h3>Ajouter au Catalogue</h3><input type="text" id="new-p-name" placeholder="Nom"><input type="number" id="new-p-qty" placeholder="Quantité"><button class="btn btn-success" onclick="addNewStock()">VALIDER</button></div>
+        <div class="card" style="width:100%; max-width:400px;"><h3>Ajouter au Stock</h3><input type="text" id="new-p-name" placeholder="Nom"><input type="number" id="new-p-qty" placeholder="Quantité"><button class="btn btn-success" onclick="addNewStock()">VALIDER</button></div>
     </div>
 
     <div id="userModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
@@ -201,7 +197,6 @@
                 let actionBtn = (currentUser === 'MAINTENANCE') ? (p.status === 'OPEN' ? 
                     `<button class="btn btn-warning" style="padding:8px; margin-top:8px;" onclick="takeCharge('${p.key}')">I'M GOING</button>` : 
                     `<button class="btn btn-success" style="padding:8px; margin-top:8px;" onclick="openRepriseModal('${p.key}')">DONE</button>`) : "";
-                
                 container.innerHTML += `<div class="card" style="border-left:5px solid ${p.status === 'OPEN' ? 'var(--danger)' : 'var(--warning)'}">
                     <div style="display:flex; justify-content:space-between"><b>${p.mach}</b>${statusHtml}</div>
                     <small>${p.proj} | ${p.dateStr}</small><br>${actionBtn}
@@ -234,66 +229,53 @@
         }
 
         function confirmClosing() {
-            const key = document.getElementById('modal-key').value;
-            const problem = document.getElementById('modal-problem').value.trim();
-            const solution = document.getElementById('modal-solution').value.trim();
-            const piece = document.getElementById('modal-piece').value.toUpperCase().trim();
-            const qtyUsed = parseInt(document.getElementById('modal-qty').value) || 1;
-            
-            if(!problem || !solution) return alert("Veuillez saisir le Problème et la Solution !");
-
-            const item = allData.find(x => x.key === key);
-            const duration = Math.round((Date.now() - item.startTs) / 60000);
-
-            database.ref('pannes/' + key).update({ 
-                status: 'CLOSED', duration, problem, solution, 
-                piece: piece || 'N/A', qty: piece !== '' ? qtyUsed : 0 
-            }).then(() => {
+            const key = document.getElementById('modal-key').value, problem = document.getElementById('modal-problem').value.trim(), solution = document.getElementById('modal-solution').value.trim();
+            const piece = document.getElementById('modal-piece').value.toUpperCase().trim(), qtyUsed = parseInt(document.getElementById('modal-qty').value) || 1;
+            if(!problem || !solution) return alert("Remplir Problem/Solution!");
+            const item = allData.find(x => x.key === key), duration = Math.round((Date.now() - item.startTs) / 60000);
+            database.ref('pannes/' + key).update({ status: 'CLOSED', duration, problem, solution, piece: piece || 'N/A', qty: piece !== '' ? qtyUsed : 0 }).then(() => {
                 if(piece && piece !== 'N/A') {
                     const sRef = database.ref('stock/' + piece);
                     sRef.once('value', s => { if(s.exists()) sRef.set({ qty: Math.max(0, s.val().qty - qtyUsed) }); });
                 }
-                document.getElementById('modal-problem').value = "";
-                document.getElementById('modal-solution').value = "";
+                document.getElementById('modal-problem').value = ""; document.getElementById('modal-solution').value = "";
                 document.getElementById('closeModal').style.display = 'none';
             });
         }
 
-        // --- EXCEL AVEC DASHBOARD ---
+        // --- EXCEL LOGIC (2 SHEETS: DATA + DASHBOARD) ---
         function exportToExcel() {
             const closed = allData.filter(p => p.status === 'CLOSED');
             if(closed.length === 0) return alert("Archive vide!");
 
-            // Sheet 1: Data Archive
-            const archiveRows = closed.map(p => ({
+            // Sheet 1: Details
+            const rows = closed.map(p => ({
                 'Date': p.dateStr, 'Projet': p.proj, 'Machine': p.mach, 'Downtime(m)': p.duration,
-                'Problème': p.problem, 'Solution': p.solution, 'Pièce': p.piece, 'Qté': p.qty
+                'Problème': p.problem, 'Solution': p.solution, 'Pièce': p.piece, 'Qté': p.qty || 0
             }));
-            const wsData = XLSX.utils.json_to_sheet(archiveRows);
+            const wsData = XLSX.utils.json_to_sheet(rows);
 
-            // Sheet 2: Dashboard Summary
-            const totalDowntime = closed.reduce((acc, curr) => acc + (curr.duration || 0), 0);
-            const mttr = Math.round(totalDowntime / closed.length);
+            // Sheet 2: Dashboard
+            const totalDowntime = closed.reduce((a, b) => a + (b.duration || 0), 0);
             const statsProj = {}; closed.forEach(p => statsProj[p.proj] = (statsProj[p.proj] || 0) + 1);
-
             const dashData = [
-                ['GMAO DASHBOARD SUMMARY', '', 'Généré le:', new Date().toLocaleDateString()],
+                ['RAPPORT ANALYTIQUE GMAO', '', 'Date:', new Date().toLocaleDateString()],
                 [],
                 ['KPIs GLOBAUX', 'VALEUR', 'UNITE'],
                 ['Total Interventions', closed.length, 'Interv.'],
-                ['Total Downtime', totalDowntime, 'Minutes'],
-                ['MTTR (Mean Time To Repair)', mttr, 'Min/Interv.'],
-                ['MTBF (Heures)', document.getElementById('m-mtbf').innerText, 'Heures'],
+                ['Cumul Downtime', totalDowntime, 'Minutes'],
+                ['MTTR Moyen', Math.round(totalDowntime/closed.length), 'Min/Interv.'],
+                ['MTBF Actuel', document.getElementById('m-mtbf').innerText, 'Heures'],
                 [],
-                ['INTERVENTIONS PAR PROJET', 'NOMBRE'],
-                ...Object.entries(statsProj).map(([proj, count]) => [proj, count])
+                ['RÉPARTITION PAR PROJET', 'VOLUME'],
+                ...Object.entries(statsProj).map(([k, v]) => [k, v])
             ];
             const wsDash = XLSX.utils.aoa_to_sheet(dashData);
 
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, wsData, "Archives_Details");
-            XLSX.utils.book_append_sheet(wb, wsDash, "Dashboard_KPIs");
-            XLSX.writeFile(wb, "GMAO_Report_Full_" + new Date().toLocaleDateString() + ".xlsx");
+            XLSX.utils.book_append_sheet(wb, wsDash, "Dashboard_Summary");
+            XLSX.writeFile(wb, "GMAO_Report_CVG_" + new Date().toLocaleDateString() + ".xlsx");
         }
 
         function exportToPDF() {
@@ -304,11 +286,10 @@
             doc.save("GMAO_Rapport.pdf");
         }
 
-        // Database listeners & actions
         function listenStock() {
             database.ref('stock/').on('value', snap => {
-                const list = document.getElementById('stock-list'); if(!list) return;
-                list.innerHTML = ""; const dl = document.getElementById('spareparts'); if(!dl) return; dl.innerHTML = "";
+                const list = document.getElementById('stock-list'); if(!list) return; list.innerHTML = "";
+                const dl = document.getElementById('spareparts'); if(!dl) return; dl.innerHTML = "";
                 if(snap.val()) Object.entries(snap.val()).forEach(([name, data]) => {
                     list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;"><span>${name}</span><b>${data.qty}</b></div>`;
                     dl.innerHTML += `<option value="${name}">`;
@@ -323,14 +304,11 @@
         }
         function takeCharge(key) { database.ref('pannes/' + key).update({ status: 'IN_PROGRESS' }); }
         function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display = 'flex'; }
-        function handlePanneSignal() {
-            const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value;
-            database.ref('pannes/').push({ proj, mach, status: 'OPEN', startTs: Date.now(), dateStr: new Date().toLocaleString() });
-        }
+        function handlePanneSignal() { const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value; database.ref('pannes/').push({ proj, mach, status: 'OPEN', startTs: Date.now(), dateStr: new Date().toLocaleString() }); }
         function addNewStock() { const n = document.getElementById('new-p-name').value.toUpperCase().trim(), q = parseInt(document.getElementById('new-p-qty').value); if(n && !isNaN(q)) database.ref('stock/'+n).set({qty:q}).then(()=>document.getElementById('stockModal').style.display='none'); }
         function addNewUser() { const n = document.getElementById('u-name').value, p = document.getElementById('u-pass').value, r = document.getElementById('u-role').value; if(n && p) database.ref('users/').push({name:n, pass:p, role:r}); }
         function deletePanne(key) { if(confirm("Supprimer?")) database.ref('pannes/'+key).remove(); }
-        function updateMachineList() { const p = document.getElementById('in-proj').value, s = document.getElementById('in-mach'); s.innerHTML = ""; machineData[p].forEach(m => s.innerHTML += `<option value="${m}">${m}</option>`); }
+        function updateMachineList() { const p = document.getElementById('in-proj').value, s = document.getElementById('in-mach'); s.innerHTML = ""; (machineData[p] || []).forEach(m => s.innerHTML += `<option value="${m}">${m}</option>`); }
         function enableAudio() { window.audioAllowed = true; }
     </script>
 </body>
