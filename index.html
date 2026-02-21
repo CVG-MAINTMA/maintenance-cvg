@@ -3,117 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CVG DYNAMICS | Smart Selection</title>
+    <title>CVG DYNAMICS PRO | Manager Edition</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
         :root { --primary: #002b5c; --accent: #00d4ff; --success: #10b981; --danger: #ef4444; --bg: #f8fafc; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg); padding: 15px; }
+        body { background: var(--bg); padding: 10px; }
 
-        /* Login */
-        #login-overlay { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; justify-content: center; align-items: center; color: white; }
-        .login-box { background: white; padding: 30px; border-radius: 20px; width: 320px; text-align: center; color: #333; }
+        header { background: var(--primary); color: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
         
-        /* App Structure */
-        header { background: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .main-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 5px solid var(--primary); }
-        
-        label { display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.85rem; color: #64748b; }
-        select { width: 100%; padding: 14px; border-radius: 12px; border: 2px solid #e2e8f0; background: #fff; margin-bottom: 20px; font-size: 1rem; outline: none; }
-        select:focus { border-color: var(--accent); }
+        .grid-manager { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .kpi { background: white; padding: 15px; border-radius: 15px; text-align: center; border-bottom: 4px solid var(--accent); }
+        .kpi span { display: block; font-size: 1.5rem; font-weight: 800; color: var(--primary); }
 
-        .btn-stop { width: 100%; padding: 18px; background: var(--danger); color: white; border: none; border-radius: 15px; font-weight: 800; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        
-        /* Table */
-        .table-container { background: white; border-radius: 15px; overflow-x: auto; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { background: #f1f5f9; padding: 12px; text-align: left; }
-        td { padding: 12px; border-bottom: 1px solid #eee; }
-        
-        .status-open { color: var(--danger); font-weight: 800; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0.3; } }
+        select, input { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 10px; outline: none; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s; }
+        .btn-pdf { background: #1e293b; color: white; margin-top: 10px; }
+        .btn-stop { background: var(--danger); color: white; }
         
         .hidden { display: none !important; }
-        #closeModal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(5px); }
+        #closeModal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; }
+        canvas { max-height: 250px; }
     </style>
 </head>
 <body onclick="enableAudio()">
 
-    <div id="login-overlay">
-        <div class="login-box">
-            <h2 style="color:var(--primary)">CVG Dynamics</h2>
-            <p style="font-size: 0.8rem; margin: 10px 0 20px;">Accès Sécurisé</p>
-            <input type="password" id="pinInput" placeholder="PIN Code" maxlength="4" style="width:100%; padding:15px; text-align:center; font-size:1.5rem; border-radius:12px; border:2px solid #ddd; margin-bottom:20px;">
-            <button class="btn-stop" style="background:var(--primary)" onclick="checkLogin()">ENTRER</button>
-        </div>
-    </div>
-
-    <div id="closeModal">
-        <div style="background:white; padding:25px; border-radius:25px; width:100%; max-width:400px;">
-            <h3 style="margin-bottom:20px; color:var(--primary)"><i class="fas fa-check-circle"></i> Clôture Intervention</h3>
-            <input type="hidden" id="modal-key">
-            <label>Nature du problème</label>
-            <select id="modal-type">
-                <option value="Mécanique">🔧 Mécanique</option>
-                <option value="Électrique">⚡ Électrique</option>
-                <option value="Process">⚙️ Process</option>
-                <option value="Logistique">📦 Logistique</option>
-            </select>
-            <button class="btn-stop" style="background:var(--success)" onclick="confirmClosing()">REPRENDRE LA PRODUCTION</button>
-            <button onclick="document.getElementById('closeModal').style.display='none'" style="width:100%; margin-top:15px; background:none; border:none; color:#94a3b8; font-weight:bold;">ANNULER</button>
+    <div id="login-overlay" style="position:fixed; inset:0; background:var(--primary); z-index:9999; display:flex; justify-content:center; align-items:center;">
+        <div style="background:white; padding:30px; border-radius:20px; width:320px; text-align:center;">
+            <h2 style="color:var(--primary)">CVG LOGIN</h2>
+            <input type="password" id="pinInput" placeholder="Code PIN" style="margin-top:20px; text-align:center; font-size:1.5rem;">
+            <button class="btn btn-stop" style="background:var(--primary)" onclick="checkLogin()">ENTRER</button>
+            <p style="font-size:0.7rem; color:grey; margin-top:10px;">Op: 1111 | Tech: 2222 | Manager: 3333</p>
         </div>
     </div>
 
     <div id="app-content" class="hidden">
         <header>
-            <h2 style="font-size:1rem; color:var(--primary)">CVG <span style="color:var(--accent)">GMAO</span></h2>
-            <div id="roleBadge" style="font-size:0.7rem; background:#f1f5f9; padding:6px 12px; border-radius:50px; font-weight:800; border:1px solid #e2e8f0"></div>
+            <div><small>Interface</small><h2 id="roleTitle">...</h2></div>
+            <button onclick="location.reload()" style="background:none; border:none; color:white; font-size:1.2rem;"><i class="fas fa-sign-out-alt"></i></button>
         </header>
 
-        <div id="op-panel" class="main-card hidden">
-            <label><i class="fas fa-layer-group"></i> Projet / Ligne</label>
-            <select id="in-proj" onchange="updateMachineList()">
-                <option value="">-- Choisir Projet --</option>
-                <option value="SKODA">SKODA</option>
-                <option value="CRAFTER">CRAFTER</option>
-                <option value="G.CALIFORNIA">G.CALIFORNIA</option>
-            </select>
-
-            <label><i class="fas fa-robot"></i> Machine / Poste</label>
-            <select id="in-mach">
-                <option value="">-- Choisir Projet d'abord --</option>
-            </select>
-
-            <button class="btn-stop" onclick="openArret()">
-                <i class="fas fa-hand-paper"></i> SIGNALER ARRÊT (STOP)
-            </button>
+        <div id="manager-panel" class="hidden">
+            <div class="grid-manager">
+                <div class="kpi">Total Pannes<span id="m-count">0</span></div>
+                <div class="kpi">Downtime (Min)<span id="m-time">0</span></div>
+            </div>
+            <div class="card">
+                <h4 style="margin-bottom:10px;">Répartition par Projet</h4>
+                <canvas id="managerChart"></canvas>
+            </div>
+            <button class="btn btn-pdf" onclick="generateDailyPDF()"><i class="fas fa-file-pdf"></i> TELECHARGER RAPPORT PDF</button>
         </div>
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr><th>Machine</th><th>Heure</th><th>Statut</th></tr>
-                </thead>
-                <tbody id="data-table"></tbody>
-            </table>
+        <div id="op-panel" class="card hidden">
+            <label>Projet</label>
+            <select id="in-proj" onchange="updateMachineList()"><option value="SKODA">SKODA</option><option value="CRAFTER">CRAFTER</option><option value="G.CALIFORNIA">G.CALIFORNIA</option></select>
+            <label>Machine</label>
+            <select id="in-mach"></select>
+            <button class="btn btn-stop" onclick="openArret()">🛑 SIGNALER ARRÊT</button>
+        </div>
+
+        <div class="card" style="padding:10px;">
+            <h4 style="margin:10px;">Historique Live</h4>
+            <div id="pannes-list"></div>
+        </div>
+    </div>
+
+    <div id="closeModal">
+        <div style="background:white; padding:25px; border-radius:25px; width:100%; max-width:400px;">
+            <h3 style="color:var(--primary)">Clôture & Pièces</h3>
+            <input type="hidden" id="modal-key">
+            <label style="margin-top:15px; display:block;">Type de Panne</label>
+            <select id="modal-type"><option>Mécanique</option><option>Électrique</option><option>Pneumatique</option></select>
+            <label>Pièce Changée (Si applicable)</label>
+            <input type="text" id="modal-piece" placeholder="Ex: Capteur, Courroie, Valve...">
+            <button class="btn btn-stop" style="background:var(--success)" onclick="confirmClosing()">CONFIRMER START</button>
         </div>
     </div>
 
     <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
-        // --- DONNÉES DES MACHINES ---
-        const machineData = {
-            "SKODA": ["80008172", "80008173", "80008174"],
-            "CRAFTER": ["80008119", "80008122", "80008116"],
-            "G.CALIFORNIA": ["80006953"]
-        };
-
+        const machineData = { "SKODA": ["80008172", "80008173"], "CRAFTER": ["80008119", "80008122"], "G.CALIFORNIA": ["80006953"] };
         const firebaseConfig = {
             apiKey: "AIzaSyASQa5cLXFllnV6EmYp-ARZ9dndWSKha6c",
             authDomain: "cvgmaroc-gmao.firebaseapp.com",
@@ -123,113 +103,122 @@
             messagingSenderId: "72908747564",
             appId: "1:72908747564:web:82f646ef5dd209d03b7289"
         };
-        
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        let currentUser = null;
-        let audioActive = false;
-        const sound = document.getElementById('alertSound');
+        let currentUser = null; let myChart = null; let allData = [];
 
-        function enableAudio() { audioActive = true; }
-
-        // Mettre à jour la liste des machines selon le projet
-        function updateMachineList() {
-            const proj = document.getElementById('in-proj').value;
-            const machSelect = document.getElementById('in-mach');
-            machSelect.innerHTML = '<option value="">-- Sélectionner Machine --</option>';
-            
-            if(proj && machineData[proj]) {
-                machineData[proj].forEach(m => {
-                    machSelect.innerHTML += `<option value="${m}">${m}</option>`;
-                });
-            }
-        }
+        function enableAudio() { window.audioAllowed = true; }
 
         function checkLogin() {
             const pin = document.getElementById('pinInput').value;
-            if(pin === "1111") { currentUser = {role: 'OPERATEUR'}; loadApp(); }
-            else if(pin === "2222") { currentUser = {role: 'MAINTENANCE'}; loadApp(); }
-            else { alert("PIN Incorrect!"); }
-        }
-
-        function loadApp() {
+            if(pin === "1111") currentUser = "OPERATEUR";
+            else if(pin === "2222") currentUser = "MAINTENANCE";
+            else if(pin === "3333") currentUser = "MANAGER";
+            else return alert("PIN Erroné");
+            
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('app-content').classList.remove('hidden');
-            document.getElementById('roleBadge').innerText = currentUser.role;
-            if(currentUser.role === 'OPERATEUR') document.getElementById('op-panel').classList.remove('hidden');
-            listenToFirebase();
+            document.getElementById('roleTitle').innerText = currentUser;
+            if(currentUser === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
+            if(currentUser === "MANAGER") document.getElementById('manager-panel').classList.remove('hidden');
+            listenFirebase();
+        }
+
+        function updateMachineList() {
+            const proj = document.getElementById('in-proj').value;
+            const select = document.getElementById('in-mach');
+            select.innerHTML = "";
+            machineData[proj].forEach(m => select.innerHTML += `<option value="${m}">${m}</option>`);
         }
 
         function openArret() {
-            const proj = document.getElementById('in-proj').value;
-            const mach = document.getElementById('in-mach').value;
-            if(!proj || !mach) return alert("Sélectionnez le Projet et la Machine !");
-            
             database.ref('pannes/').push({
-                proj: proj,
-                mach: mach,
+                proj: document.getElementById('in-proj').value,
+                mach: document.getElementById('in-mach').value,
                 startTs: Date.now(),
-                startStr: new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}),
-                status: 'OPEN'
-            }).then(() => {
-                alert("🔴 ALERTE MAINTENANCE ENVOYÉE");
-                document.getElementById('in-proj').value = "";
-                updateMachineList();
+                startStr: new Date().toLocaleTimeString(),
+                dateStr: new Date().toLocaleDateString(),
+                status: 'OPEN',
+                piece: '-'
             });
         }
 
-        function listenToFirebase() {
-            database.ref('pannes/').on('value', (snapshot) => {
-                const data = snapshot.val();
-                const table = document.getElementById('data-table');
-                table.innerHTML = "";
-                let alertOn = false;
-
-                if(data) {
-                    Object.keys(data).reverse().forEach(key => {
-                        const p = data[key];
-                        const isOpen = p.status === 'OPEN';
-                        if(isOpen) alertOn = true;
-
-                        table.innerHTML += `
-                            <tr>
-                                <td><b>${p.mach}</b><br><small>${p.proj}</small></td>
-                                <td>${p.startStr}</td>
-                                <td>
-                                    ${isOpen && currentUser.role === 'MAINTENANCE' ? 
-                                    `<button class="btn-finish" style="background:var(--success); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;" onclick="openModal('${key}')">FIXED</button>` : 
-                                    `<span class="${isOpen ? 'status-open' : ''}">${isOpen ? '🛑 EN ARRÊT' : '✅ REPRIS'}</span>`}
-                                </td>
-                            </tr>
-                        `;
-                    });
-                }
-                
-                if(alertOn && currentUser.role === 'MAINTENANCE') {
-                    if(audioActive) sound.play();
-                    if(navigator.vibrate) navigator.vibrate([500, 200, 500]);
-                } else {
-                    sound.pause();
-                }
+        function listenFirebase() {
+            database.ref('pannes/').on('value', snap => {
+                const data = snap.val();
+                allData = data ? Object.entries(data).map(([key, val]) => ({key, ...val})) : [];
+                renderUI();
+                if(currentUser === "MANAGER") updateManagerDashboard();
             });
         }
 
-        function openModal(key) {
-            document.getElementById('modal-key').value = key;
-            document.getElementById('closeModal').style.display = 'flex';
+        function renderUI() {
+            const container = document.getElementById('pannes-list');
+            container.innerHTML = "";
+            let alertActive = false;
+
+            allData.reverse().forEach(p => {
+                const isOpen = p.status === 'OPEN';
+                if(isOpen) alertActive = true;
+                container.innerHTML += `
+                    <div style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <b>${p.mach}</b> <small>(${p.proj})</small><br>
+                            <small>${p.startStr} | ${isOpen ? '⏳ En cours' : p.duration+' min | 🛠️ '+p.piece}</small>
+                        </div>
+                        ${isOpen && currentUser === 'MAINTENANCE' ? `<button onclick="openModal('${p.key}')" style="background:var(--success); color:white; border:none; padding:8px 15px; border-radius:8px;">FINIR</button>` : `<b style="color:${isOpen?'red':'green'}">${isOpen?'ARRÊT':'OK'}</b>`}
+                    </div>
+                `;
+            });
+
+            if(alertActive && currentUser === "MAINTENANCE") {
+                if(window.audioAllowed) document.getElementById('alertSound').play();
+            } else { document.getElementById('alertSound').pause(); }
         }
+
+        function openModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display = 'flex'; }
 
         function confirmClosing() {
             const key = document.getElementById('modal-key').value;
-            const type = document.getElementById('modal-type').value;
-            
+            const item = allData.find(x => x.key === key);
+            const duration = Math.round((Date.now() - item.startTs) / 60000);
             database.ref('pannes/' + key).update({
                 status: 'CLOSED',
-                closeType: type,
-                closeTs: Date.now()
-            }).then(() => {
-                document.getElementById('closeModal').style.display = 'none';
+                duration: duration,
+                type: document.getElementById('modal-type').value,
+                piece: document.getElementById('modal-piece').value || 'Aucune'
+            }).then(() => document.getElementById('closeModal').style.display = 'none');
+        }
+
+        // --- PDF & DASHBOARD ---
+        function updateManagerDashboard() {
+            const stats = { "SKODA": 0, "CRAFTER": 0, "G.CALIFORNIA": 0 };
+            let totalTime = 0;
+            allData.forEach(p => { if(p.duration) { stats[p.proj] += p.duration; totalTime += p.duration; } });
+            
+            document.getElementById('m-count').innerText = allData.length;
+            document.getElementById('m-time').innerText = totalTime;
+
+            const ctx = document.getElementById('managerChart').getContext('2d');
+            if(myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: Object.keys(stats), datasets: [{ label: 'Minutes Perdues', data: Object.values(stats), backgroundColor: '#00d4ff' }] }
             });
+        }
+
+        function generateDailyPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("RAPPORT DE MAINTENANCE CVG - " + new Date().toLocaleDateString(), 15, 15);
+            
+            const rows = allData.map(p => [p.dateStr, p.mach, p.proj, p.startStr, p.duration || '0', p.type || '-', p.piece]);
+            doc.autoTable({
+                head: [['Date', 'Machine', 'Projet', 'Start', 'Duree(m)', 'Type', 'Piece']],
+                body: rows,
+                startY: 25
+            });
+            doc.save("Rapport_Maintenance.pdf");
         }
     </script>
 </body>
