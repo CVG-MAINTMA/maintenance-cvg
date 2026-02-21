@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CVG DYNAMICS | Smart GMAO 2026</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -15,99 +15,34 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
         :root { --primary: #002b5c; --accent: #00d4ff; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --bg: #f8fafc; --purple: #8b5cf6; }
-        
-        * { 
-            margin: 0; padding: 0; box-sizing: border-box; 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            -webkit-tap-highlight-color: transparent; /* Kat-mseh dik l-zarqa f t-tilifun mlli kat-wrek */
-        }
-
-        body { 
-            background: var(--bg); 
-            color: #1e293b; 
-            overflow-x: hidden;
-            overscroll-behavior-y: contain; /* Kat-mseh dik "pull-to-refresh" dial Chrome */
-        }
-
-        /* Header Style App Mobile */
-        header { 
-            background: var(--primary); 
-            color: white; 
-            padding: 18px 15px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .container {
-            padding: 15px;
-            max-width: 600px; /* Bach f l-PC ma-t-wellich 3riyyda bzaf */
-            margin: 0 auto;
-        }
-
-        .card { 
-            background: white; 
-            padding: 15px; 
-            border-radius: 18px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
-            margin-bottom: 15px; 
-            border: 1px solid #f1f5f9;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); padding: 10px; color: #1e293b; }
+        header { background: var(--primary); color: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .card { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
         .grid-kpi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
         .kpi-card { background: white; padding: 12px; border-radius: 15px; border-left: 5px solid var(--accent); position: relative; }
         .kpi-card span { display: block; font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
         .kpi-card b { font-size: 1.1rem; color: var(--primary); }
-
-        .btn { 
-            width: 100%; padding: 14px; border: none; border-radius: 14px; 
-            font-weight: 800; cursor: pointer; display: flex; 
-            align-items: center; justify-content: center; gap: 10px; 
-            transition: transform 0.1s active; font-size: 0.9rem;
-        }
-        .btn:active { transform: scale(0.98); } /* Effect dyal app mlli k-twrek */
-
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
         .btn-stop { background: var(--danger); color: white; }
         .btn-success { background: var(--success); color: white; }
         .btn-warning { background: var(--warning); color: white; }
         .btn-ghost { background: #f1f5f9; color: #64748b; margin-top: 8px; }
-
-        input, select { 
-            width: 100%; padding: 14px; border-radius: 12px; 
-            border: 1.5px solid #e2e8f0; margin-bottom: 12px; 
-            outline: none; background: #fff; font-size: 1rem;
-        }
-
+        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 10px; outline: none; background: #fff; }
         .hidden { display: none !important; }
-
-        /* Modal App Style */
-        .modal { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.6); 
-            display: none; justify-content: center; align-items: flex-end; /* I-ban men l-teht bhal iOS */
-            z-index: 10000; backdrop-filter: blur(4px); 
-        }
-        .modal .card { 
-            width: 100%; max-width: 500px; border-radius: 25px 25px 0 0; 
-            margin-bottom: 0; animation: slideUp 0.3s ease-out; 
-        }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-        .btn-del { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 1.1rem; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(5px); }
+        .btn-del { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 1rem; }
         .status-tag { font-size: 0.7rem; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; }
         .tag-open { background: #fee2e2; color: #ef4444; }
         .tag-progress { background: #fef3c7; color: #d97706; }
-        #archive-list, #stock-list { max-height: 50vh; overflow-y: auto; }
+        #archive-list, #stock-list { max-height: 400px; overflow-y: auto; }
     </style>
 </head>
 <body onclick="enableAudio()">
 
-    <div id="login-overlay" style="position:fixed; inset:0; background:var(--primary); z-index:9999; display:flex; justify-content:center; align-items:center; padding:20px;">
-        <div class="card" style="width:100%; max-width:340px; text-align:center;">
-            <h2 style="color:var(--primary); margin-bottom:20px;">GMAO CVG</h2>
+    <div id="login-overlay" style="position:fixed; inset:0; background:var(--primary); z-index:9999; display:flex; justify-content:center; align-items:center;">
+        <div class="card" style="width:340px; text-align:center;">
+            <h2>GMAO CVG</h2>
             <input type="text" id="login-user" placeholder="Utilisateur">
             <input type="password" id="login-pass" placeholder="Mot de passe">
             <button class="btn" style="background:var(--primary); color:white" onclick="handleLogin()">ACCÉDER</button>
@@ -116,77 +51,74 @@
 
     <div id="app-content" class="hidden">
         <header>
-            <div><small id="roleText" style="color:var(--accent); font-weight:800;"></small><h2 style="font-size:1.2rem;">CVG DYNAMICS</h2></div>
-            <button onclick="location.reload()" style="background:none; border:none; color:white; font-size:1.2rem;"><i class="fas fa-power-off"></i></button>
+            <div><small id="roleText" style="color:var(--accent); font-weight:800;"></small><h2>CVG DYNAMICS</h2></div>
+            <button onclick="location.reload()" style="background:none; border:none; color:white;"><i class="fas fa-power-off"></i></button>
         </header>
 
-        <div class="container">
-            <div id="manager-panel" class="hidden">
-                <div class="grid-kpi">
-                    <div class="kpi-card"><span>Interventions</span><b id="m-count">0</b></div>
-                    <div class="kpi-card"><span>Charge</span><b id="m-charge">0</b></div>
-                    <div class="kpi-card"><span>MTBF (H)</span><b id="m-mtbf">0</b></div>
-                    <div class="kpi-card"><span>MTTR (Min)</span><b id="m-mttr">0</b></div>
-                </div>
-
-                <div class="card" style="padding:10px;">
-                    <canvas id="downtimeChart" style="width:100%; height:180px;"></canvas>
-                </div>
-                
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
-                    <button class="btn" style="background:#0ea5e9; color:white;" onclick="document.getElementById('viewStockModal').style.display='flex'"><i class="fas fa-boxes-stacked"></i> STOCK</button>
-                    <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('archiveModal').style.display='flex'"><i class="fas fa-archive"></i> ARCHIVES</button>
-                    <button class="btn" style="background:#64748b; color:white;" onclick="document.getElementById('stockModal').style.display='flex'"><i class="fas fa-plus"></i> CATALOGUE</button>
-                    <button id="btn-users-ui" class="btn" style="background:#1e293b; color:white;" onclick="document.getElementById('userModal').style.display='flex'"><i class="fas fa-users"></i> USERS</button>
-                </div>
+        <div id="manager-panel" class="hidden">
+            <div class="grid-kpi">
+                <div class="kpi-card"><span>Interventions</span><b id="m-count">0</b></div>
+                <div class="kpi-card"><span>Charge Actuelle</span><b id="m-charge">0</b></div>
+                <div class="kpi-card"><span>MTBF (H)</span><b id="m-mtbf">0</b></div>
+                <div class="kpi-card"><span>MTTR (Min)</span><b id="m-mttr">0</b></div>
             </div>
 
-            <div id="op-panel" class="card hidden">
-                <label style="font-size:0.8rem; font-weight:800; color:var(--primary)">SÉLECTION PROJET & MACHINE</label>
-                <select id="in-proj" onchange="updateMachineList()"><option value="SKODA">SKODA</option><option value="CRAFTER">CRAFTER</option><option value="G.CALIFORNIA">G.CALIFORNIA</option></select>
-                <select id="in-mach"></select>
-                <button class="btn btn-stop" onclick="handlePanneSignal()"><i class="fas fa-exclamation-triangle"></i> SIGNALER ARRÊT</button>
+            <div class="card" style="padding:10px;">
+                <canvas id="downtimeChart" style="width:100%; max-height:200px;"></canvas>
             </div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
+                <button class="btn" style="background:#0ea5e9; color:white;" onclick="document.getElementById('viewStockModal').style.display='flex'"><i class="fas fa-boxes-stacked"></i> STOCK</button>
+                <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('archiveModal').style.display='flex'"><i class="fas fa-archive"></i> ARCHIVES</button>
+                <button class="btn" style="background:#64748b; color:white;" onclick="document.getElementById('stockModal').style.display='flex'"><i class="fas fa-plus"></i> CATALOGUE</button>
+                <button id="btn-users-ui" class="btn" style="background:#1e293b; color:white;" onclick="document.getElementById('userModal').style.display='flex'"><i class="fas fa-users"></i> USERS</button>
+            </div>
+        </div>
 
-            <div class="card">
-                <h4 style="margin-bottom:12px; font-size:0.9rem;"><i class="fas fa-bell" style="color:var(--danger)"></i> ALERTES ACTIVES</h4>
-                <div id="pannes-list"></div>
-            </div>
+        <div id="op-panel" class="card hidden">
+            <select id="in-proj" onchange="updateMachineList()"><option value="SKODA">SKODA</option><option value="CRAFTER">CRAFTER</option><option value="G.CALIFORNIA">G.CALIFORNIA</option></select>
+            <select id="in-mach"></select>
+            <button class="btn btn-stop" onclick="handlePanneSignal()">SIGNALER ARRÊT</button>
+        </div>
+
+        <div class="card">
+            <h4><i class="fas fa-bell"></i> ALERTES ACTIVES</h4>
+            <div id="pannes-list"></div>
         </div>
     </div>
 
     <div id="closeModal" class="modal">
-        <div class="card">
-            <h3 style="margin-bottom:15px;">Validation Finalisation</h3>
+        <div class="card" style="width:100%; max-width:400px;">
+            <h3>Validation Finalisation</h3>
             <input type="hidden" id="modal-key">
             <input list="spareparts" id="modal-piece" placeholder="Pièce utilisée">
             <datalist id="spareparts"></datalist>
-            <input type="number" id="modal-qty" value="1" placeholder="Quantité">
+            <input type="number" id="modal-qty" value="1">
             <button class="btn btn-success" onclick="confirmClosing()">TERMINER (DONE)</button>
             <button class="btn btn-ghost" onclick="document.getElementById('closeModal').style.display='none'">ANNULER</button>
         </div>
     </div>
 
     <div id="archiveModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-        <div class="card">
+        <div class="card" style="width:100%; max-width:600px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <h3>Archives</h3>
-                <button class="btn btn-success" style="width:auto; padding:8px 15px;" onclick="exportToPDF()">PDF</button>
+                <button class="btn btn-success" style="width:auto; padding:5px 15px;" onclick="exportToPDF()">PDF</button>
             </div>
             <div id="archive-list"></div>
         </div>
     </div>
 
     <div id="viewStockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-        <div class="card">
-            <h3 style="margin-bottom:15px;">Stock Actuel</h3>
+        <div class="card" style="width:100%; max-width:450px;">
+            <h3>Stock Actuel</h3>
             <div id="stock-list"></div>
         </div>
     </div>
 
     <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-        <div class="card">
-            <h3 style="margin-bottom:15px;">Ajouter au Stock</h3>
+        <div class="card" style="width:100%; max-width:400px;">
+            <h3>Ajouter au Stock</h3>
             <input type="text" id="new-p-name" placeholder="Nom de la pièce">
             <input type="number" id="new-p-qty" placeholder="Quantité">
             <button class="btn btn-success" onclick="addNewStock()">VALIDER</button>
@@ -194,13 +126,13 @@
     </div>
 
     <div id="userModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-        <div class="card">
+        <div class="card" style="width:100%; max-width:400px;">
             <h3>Utilisateurs</h3>
             <input type="text" id="u-name" placeholder="Nom">
             <input type="password" id="u-pass" placeholder="Pass">
             <select id="u-role"><option value="MAINTENANCE">MAINTENANCE</option><option value="OPERATEUR">OPERATEUR</option><option value="MANAGER">MANAGER</option></select>
             <button class="btn btn-success" onclick="addNewUser()">CRÉER</button>
-            <div id="users-list-ui" style="margin-top:10px; max-height:200px; overflow-y:auto;"></div>
+            <div id="users-list-ui" style="margin-top:10px;"></div>
         </div>
     </div>
 
@@ -245,33 +177,43 @@
         function listenFirebase() {
             database.ref('pannes/').on('value', snap => {
                 allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
-                renderUI(); renderArchives(); updateStats();
-                if(currentUser === "MANAGER") updateCharts();
+                renderUI(); 
+                renderArchives();
+                updateStats();
+                if(currentUser === "MANAGER") updateCharts(); // Mise à jour du graphique pour Manager
             });
         }
 
+        // --- NOUVELLE FONCTION GRAPHIQUE ---
         function updateCharts() {
-            const chartCanvas = document.getElementById('downtimeChart');
-            if(!chartCanvas) return;
-            const ctx = chartCanvas.getContext('2d');
+            const ctx = document.getElementById('downtimeChart').getContext('2d');
             const dataMap = {};
+            
+            // On calcule le downtime total par machine (Minutes)
             allData.filter(p => p.status === 'CLOSED').forEach(p => {
                 const label = `${p.proj} - ${p.mach}`;
                 dataMap[label] = (dataMap[label] || 0) + (p.duration || 0);
             });
+
             const labels = Object.keys(dataMap);
             const values = Object.values(dataMap);
-            if(myChart) myChart.destroy();
+
+            if(myChart) myChart.destroy(); // On détruit l'ancien pour ne pas avoir de bug au survol
+
             myChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [{ label: 'Min', data: values, backgroundColor: '#00d4ff', borderRadius: 6 }]
+                    datasets: [{
+                        label: 'Downtime Total (Min)',
+                        data: values,
+                        backgroundColor: '#00d4ff',
+                        borderRadius: 8
+                    }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { legend: { display: false }, title: { display: true, text: 'Temps d\'arrêt par Machine', color: '#002b5c' } },
                     scales: { y: { beginAtZero: true } }
                 }
             });
@@ -285,12 +227,12 @@
                 let statusHtml = p.status === 'OPEN' ? `<span class="status-tag tag-open">EN ARRÊT</span>` : `<span class="status-tag tag-progress">RÉPARATION...</span>`;
                 let actionBtn = "";
                 if(currentUser === 'MAINTENANCE') {
-                    if(p.status === 'OPEN') actionBtn = `<button class="btn btn-warning" style="padding:10px; margin-top:10px;" onclick="takeCharge('${p.key}')">I'M GOING</button>`;
-                    else actionBtn = `<button class="btn btn-success" style="padding:10px; margin-top:10px;" onclick="openRepriseModal('${p.key}')">DONE</button>`;
+                    if(p.status === 'OPEN') actionBtn = `<button class="btn btn-warning" style="padding:8px; margin-top:8px;" onclick="takeCharge('${p.key}')">I'M GOING</button>`;
+                    else actionBtn = `<button class="btn btn-success" style="padding:8px; margin-top:8px;" onclick="openRepriseModal('${p.key}')">DONE</button>`;
                 }
-                container.innerHTML += `<div class="card" style="border-left:6px solid ${p.status === 'OPEN' ? 'var(--danger)' : 'var(--warning)'}; padding:12px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;"><b>${p.mach}</b>${statusHtml}</div>
-                    <small style="color:#64748b">${p.proj} | ${p.dateStr}</small><br>${actionBtn}
+                container.innerHTML += `<div class="card" style="border-left:5px solid ${p.status === 'OPEN' ? 'var(--danger)' : 'var(--warning)'}">
+                    <div style="display:flex; justify-content:space-between"><b>${p.mach}</b>${statusHtml}</div>
+                    <small>${p.proj} | ${p.dateStr}</small><br>${actionBtn}
                 </div>`;
             });
             if(actives.some(p => p.status === 'OPEN') && currentUser !== 'OPERATEUR') document.getElementById('alertSound').play().catch(()=>{}); else document.getElementById('alertSound').pause();
@@ -302,7 +244,7 @@
             const archives = allData.filter(p => p.status === 'CLOSED');
             archives.reverse().forEach(p => {
                 list.innerHTML += `<div class="card" style="padding:10px; margin-bottom:8px; border-left:5px solid var(--success); display:flex; justify-content:space-between; align-items:center;">
-                    <div><b style="font-size:0.85rem;">${p.mach}</b><br><small style="font-size:0.7rem;">${p.dateStr} | ${p.duration}min | ${p.piece}</small></div>
+                    <div><b>${p.mach}</b> <span style="color:var(--success); font-weight:800; font-size:0.7rem;">DONE</span><br><small>${p.dateStr} | ${p.duration}min | ${p.piece}</small></div>
                     ${currentUser === 'MANAGER' ? `<button class="btn-del" onclick="deletePanne('${p.key}')"><i class="fas fa-trash"></i></button>` : ''}
                 </div>`;
             });
@@ -323,7 +265,7 @@
                 const dl = document.getElementById('spareparts'); if(!dl) return;
                 dl.innerHTML = "";
                 if(snap.val()) Object.entries(snap.val()).forEach(([name, data]) => {
-                    list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #f1f5f9;"><span>${name}</span><b>${data.qty}</b></div>`;
+                    list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;"><span>${name}</span><b>${data.qty}</b></div>`;
                     dl.innerHTML += `<option value="${name}">`;
                 });
             });
@@ -333,7 +275,7 @@
             database.ref('users/').on('value', snap => {
                 const div = document.getElementById('users-list-ui'); if(!div) return;
                 div.innerHTML = "";
-                if(snap.val()) Object.entries(snap.val()).forEach(([key, u]) => { div.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px; background:#f8fafc; border-radius:8px; margin-bottom:5px;"><span>${u.name}</span> <button onclick="database.ref('users/${key}').remove()" style="color:red; border:none; background:none;">&times;</button></div>`; });
+                if(snap.val()) Object.entries(snap.val()).forEach(([key, u]) => { div.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>${u.name}</span> <button onclick="database.ref('users/${key}').remove()" style="color:red; border:none; background:none;">&times;</button></div>`; });
             });
         }
 
