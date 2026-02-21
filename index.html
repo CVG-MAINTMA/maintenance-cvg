@@ -71,30 +71,11 @@
                 <div class="kpi-card"><span>MTTR (Min)</span><b id="m-mttr">0</b></div>
             </div>
             <div class="card" style="padding:10px;"><canvas id="downtimeChart" style="width:100%; max-height:200px;"></canvas></div>
-            
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button class="btn" style="background:#0ea5e9; color:white;" onclick="document.getElementById('viewStockModal').style.display='flex'"><i class="fas fa-boxes-stacked"></i> STOCK</button>
                 <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('archiveModal').style.display='flex'"><i class="fas fa-archive"></i> ARCHIVES</button>
                 <button class="btn" style="background:#16a34a; color:white;" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> EXCEL + DASH</button>
                 <button class="btn" style="background:#64748b; color:white;" onclick="document.getElementById('stockModal').style.display='flex'"><i class="fas fa-plus"></i> CATALOGUE</button>
-            </div>
-
-            <div class="card" style="border: 1px solid var(--purple); background: #ffffff; position: relative; overflow: hidden;">
-                <div style="background: var(--purple); color: white; padding: 10px; margin: -15px -15px 15px -15px; font-weight: 800; font-size: 0.8rem; text-align: center;">
-                    <i class="fas fa-user-plus"></i> AJOUTER UN NOUVEAU MATRICULE
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <input type="text" id="new-user-name" placeholder="Matricule" style="margin-bottom: 5px;">
-                    <input type="password" id="new-user-pass" placeholder="Password" style="margin-bottom: 5px;">
-                </div>
-                <select id="new-user-role" style="background: #fdfaff; border: 1.5px solid var(--purple);">
-                    <option value="MAINTENANCE">🛠️ MAINTENANCE</option>
-                    <option value="OPERATEUR">👷 OPERATEUR</option>
-                    <option value="MANAGER">📈 MANAGER</option>
-                </select>
-                <button class="btn" style="background:var(--purple); color:white" onclick="addNewUser()">
-                    ENREGISTRER L'UTILISATEUR
-                </button>
             </div>
         </div>
 
@@ -156,7 +137,7 @@
             if(u === "admin" && p === "3333") return startApp("MANAGER");
             database.ref('users/').once('value', snap => {
                 let found = false; if(snap.val()) Object.values(snap.val()).forEach(usr => { if(usr.name.toLowerCase() === u && usr.pass === p) { found = true; startApp(usr.role); }});
-                if(!found) alert("Refusé : Matricule ou mot de passe incorrect");
+                if(!found) alert("Refusé");
             });
         }
 
@@ -170,19 +151,7 @@
             if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
         }
 
-        function addNewUser() {
-            const name = document.getElementById('new-user-name').value.trim();
-            const pass = document.getElementById('new-user-pass').value;
-            const role = document.getElementById('new-user-role').value;
-            if (name && pass) {
-                database.ref('users/').push({ name, pass, role }).then(() => {
-                    alert("Utilisateur " + name + " ajouté avec succès!");
-                    document.getElementById('new-user-name').value = "";
-                    document.getElementById('new-user-pass').value = "";
-                });
-            } else { alert("Remplir tous les champs !"); }
-        }
-
+        // QR SCANNER LOGIC
         function startScanner() {
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (decodedText) => {
@@ -206,6 +175,7 @@
 
         function stopScanner() { if(html5QrCode) html5QrCode.stop().then(()=>document.getElementById("reader").innerHTML=""); }
 
+        // CORE LOGIC
         function listenFirebase() {
             database.ref('pannes/').on('value', snap => {
                 allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
@@ -235,7 +205,7 @@
             document.getElementById('m-charge').innerText = actives.length;
             actives.reverse().forEach(p => {
                 let statusHtml = p.status === 'OPEN' ? `<span class="status-tag tag-open">EN ARRÊT</span>` : `<span class="status-tag tag-progress">RÉPARATION...</span>`;
-                let actionBtn = (currentUser === 'MAINTENANCE' || currentUser === 'MANAGER') ? (p.status === 'OPEN' ? 
+                let actionBtn = (currentUser === 'MAINTENANCE') ? (p.status === 'OPEN' ? 
                     `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">I'M GOING</button>` : 
                     `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">DONE</button>`) : "";
                 container.innerHTML += `<div class="card" style="border-left:5px solid ${p.status === 'OPEN' ? 'var(--danger)' : 'var(--warning)'}">
@@ -284,8 +254,10 @@
             const wsData = XLSX.utils.json_to_sheet(closed.map(p => ({
                 'Date': p.dateStr, 'Tech': p.techId, 'Machine': p.mach, 'Downtime(m)': p.duration, 'Problème': p.problem, 'Solution': p.solution
             })));
+            const dashData = [['KPI ANALYTICS'], ['Total Interv.', closed.length], ['MTTR Moy.', document.getElementById('m-mttr').innerText + ' min']];
+            const wsDash = XLSX.utils.aoa_to_sheet(dashData);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, wsData, "Logs");
+            XLSX.utils.book_append_sheet(wb, wsData, "Logs"); XLSX.utils.book_append_sheet(wb, wsDash, "Dashboard");
             XLSX.writeFile(wb, "GMAO_Report.xlsx");
         }
 
@@ -311,3 +283,4 @@
     </script>
 </body>
 </html>
+
