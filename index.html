@@ -29,7 +29,8 @@
         .btn-success { background: var(--success); color: white; }
         .btn-warning { background: var(--warning); color: white; }
         .btn-ghost { background: #f1f5f9; color: #64748b; margin-top: 8px; }
-        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 10px; outline: none; background: #fff; }
+        input, select, textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 10px; outline: none; background: #fff; font-size: 0.9rem; }
+        textarea { height: 60px; resize: none; }
         .hidden { display: none !important; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(5px); }
         .btn-del { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 1rem; }
@@ -91,11 +92,18 @@
 
     <div id="closeModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
-            <h3>Validation Finalisation</h3>
+            <h3>Rapport d'Intervention</h3>
             <input type="hidden" id="modal-key">
-            <input list="spareparts" id="modal-piece" placeholder="Pièce utilisée">
+            
+            <textarea id="modal-problem" placeholder="Description du problème (Mouchkil)"></textarea>
+            <textarea id="modal-solution" placeholder="Solution apportée (L-7al)"></textarea>
+            
+            <label style="font-size: 0.7rem; font-weight: 800; color: #64748b;">PIÈCE DÉTACHÉE :</label>
+            <input list="spareparts" id="modal-piece" placeholder="Nom de la pièce (Optionnel)">
             <datalist id="spareparts"></datalist>
-            <input type="number" id="modal-qty" value="1">
+            
+            <input type="number" id="modal-qty" value="1" placeholder="Quantité">
+            
             <button class="btn btn-success" onclick="confirmClosing()">TERMINER (DONE)</button>
             <button class="btn btn-ghost" onclick="document.getElementById('closeModal').style.display='none'">ANNULER</button>
         </div>
@@ -104,7 +112,7 @@
     <div id="archiveModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
         <div class="card" style="width:100%; max-width:600px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h3>Archives</h3>
+                <h3>Archives Maintenance</h3>
                 <button class="btn btn-success" style="width:auto; padding:5px 15px;" onclick="exportToPDF()">PDF</button>
             </div>
             <div id="archive-list"></div>
@@ -120,7 +128,7 @@
 
     <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
         <div class="card" style="width:100%; max-width:400px;">
-            <h3>Ajouter au Stock</h3>
+            <h3>Ajouter au Catalogue</h3>
             <input type="text" id="new-p-name" placeholder="Nom de la pièce">
             <input type="number" id="new-p-qty" placeholder="Quantité">
             <button class="btn btn-success" onclick="addNewStock()">VALIDER</button>
@@ -190,17 +198,15 @@
             const ctx = document.getElementById('downtimeChart').getContext('2d');
             const dataMap = {};
             allData.filter(p => p.status === 'CLOSED').forEach(p => {
-                const label = `${p.proj} - ${p.mach}`;
+                const label = `${p.proj}-${p.mach}`;
                 dataMap[label] = (dataMap[label] || 0) + (p.duration || 0);
             });
-            const labels = Object.keys(dataMap);
-            const values = Object.values(dataMap);
             if(myChart) myChart.destroy();
             myChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: labels,
-                    datasets: [{ label: 'Downtime (Min)', data: values, backgroundColor: '#00d4ff', borderRadius: 8 }]
+                    labels: Object.keys(dataMap),
+                    datasets: [{ label: 'Min', data: Object.values(dataMap), backgroundColor: '#00d4ff', borderRadius: 8 }]
                 },
                 options: { responsive: true, plugins: { legend: { display: false } } }
             });
@@ -230,9 +236,12 @@
             list.innerHTML = "";
             const archives = allData.filter(p => p.status === 'CLOSED');
             archives.reverse().forEach(p => {
-                list.innerHTML += `<div class="card" style="padding:10px; margin-bottom:8px; border-left:5px solid var(--success); display:flex; justify-content:space-between; align-items:center;">
-                    <div><b>${p.mach}</b> <span style="color:var(--success); font-weight:800; font-size:0.7rem;">DONE</span><br><small>${p.dateStr} | ${p.duration}min | ${p.piece}</small></div>
-                    ${currentUser === 'MANAGER' ? `<button class="btn-del" onclick="deletePanne('${p.key}')"><i class="fas fa-trash"></i></button>` : ''}
+                list.innerHTML += `<div class="card" style="padding:10px; border-left:5px solid var(--success);">
+                    <div style="display:flex; justify-content:space-between"><b>${p.mach} (${p.proj})</b> <small>${p.duration}m</small></div>
+                    <div style="font-size:0.75rem; margin-top:5px; color:#64748b;">
+                        <b>P:</b> ${p.problem || 'N/A'}<br><b>S:</b> ${p.solution || 'N/A'}<br><b>Spare:</b> ${p.piece} (x${p.qty || 0})
+                    </div>
+                    ${currentUser === 'MANAGER' ? `<div style="text-align:right"><button class="btn-del" onclick="deletePanne('${p.key}')"><i class="fas fa-trash"></i></button></div>` : ''}
                 </div>`;
             });
         }
@@ -245,32 +254,55 @@
             document.getElementById('m-mtbf').innerText = closed.length > 0 ? Math.round(720 / closed.length) : 720;
         }
 
-        // --- NOUVELLE FONCTION EXCEL ---
+        function confirmClosing() {
+            const key = document.getElementById('modal-key').value;
+            const problem = document.getElementById('modal-problem').value.trim();
+            const solution = document.getElementById('modal-solution').value.trim();
+            const piece = document.getElementById('modal-piece').value.toUpperCase().trim();
+            const qtyUsed = parseInt(document.getElementById('modal-qty').value) || 1;
+            
+            if(!problem || !solution) return alert("Remplir le problème et la solution !");
+
+            const item = allData.find(x => x.key === key);
+            const duration = Math.round((Date.now() - item.startTs) / 60000);
+
+            database.ref('pannes/' + key).update({ 
+                status: 'CLOSED', 
+                duration, 
+                problem: problem,
+                solution: solution,
+                piece: piece || 'N/A',
+                qty: piece !== '' ? qtyUsed : 0
+            }).then(() => {
+                if(piece && piece !== 'N/A') {
+                    const sRef = database.ref('stock/' + piece);
+                    sRef.once('value', s => { if(s.exists()) sRef.set({ qty: Math.max(0, s.val().qty - qtyUsed) }); });
+                }
+                document.getElementById('modal-problem').value = "";
+                document.getElementById('modal-solution').value = "";
+                document.getElementById('closeModal').style.display = 'none';
+            });
+        }
+
         function exportToExcel() {
-            const closedData = allData.filter(p => p.status === 'CLOSED').map(p => ({
-                'Date': p.dateStr,
-                'Projet': p.proj,
-                'Machine': p.mach,
-                'Durée (Min)': p.duration,
-                'Pièce Utilisée': p.piece,
-                'Status': 'TERMINÉ'
+            const rows = allData.filter(p => p.status === 'CLOSED').map(p => ({
+                'Date': p.dateStr, 'Projet': p.proj, 'Machine': p.mach, 'Downtime(m)': p.duration,
+                'Problème': p.problem, 'Solution': p.solution, 'Pièce': p.piece, 'Qté': p.qty
             }));
-            if(closedData.length === 0) return alert("Archive vide!");
-            const worksheet = XLSX.utils.json_to_sheet(closedData);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Maintenance");
-            XLSX.writeFile(workbook, "Rapport_GMAO_" + new Date().toLocaleDateString() + ".xlsx");
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Rapport");
+            XLSX.writeFile(wb, "GMAO_Export_" + new Date().toLocaleDateString() + ".xlsx");
         }
 
         function exportToPDF() {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            const { jsPDF } = window.jspdf; const doc = new jsPDF('l');
             doc.text("Rapport Maintenance CVG", 14, 15);
-            const rows = allData.filter(p => p.status === 'CLOSED').map(p => [p.dateStr, p.proj, p.mach, p.duration + "m", p.piece]);
-            doc.autoTable({ head: [['Date', 'Projet', 'Machine', 'Temps', 'Pièce']], body: rows, startY: 25 });
-            doc.save("Rapport_GMAO.pdf");
+            const rows = allData.filter(p => p.status === 'CLOSED').map(p => [p.dateStr, p.mach, p.duration + "m", p.problem, p.solution, p.piece]);
+            doc.autoTable({ head: [['Date', 'Machine', 'Durée', 'Problème', 'Solution', 'Pièce']], body: rows, startY: 25 });
+            doc.save("GMAO_Rapport.pdf");
         }
 
-        // Functions for database actions
         function listenStock() {
             database.ref('stock/').on('value', snap => {
                 const list = document.getElementById('stock-list'); if(!list) return;
@@ -294,19 +326,6 @@
 
         function takeCharge(key) { database.ref('pannes/' + key).update({ status: 'IN_PROGRESS' }); }
         function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display = 'flex'; }
-        
-        function confirmClosing() {
-            const key = document.getElementById('modal-key').value, piece = document.getElementById('modal-piece').value.toUpperCase().trim(), qtyUsed = parseInt(document.getElementById('modal-qty').value) || 1;
-            const item = allData.find(x => x.key === key), duration = Math.round((Date.now() - item.startTs) / 60000);
-            database.ref('pannes/' + key).update({ status: 'CLOSED', duration, piece: piece || 'N/A' }).then(() => {
-                if(piece && piece !== 'N/A') {
-                    const sRef = database.ref('stock/' + piece);
-                    sRef.once('value', s => { if(s.exists()) sRef.set({ qty: Math.max(0, s.val().qty - qtyUsed) }); });
-                }
-                document.getElementById('closeModal').style.display = 'none';
-            });
-        }
-
         function handlePanneSignal() {
             const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value;
             database.ref('pannes/').push({ proj, mach, status: 'OPEN', startTs: Date.now(), dateStr: new Date().toLocaleString() });
