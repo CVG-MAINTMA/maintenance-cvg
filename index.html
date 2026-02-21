@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CVG DYNAMICS PRO | Full Edition</title>
+    <title>CVG DYNAMICS | Smart GMAO 2026</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
@@ -16,118 +16,148 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
         :root { --primary: #002b5c; --accent: #00d4ff; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --bg: #f8fafc; --purple: #8b5cf6; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg); padding: 10px; }
-        header { background: var(--primary); color: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        body { background: var(--bg); padding: 10px; color: #1e293b; }
+
+        /* Login & UI Elements */
+        #login-overlay { position:fixed; inset:0; background:radial-gradient(circle at top right, var(--primary), #001a38); z-index:9999; display:flex; justify-content:center; align-items:center; }
+        header { background: var(--primary); color: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .card { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        .grid-kpi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
-        .kpi-card { background: white; padding: 12px; border-radius: 15px; border-left: 5px solid var(--accent); }
-        .kpi-card b { font-size: 1.1rem; color: var(--primary); display: block; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 5px; }
-        input, select { width: 100%; padding: 10px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 8px; }
+        
+        /* Dashboard & KPIs */
+        .grid-kpi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
+        .kpi-card { background: white; padding: 15px; border-radius: 15px; border-left: 5px solid var(--accent); }
+        .kpi-card span { display: block; font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase; }
+        .kpi-card b { font-size: 1.1rem; color: var(--primary); }
+
+        /* Stock Alerts */
+        .stock-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #eee; font-size: 0.8rem; }
+        .stock-low { color: var(--danger); font-weight: bold; animation: blinker 1.5s linear infinite; }
+
+        /* Interaction */
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
+        .btn-stop { background: var(--danger); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 10px; outline: none; }
+        
         .hidden { display: none !important; }
-        .badge-danger { background: var(--danger); color: white; padding: 2px 6px; border-radius: 5px; font-size: 0.7rem; }
-        #preview-img { width: 100%; border-radius: 10px; margin: 10px 0; display: none; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; overflow-y: auto; }
+        .alert-blink { animation: blinker 1.5s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0.3; } }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(5px); overflow-y: auto; }
     </style>
 </head>
 <body onclick="enableAudio()">
 
-    <div id="login-overlay" style="position:fixed; inset:0; background:var(--primary); z-index:9999; display:flex; justify-content:center; align-items:center;">
-        <div class="card" style="width:340px; text-align:center;">
-            <h2 style="margin-bottom:20px;">CONNEXION GMAO</h2>
-            <input type="text" id="login-user" placeholder="Utilisateur">
+    <div id="login-overlay">
+        <div class="card" style="width:340px; text-align:center; padding:40px 30px;">
+            <div style="background:var(--primary); width:60px; height:60px; border-radius:15px; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; color:white;"><i class="fas fa-shield-alt fa-2x"></i></div>
+            <h2 style="color:var(--primary); margin-bottom:20px;">CONNEXION</h2>
+            <input type="text" id="login-user" placeholder="Nom d'utilisateur">
             <input type="password" id="login-pass" placeholder="Mot de passe">
-            <button class="btn" style="background:var(--primary); color:white;" onclick="handleLogin()">ACCÉDER</button>
+            <button class="btn" style="background:var(--primary); color:white" onclick="handleLogin()">ACCÉDER AU SYSTÈME</button>
+            <div style="margin-top:15px; font-size:0.6rem; color:#94a3b8;">Codes Usine: 1111 | 2222 | 3333</div>
         </div>
     </div>
 
     <div id="app-content" class="hidden">
         <header>
-            <div><small id="roleText"></small><h4>CVG DYNAMICS</h4></div>
-            <button onclick="location.reload()" style="background:none; border:none; color:white;"><i class="fas fa-sign-out-alt"></i></button>
+            <div><small id="roleText" style="font-weight:bold; color:var(--accent)"></small><h2 style="font-size:1.1rem;">CVG <span style="color:var(--accent)">DYNAMICS</span></h2></div>
+            <button onclick="location.reload()" style="background:none; border:none; color:white; font-size:1.2rem;"><i class="fas fa-power-off"></i></button>
         </header>
 
         <div id="stock-panel" class="card hidden">
-            <h4 style="font-size:0.8rem;"><i class="fas fa-box"></i> ALERTES STOCK PIÈCES</h4>
+            <h4 style="font-size:0.8rem; margin-bottom:10px;"><i class="fas fa-warehouse"></i> ALERTES STOCK PIÈCES</h4>
             <div id="stock-list"></div>
         </div>
 
         <div id="manager-panel" class="hidden">
-            <div class="card">
-                <label>Filtrer par Mois:</label>
+            <div class="card" style="padding:10px;">
+                <label style="font-size:0.7rem;">FILTRER PAR MOIS :</label>
                 <input type="month" id="filter-month" onchange="updateManagerDashboard()">
             </div>
             <div class="grid-kpi">
-                <div class="kpi-card"><span>Pannes</span><b id="m-count">0</b></div>
-                <div class="kpi-card"><span>Downtime</span><b id="m-time">0</b></div>
-                <div class="kpi-card" id="card-mtbf"><span>MTBF</span><b id="m-mtbf">0</b></div>
-                <div class="kpi-card" id="card-mttr"><span>MTTR</span><b id="m-mttr">0</b></div>
+                <div class="kpi-card"><span>Total Pannes</span><b id="m-count">0</b></div>
+                <div class="kpi-card" style="border-left-color: var(--danger);"><span>Downtime</span><b id="m-time">0</b></div>
+                <div class="kpi-card" id="card-mtbf" style="border-left-color: var(--success);"><span>MTBF (Moy)</span><b id="m-mtbf">0</b></div>
+                <div class="kpi-card" id="card-mttr" style="border-left-color: var(--purple);"><span>MTTR (Répar.)</span><b id="m-mttr">0</b></div>
             </div>
-            <canvas id="managerChart" style="max-height: 200px;"></canvas>
-            <button class="btn" style="background:#1e293b; color:white" onclick="generateDailyPDF()">RAPPORT PDF</button>
-            <button class="btn" style="background:var(--purple); color:white" onclick="document.getElementById('userModal').style.display='flex'">GÉRER USERS</button>
+            <div class="card"><canvas id="managerChart" style="max-height:180px;"></canvas></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
+                <button class="btn" style="background:#1e293b; color:white;" onclick="generateDailyPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
+                <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('userModal').style.display='flex'"><i class="fas fa-users"></i> USERS</button>
+            </div>
         </div>
 
         <div id="op-panel" class="card hidden">
+            <label>Projet</label>
             <select id="in-proj" onchange="updateMachineList()"><option value="SKODA">SKODA</option><option value="CRAFTER">CRAFTER</option><option value="G.CALIFORNIA">G.CALIFORNIA</option></select>
+            <label>Machine</label>
             <select id="in-mach"></select>
-            <label style="font-size: 0.7rem;"><i class="fas fa-camera"></i> Photo du problème (Optionnel):</label>
-            <input type="file" id="in-file" accept="image/*" capture="camera">
-            <button class="btn" style="background:var(--danger); color:white" onclick="openArret()">SIGNALER ARRÊT</button>
+            <label style="font-size:0.7rem; color:var(--primary); font-weight:bold;"><i class="fas fa-camera"></i> CAPTURER PHOTO (OPTIONNEL)</label>
+            <input type="file" id="in-file" accept="image/*" capture="camera" style="font-size:0.8rem;">
+            <button class="btn btn-stop" onclick="handlePanneSignal()"><i class="fas fa-exclamation-triangle"></i> SIGNALER ARRÊT</button>
         </div>
 
         <div class="card">
-            <h4><i class="fas fa-history"></i> HISTORIQUE RÉCENT</h4>
+            <h4 style="margin-bottom:10px; font-size:0.9rem; color:var(--primary)"><i class="fas fa-clock"></i> DERNIÈRES INTERVENTIONS</h4>
             <div id="pannes-list"></div>
         </div>
     </div>
 
     <div id="closeModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
-            <h3>Détails Réparation</h3>
-            <div id="img-container"></div>
-            <select id="modal-type"><option>🔧 Mécanique</option><option>⚡ Électrique</option><option>⚙️ Process</option></select>
-            <input type="text" id="modal-piece" placeholder="Nom de la pièce (ex: Capteur)">
-            <input type="number" id="modal-qty" placeholder="Quantité utilisée" value="1">
-            <button class="btn" style="background:var(--success); color:white;" onclick="confirmClosing()">VALIDER REPRISE</button>
+            <h3 style="color:var(--primary); margin-bottom:15px;">Détails Réparation</h3>
+            <div id="modal-img-preview" style="margin-bottom:15px;"></div>
+            <label>Intervention</label>
+            <select id="modal-type"><option>🔧 Mécanique</option><option>⚡ Électrique</option><option>⚙️ Process</option><option>📦 Logistique</option></select>
+            <label>Pièce de Rechange</label>
+            <input type="text" id="modal-piece" placeholder="Ex: CAPTEUR">
+            <label>Quantité</label>
+            <input type="number" id="modal-qty" value="1" min="1">
+            <button class="btn btn-success" onclick="confirmClosing()">VALIDER ET REDÉMARRER</button>
+            <button class="btn" style="background:none; color:grey" onclick="document.getElementById('closeModal').style.display='none'">Annuler</button>
         </div>
     </div>
 
     <div id="userModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
-            <h3>Nouveau User</h3>
+            <h3>Gestion Utilisateurs</h3>
             <input type="text" id="new-username" placeholder="Nom">
             <input type="password" id="new-password" placeholder="Pass">
             <select id="new-role"><option value="OPERATEUR">OPERATEUR</option><option value="MAINTENANCE">MAINTENANCE</option><option value="MANAGER">MANAGER</option></select>
-            <button class="btn" style="background:var(--success); color:white" onclick="saveUser()">SAUVEGARDER</button>
-            <button class="btn" onclick="this.parentElement.parentElement.style.display='none'">FERMER</button>
+            <button class="btn btn-success" onclick="saveUser()">ENREGISTRER USER</button>
+            <button class="btn" style="margin-top:10px;" onclick="document.getElementById('userModal').style.display='none'">FERMER</button>
         </div>
     </div>
 
+    <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
     <script>
+        const machineData = { "SKODA": ["80008172", "80008173", "80008174"], "CRAFTER": ["80008119", "80008122", "80008116"], "G.CALIFORNIA": ["80006953"] };
         const firebaseConfig = {
             apiKey: "AIzaSyASQa5cLXFllnV6EmYp-ARZ9dndWSKha6c",
             authDomain: "cvgmaroc-gmao.firebaseapp.com",
             databaseURL: "https://cvgmaroc-gmao-default-rtdb.firebaseio.com",
             projectId: "cvgmaroc-gmao",
-            storageBucket: "cvgmaroc-gmao.firebasestorage.app", // Darouri l-tsawer
+            storageBucket: "cvgmaroc-gmao.firebasestorage.app",
             messagingSenderId: "72908747564",
             appId: "1:72908747564:web:82f646ef5dd209d03b7289"
         };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        const storage = firebase.storage();
         let currentUser = null, allData = [], myChart = null;
 
         function enableAudio() { window.audioAllowed = true; }
 
+        // --- AUTH LOGIC ---
         function handleLogin() {
             const u = document.getElementById('login-user').value, p = document.getElementById('login-pass').value;
             if(u === "admin" && p === "3333") return startApp("MANAGER");
             database.ref('users/').once('value', snap => {
-                const users = snap.val(); let found = false;
-                if(users) Object.values(users).forEach(usr => { if(usr.name===u && usr.pass===p){ found=true; startApp(usr.role); }});
-                if(!found) alert("Erreur connexion");
+                let found = false;
+                if(snap.val()) Object.values(snap.val()).forEach(usr => {
+                    if(usr.name === u && usr.pass === p) { found = true; startApp(usr.role); }
+                });
+                if(!found) alert("Identifiants incorrects");
             });
         }
 
@@ -135,32 +165,36 @@
             currentUser = role;
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('app-content').classList.remove('hidden');
-            document.getElementById('roleText').innerText = role;
+            document.getElementById('roleText').innerText = "CVG | " + role;
             if(role !== "OPERATEUR") document.getElementById('stock-panel').classList.remove('hidden');
             if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
             if(role === "MANAGER") document.getElementById('manager-panel').classList.remove('hidden');
-            listenFirebase();
-            listenStock();
+            listenFirebase(); listenStock();
         }
 
-        function openArret() {
+        // --- CORE LOGIC (PANNE & PHOTO BASE64) ---
+        function handlePanneSignal() {
             const file = document.getElementById('in-file').files[0];
             const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value;
-            const ref = database.ref('pannes/').push();
-            
+
             if(file) {
-                const sRef = storage.ref('images/' + ref.key);
-                sRef.put(file).then(() => sRef.getDownloadURL().then(url => savePanne(ref, proj, mach, url)));
-            } else savePanne(ref, proj, mach, null);
+                const reader = new FileReader();
+                reader.onloadend = () => saveToFirebase(proj, mach, reader.result);
+                reader.readAsDataURL(file); // Kat-konverti tswira l text fabour
+            } else saveToFirebase(proj, mach, null);
         }
 
-        function savePanne(ref, proj, mach, url) {
-            ref.set({ proj, mach, img: url, startTs: Date.now(), 
-                      dateStr: new Date().toLocaleDateString('fr-FR'),
-                      monthStr: new Date().toISOString().slice(0,7),
-                      status: 'OPEN' }).then(() => alert("Signal envoyé !"));
+        function saveToFirebase(proj, mach, imgData) {
+            database.ref('pannes/').push({
+                proj, mach, img: imgData,
+                startTs: Date.now(),
+                dateStr: new Date().toLocaleDateString('fr-FR'),
+                monthStr: new Date().toISOString().slice(0, 7),
+                status: 'OPEN'
+            }).then(() => alert("Signal envoyé ! Maintenance alertée."));
         }
 
+        // --- RENDER & DASHBOARD ---
         function listenFirebase() {
             database.ref('pannes/').on('value', snap => {
                 allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
@@ -169,79 +203,99 @@
             });
         }
 
-        function listenStock() {
-            database.ref('stock/').on('value', snap => {
-                const container = document.getElementById('stock-list');
-                container.innerHTML = "";
-                if(snap.val()) Object.entries(snap.val()).forEach(([id, s]) => {
-                    if(s.qty <= 2) container.innerHTML += `<div class="badge-danger" style="margin-bottom:5px;">ALERTE: ${id} (Reste: ${s.qty})</div>`;
-                });
-            });
-        }
-
         function renderUI() {
             const container = document.getElementById('pannes-list');
-            container.innerHTML = "";
+            container.innerHTML = ""; let alertOn = false;
             allData.slice(-10).reverse().forEach(p => {
                 const isOpen = p.status === 'OPEN';
+                if(isOpen) alertOn = true;
                 container.innerHTML += `
-                <div class="card" style="padding:10px; border-left: 5px solid ${isOpen?'red':'green'}">
-                    <b>${p.mach}</b> - ${p.proj} ${p.img ? '<i class="fas fa-image" style="color:var(--accent)"></i>' : ''}<br>
-                    <small>${p.dateStr} | ${isOpen ? 'EN ARRÊT' : 'Durée: '+p.duration+'m'}</small>
-                    ${isOpen && currentUser === 'MAINTENANCE' ? `<button class="btn" style="background:var(--success); color:white; padding:5px" onclick="openReprise('${p.key}', '${p.img||''}')">REPRISE</button>` : ''}
-                </div>`;
+                    <div class="card" style="padding:12px; border-left:5px solid ${isOpen?'red':'#10b981'}; margin-bottom:8px;">
+                        <div style="display:flex; justify-content:space-between">
+                            <b>${p.mach} <span style="font-weight:normal; font-size:0.7rem;">(${p.proj})</span></b>
+                            ${p.img ? '<i class="fas fa-camera" style="color:var(--accent)"></i>' : ''}
+                        </div>
+                        <small>${p.dateStr} | ${isOpen ? '<b style="color:red">ARRÊT</b>' : p.duration+'m | '+p.piece}</small>
+                        ${isOpen && currentUser === 'MAINTENANCE' ? 
+                        `<button class="btn btn-success" style="padding:5px; margin-top:8px;" onclick="openRepriseModal('${p.key}', '${p.img||''}')">REPRISE</button>` : ''}
+                    </div>`;
             });
+            if(alertOn && currentUser === "MAINTENANCE") { if(window.audioAllowed) document.getElementById('alertSound').play(); }
+            else document.getElementById('alertSound').pause();
         }
 
-        function openReprise(key, img) {
+        function openRepriseModal(key, img) {
             document.getElementById('modal-key').value = key;
-            document.getElementById('img-container').innerHTML = img ? `<img src="${img}" style="width:100%; border-radius:10px; margin-bottom:10px;">` : '';
+            document.getElementById('modal-img-preview').innerHTML = img ? `<img src="${img}" style="width:100%; border-radius:10px;">` : '<p style="font-size:0.7rem; color:grey;">Aucune photo</p>';
             document.getElementById('closeModal').style.display = 'flex';
         }
 
         function confirmClosing() {
-            const key = document.getElementById('modal-key').value, piece = document.getElementById('modal-piece').value;
-            const qtyUsed = parseInt(document.getElementById('modal-qty').value);
-            const item = allData.find(x => x.key === key);
+            const key = document.getElementById('modal-key').value, piece = document.getElementById('modal-piece').value.toUpperCase();
+            const qtyUsed = parseInt(document.getElementById('modal-qty').value), item = allData.find(x => x.key === key);
             const duration = Math.round((Date.now() - item.startTs) / 60000);
 
             database.ref('pannes/' + key).update({ status: 'CLOSED', duration, piece, type: document.getElementById('modal-type').value });
-            
-            if(piece && piece !== "") {
-                const sRef = database.ref('stock/' + piece.toUpperCase());
-                sRef.once('value', s => {
-                    let currentQty = s.val() ? s.val().qty : 10;
-                    sRef.set({ qty: currentQty - qtyUsed });
-                });
+            if(piece) {
+                const sRef = database.ref('stock/' + piece);
+                sRef.once('value', s => { let cur = s.val() ? s.val().qty : 10; sRef.set({ qty: cur - qtyUsed }); });
             }
             document.getElementById('closeModal').style.display = 'none';
         }
 
+        // --- DASHBOARD ANALYTICS ---
         function updateManagerDashboard() {
-            const month = document.getElementById('filter-month').value;
-            const filtered = month ? allData.filter(p => p.monthStr === month) : allData;
+            const filter = document.getElementById('filter-month').value;
+            const filtered = filter ? allData.filter(p => p.monthStr === filter) : allData;
+            let downtime = 0, stats = { "SKODA":0, "CRAFTER":0, "G.CALIFORNIA":0 };
+            filtered.forEach(p => { if(p.duration) { downtime += p.duration; stats[p.proj] += p.duration; } });
             
-            let time = 0; filtered.forEach(p => time += (p.duration || 0));
             const n = filtered.length;
             document.getElementById('m-count').innerText = n;
-            document.getElementById('m-time').innerText = time + "m";
-            document.getElementById('m-mtbf').innerText = n > 0 ? Math.round((43200 - time)/n) : 43200; // 43200 = min/mois
-            document.getElementById('m-mttr').innerText = n > 0 ? Math.round(time/n) : 0;
+            document.getElementById('m-time').innerText = downtime + " min";
+            const mttr = n > 0 ? Math.round(downtime/n) : 0;
+            document.getElementById('m-mtbf').innerText = n > 0 ? Math.round((43200-downtime)/n) : 43200;
+            document.getElementById('m-mttr').innerText = mttr + " min";
             
-            // Animation alerte MTTR
-            if(Math.round(time/n) > 1) document.getElementById('card-mttr').classList.add('alert-blink');
-            else document.getElementById('card-mttr').classList.remove('alert-blink');
+            const card = document.getElementById('card-mttr');
+            if(mttr > 1) card.classList.add('alert-blink'); else card.classList.remove('alert-blink');
+
+            const ctx = document.getElementById('managerChart').getContext('2d');
+            if(myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: Object.keys(stats), datasets: [{ data: Object.values(stats), backgroundColor: ['#002b5c', '#00d4ff', '#10b981'] }] },
+                options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
+            });
+        }
+
+        // --- STOCK & USERS ---
+        function listenStock() {
+            database.ref('stock/').on('value', snap => {
+                const div = document.getElementById('stock-list'); div.innerHTML = "";
+                if(snap.val()) Object.entries(snap.val()).forEach(([id, s]) => {
+                    div.innerHTML += `<div class="stock-item ${s.qty<=2?'stock-low':''}"><span>${id}</span><b>${s.qty} Pcs</b></div>`;
+                });
+            });
         }
 
         function saveUser() {
             const name = document.getElementById('new-username').value, pass = document.getElementById('new-password').value, role = document.getElementById('new-role').value;
-            database.ref('users/').push({ name, pass, role }).then(() => { alert("User ajouté"); document.getElementById('userModal').style.display='none'; });
+            if(name && pass) database.ref('users/').push({name, pass, role}).then(() => { alert("User Créé !"); document.getElementById('userModal').style.display='none'; });
         }
 
         function updateMachineList() {
-            const machineData = { "SKODA": ["80008172", "80008173"], "CRAFTER": ["80008119", "80008122"], "G.CALIFORNIA": ["80006953"] };
             const p = document.getElementById('in-proj').value, s = document.getElementById('in-mach');
             s.innerHTML = ""; machineData[p].forEach(m => s.innerHTML += `<option value="${m}">${m}</option>`);
+        }
+
+        function generateDailyPDF() {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            doc.setFontSize(18); doc.text("RAPPORT PERFORMANCE - CVG", 15, 20);
+            doc.setFontSize(10); doc.text("Filtrage: " + (document.getElementById('filter-month').value || "Global"), 15, 30);
+            const rows = allData.map(p => [p.dateStr, p.mach, p.proj, p.duration||'0', p.piece||'-']);
+            doc.autoTable({ head:[['Date','Machine','Projet','Min','Pièce']], body: rows, startY: 35 });
+            doc.save("Rapport_GMAO.pdf");
         }
     </script>
 </body>
