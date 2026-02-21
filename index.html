@@ -178,7 +178,9 @@
         function listenFirebase() {
             database.ref('pannes/').on('value', snap => {
                 allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
-                renderUI(); renderArchives(); updateStats();
+                renderUI(); 
+                renderArchives(); // Sla7t had l-appel hna
+                updateStats();
             });
         }
 
@@ -203,15 +205,23 @@
             if(actives.some(p => p.status === 'OPEN') && currentUser !== 'OPERATEUR') document.getElementById('alertSound').play().catch(()=>{}); else document.getElementById('alertSound').pause();
         }
 
+        // --- SLA7T HAD L-PARTIE NICHAN ---
         function renderArchives() {
-            const list = document.getElementById('archive-list'); list.innerHTML = "";
+            const list = document.getElementById('archive-list'); 
+            if(!list) return; // Sécurité
+            list.innerHTML = "";
             const archives = allData.filter(p => p.status === 'CLOSED');
+            
             archives.reverse().forEach(p => {
-                list.innerHTML += `<div class="card" style="padding:10px; margin-bottom:8px; border-left:5px solid var(--success); display:flex; justify-content:space-between;">
-                    <div><b>${p.mach}</b><br><small>${p.dateStr} | ${p.duration}min | ${p.piece}</small></div>
-                    ${currentUser === 'MANAGER' ? `<button class="btn-del" onclick="deletePanne('${p.key}')">&times;</button>` : ''}
+                list.innerHTML += `<div class="card" style="padding:10px; margin-bottom:8px; border-left:5px solid var(--success); display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <b style="color:var(--primary)">${p.mach}</b> <span style="font-size:0.6rem; color:var(--success); font-weight:800;">DONE</span><br>
+                        <small>${p.dateStr} | ${p.duration}min | Pièce: ${p.piece || 'N/A'}</small>
+                    </div>
+                    ${(currentUser === 'MANAGER') ? `<button class="btn-del" onclick="deletePanne('${p.key}')" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-trash"></i></button>` : ''}
                 </div>`;
             });
+            if(archives.length === 0) list.innerHTML = "<p style='text-align:center;color:#94a3b8'>Aucun historique</p>";
         }
 
         function updateStats() {
@@ -224,8 +234,10 @@
 
         function listenStock() {
             database.ref('stock/').on('value', snap => {
-                const list = document.getElementById('stock-list'); list.innerHTML = "";
-                const dl = document.getElementById('spareparts'); dl.innerHTML = "";
+                const list = document.getElementById('stock-list'); if(!list) return;
+                list.innerHTML = "";
+                const dl = document.getElementById('spareparts'); if(!dl) return;
+                dl.innerHTML = "";
                 if(snap.val()) Object.entries(snap.val()).forEach(([name, data]) => {
                     list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #eee;"><span>${name}</span><b>${data.qty}</b></div>`;
                     dl.innerHTML += `<option value="${name}">`;
@@ -235,25 +247,33 @@
 
         function listenUsers() {
             database.ref('users/').on('value', snap => {
-                const div = document.getElementById('users-list-ui'); div.innerHTML = "";
+                const div = document.getElementById('users-list-ui'); if(!div) return;
+                div.innerHTML = "";
                 if(snap.val()) Object.entries(snap.val()).forEach(([key, u]) => { div.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:5px;">${u.name} (${u.role}) <button onclick="database.ref('users/${key}').remove()" style="color:red; border:none; background:none;">&times;</button></div>`; });
             });
         }
 
-        // Logic Functions
         function takeCharge(key) { database.ref('pannes/' + key).update({ status: 'IN_PROGRESS' }); }
         function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display = 'flex'; }
+        
         function confirmClosing() {
-            const key = document.getElementById('modal-key').value, piece = document.getElementById('modal-piece').value.toUpperCase().trim(), qtyUsed = parseInt(document.getElementById('modal-qty').value) || 1;
-            const item = allData.find(x => x.key === key), duration = Math.round((Date.now() - item.startTs) / 60000);
+            const key = document.getElementById('modal-key').value;
+            const piece = document.getElementById('modal-piece').value.toUpperCase().trim();
+            const qtyUsed = parseInt(document.getElementById('modal-qty').value) || 1;
+            const item = allData.find(x => x.key === key);
+            if(!item) return;
+            const duration = Math.round((Date.now() - item.startTs) / 60000);
+            
             database.ref('pannes/' + key).update({ status: 'CLOSED', duration, piece: piece || 'N/A' }).then(() => {
                 if(piece && piece !== 'N/A') {
                     const sRef = database.ref('stock/' + piece);
                     sRef.once('value', s => { if(s.exists()) sRef.set({ qty: Math.max(0, s.val().qty - qtyUsed) }); });
                 }
                 document.getElementById('closeModal').style.display = 'none';
+                document.getElementById('modal-piece').value = "";
             });
         }
+
         function handlePanneSignal() {
             const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value;
             database.ref('pannes/').push({ proj, mach, status: 'OPEN', startTs: Date.now(), dateStr: new Date().toLocaleString() });
