@@ -127,7 +127,6 @@
         const database = firebase.database();
         let currentUser = null, allData = [], myChart = null, html5QrCode;
 
-        // Login Logic
         function handleLogin() {
             const u = document.getElementById('login-user').value.trim().toLowerCase(), p = document.getElementById('login-pass').value;
             if(u === "admin" && p === "3333") return startApp("MANAGER");
@@ -147,7 +146,7 @@
             if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
         }
 
-        // QR SCANNER LOGIC
+        // QR SCANNER + VIBRATION
         function startScanner() {
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (decodedText) => {
@@ -157,12 +156,16 @@
         }
 
         function handleScanResult(code) {
+            // VIBRATION : 200ms fach kat-lqa l-machine
+            if ("vibrate" in navigator) {
+                navigator.vibrate(200);
+            }
+
             for (let proj in machineData) {
                 if (machineData[proj].includes(code)) {
                     document.getElementById('in-proj').value = proj;
                     updateMachineList();
                     document.getElementById('in-mach').value = code;
-                    if (navigator.vibrate) navigator.vibrate(100);
                     return;
                 }
             }
@@ -171,7 +174,6 @@
 
         function stopScanner() { if(html5QrCode) html5QrCode.stop().then(()=>document.getElementById("reader").innerHTML=""); }
 
-        // Mantiq Asli (Firebase Listeners)
         function listenFirebase() {
             database.ref('pannes/').on('value', snap => {
                 allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
@@ -247,7 +249,6 @@
             });
         }
 
-        // Excel + Dashboard Report
         function exportToExcel() {
             const closed = allData.filter(p => p.status === 'CLOSED');
             const wsData = XLSX.utils.json_to_sheet(closed.map(p => ({
@@ -265,7 +266,6 @@
             XLSX.writeFile(wb, "GMAO_Report.xlsx");
         }
 
-        // Utils
         function takeCharge(key) { database.ref('pannes/' + key).update({ status: 'IN_PROGRESS' }); }
         function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display = 'flex'; }
         function handlePanneSignal() { 
