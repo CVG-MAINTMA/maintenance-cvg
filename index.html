@@ -3,247 +3,363 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CVG DYNAMICS | Smart Analytics</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <title>CVG | Smart Factory Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
         
         :root {
-            --bg-dark: #050b18;
-            --card-bg: #0f172a;
-            --neon-blue: #00d4ff;
-            --neon-purple: #9d50bb;
-            --neon-green: #10b981;
-            --text-main: #f8fafc;
+            --primary: #001e3c;
+            --accent: #00d4ff;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --card-bg: #ffffff;
+            --body-bg: #f3f6f9;
         }
 
-        body { 
-            background: var(--bg-dark); 
-            color: var(--text-main); 
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            margin: 0; padding: 10px;
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--body-bg); color: #1e293b; padding: 15px; }
+
+        /* --- Alert System (Man l-code dialek) --- */
+        .alert-marquee {
+            background: #fff1f2; color: var(--danger); padding: 15px;
+            border-radius: 12px; margin-bottom: 20px; font-weight: 800;
+            border: 2px solid var(--danger); display: none;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
         }
 
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 10px;
+        .blink-danger { animation: blinker 0.8s linear infinite; background-color: var(--danger) !important; color: white !important; }
+        @keyframes blinker { 50% { opacity: 0.3; } }
+
+        /* --- Modern Layout --- */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--primary); color: white; padding: 20px 30px;
+            border-radius: 20px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
+
+        .main-grid { display: grid; grid-template-columns: 350px 1fr 300px; gap: 20px; }
+        @media (max-width: 1100px) { .main-grid { grid-template-columns: 1fr; } }
 
         .glass-card {
-            background: var(--card-bg);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 24px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transition: transform 0.3s ease;
+            background: var(--card-bg); border-radius: 24px; padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+            position: relative; overflow: hidden;
         }
 
-        .glass-card:hover { transform: translateY(-5px); border-color: var(--neon-blue); }
-
-        h2, h3 { font-family: 'Orbitron', sans-serif; letter-spacing: 2px; text-transform: uppercase; }
-
-        /* Gauge Styling */
-        .gauge-container { position: relative; width: 200px; margin: 0 auto; }
-        .gauge-value {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 1.8rem; font-weight: 800; color: var(--neon-blue);
+        /* --- KPI Styling --- */
+        .kpi-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .kpi-item { 
+            background: white; padding: 20px; border-radius: 18px; 
+            border-bottom: 4px solid var(--accent); transition: 0.3s;
         }
+        .kpi-item:hover { transform: translateY(-5px); }
+        .kpi-item small { color: #64748b; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; }
+        .kpi-item h2 { font-size: 1.6rem; color: var(--primary); font-weight: 800; }
 
-        /* Status Badges */
-        .status-pill {
-            padding: 5px 12px; border-radius: 50px; font-size: 0.7rem; font-weight: 800;
-            background: rgba(0, 212, 255, 0.1); border: 1px solid var(--neon-blue); color: var(--neon-blue);
+        /* --- Chart Section --- */
+        .chart-box { height: 280px; margin-top: 15px; }
+        
+        /* --- Table Styling --- */
+        .table-wrap { overflow-x: auto; margin-top: 10px; border-radius: 15px; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th { background: #f8fafc; padding: 15px; text-align: left; font-size: 0.75rem; color: #64748b; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
+
+        .btn-pro {
+            background: var(--primary); color: white; border: none;
+            padding: 12px 20px; border-radius: 12px; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.3s;
         }
+        .btn-pro:hover { background: var(--accent); color: var(--primary); }
 
-        #login-screen {
-            position: fixed; inset: 0; background: var(--bg-dark); z-index: 1000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        #login-overlay {
+            position: fixed; inset: 0; background: var(--primary);
+            z-index: 10000; display: flex; align-items: center; justify-content: center;
         }
-
-        .btn-neon {
-            background: transparent; border: 2px solid var(--neon-blue); color: var(--neon-blue);
-            padding: 15px 40px; border-radius: 50px; cursor: pointer; font-weight: 800;
-            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
-        }
-
-        canvas { filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.1)); }
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
-        <h1 style="font-family: 'Orbitron'; color: var(--neon-blue); margin-bottom: 30px;">CVG CORE ENGINE</h1>
-        <input type="password" id="pinInput" placeholder="ENTER ACCESS PIN" style="background: transparent; border: none; border-bottom: 2px solid white; color: white; text-align: center; font-size: 2rem; margin-bottom: 30px; outline: none; width: 250px;">
-        <button class="btn-neon" onclick="checkLogin()">INITIATE SYSTEM</button>
+    <audio id="alertSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
+    <div id="login-overlay">
+        <div style="background:white; padding:40px; border-radius:30px; width:350px; text-align:center;">
+            <h2 style="color:var(--primary)">CVG LOGIN</h2>
+            <input type="password" id="u-pass" placeholder="PIN CODE" style="width:100%; padding:15px; margin:20px 0; border-radius:10px; text-align:center; font-size:1.5rem; border:2px solid #eee;">
+            <button class="btn-pro" style="width:100%; justify-content:center;" onclick="handleLogin()">ACCÉDER</button>
+        </div>
     </div>
 
     <div id="app-content" style="display:none;">
-        <header style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <div class="status-pill">SYSTEM: ACTIVE</div>
-            <h3>CVG <span style="color:var(--neon-blue)">DYNAMICS</span> ANALYTICS</h3>
-            <div id="timer" style="font-family: 'Orbitron'; font-size: 0.8rem;"></div>
+        <header>
+            <div>
+                <h1>CVG <span style="color:var(--accent)">INTELLIGENCE</span></h1>
+                <p id="user-info" style="font-size:0.8rem; opacity:0.8;"></p>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-pro" onclick="exportData()"><i class="fa-solid fa-file-csv"></i> EXPORT</button>
+                <button onclick="location.reload()" class="btn-pro" style="background:var(--danger)"><i class="fa-solid fa-power-off"></i></button>
+            </div>
         </header>
 
-        <div class="dashboard-grid">
+        <div id="dynamic-alert-box" class="alert-marquee"></div>
+
+        <div class="kpi-container">
+            <div class="kpi-item">
+                <small>Disponibilité (OEE)</small>
+                <h2 id="kpi-oee">100%</h2>
+            </div>
+            <div class="kpi-item" style="border-bottom-color: var(--danger);">
+                <small>MTTR (Moyenne Réparation)</small>
+                <h2 id="kpi-mttr">0 min</h2>
+            </div>
+            <div class="kpi-item" style="border-bottom-color: var(--warning);">
+                <small>MTBF (Moyenne entre Pannes)</small>
+                <h2 id="kpi-mtbf">--</h2>
+            </div>
+            <div class="kpi-item" style="border-bottom-color: var(--success);">
+                <small>Total Arrêts Aujourd'hui</small>
+                <h2 id="kpi-count">0</h2>
+            </div>
+        </div>
+
+        <div class="main-grid">
             <div class="glass-card">
-                <h3>Disponibilité OEE</h3>
-                <div class="gauge-container">
-                    <canvas id="oeeGauge"></canvas>
-                    <div class="gauge-value" id="oeeText">0%</div>
+                <h3 style="margin-bottom:20px;"><i class="fa-solid fa-plus-circle"></i> Nouvel Arrêt</h3>
+                <label>Ligne / Projet</label>
+                <select id="in-proj" style="width:100%; padding:12px; margin-bottom:15px; border-radius:10px; border:1px solid #ddd;">
+                    <option value="SKODA">SKODA</option>
+                    <option value="CRAFTER">CRAFTER</option>
+                    <option value="G.CALIFORNIA">G.CALIFORNIA</option>
+                </select>
+                <label>Machine ID</label>
+                <input type="text" id="in-mach" placeholder="Ex: 80008172" style="width:100%; padding:12px; margin-bottom:15px; border-radius:10px; border:1px solid #ddd;">
+                <button class="btn-pro" style="width:100%; justify-content:center; background:var(--danger);" onclick="submitEntry()">LANCER L'ALERTE</button>
+                
+                <div class="chart-box">
+                    <canvas id="typeChart"></canvas>
                 </div>
-                <p style="text-align: center; color: #64748b; font-size: 0.8rem;">Basé sur 480min de production / Shift</p>
             </div>
 
             <div class="glass-card">
-                <h3>Arrêts par Projet (min)</h3>
-                <canvas id="projectChart"></canvas>
+                <h3>Analyse de Performance</h3>
+                <div class="chart-box" style="height:350px;">
+                    <canvas id="mainChart"></canvas>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>MACHINE</th>
+                                <th>DEBUT</th>
+                                <th>FIN</th>
+                                <th>DUREE</th>
+                                <th>STATUS</th>
+                                <th>ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table"></tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="glass-card">
-                <h3>Nature des Pannes</h3>
-                <canvas id="typeChart"></canvas>
-            </div>
-
-            <div class="glass-card">
-                <h3>Criticités Machines</h3>
-                <div id="bad-machines-list"></div>
+                <h3 style="color:var(--primary); font-size:1rem;"><i class="fa-solid fa-lightbulb"></i> AI Insights</h3>
+                <div id="ai-messages" style="margin-top:20px; font-size:0.85rem; line-height:1.6;">
+                    <p style="color:#64748b;">Analyse des données en cours...</p>
+                </div>
+                <hr style="margin:20px 0; opacity:0.1;">
+                <h4>Shift Ranking</h4>
+                <canvas id="shiftChart" style="height:200px;"></canvas>
             </div>
         </div>
     </div>
 
+    <div id="closeModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index:20000;">
+        <div class="glass-card" style="width:400px;">
+            <h3>Clôture d'intervention</h3>
+            <input type="hidden" id="modal-id">
+            <select id="modal-type" style="width:100%; padding:12px; margin:15px 0; border-radius:10px;">
+                <option value="Mécanique">🔧 Mécanique</option>
+                <option value="Électrique">⚡ Électrique</option>
+                <option value="Pneumatique">💨 Pneumatique</option>
+            </select>
+            <input type="text" id="modal-action" placeholder="Action réalisée..." style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd;">
+            <button class="btn-pro" style="width:100%; margin-top:20px; background:var(--success);" onclick="confirmClosing()">VALIDER LA REPRISE</button>
+        </div>
+    </div>
+
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyASQa5cLXFllnV6EmYp-ARZ9dndWSKha6c",
-            authDomain: "cvgmaroc-gmao.firebaseapp.com",
-            databaseURL: "https://cvgmaroc-gmao-default-rtdb.firebaseio.com",
-            projectId: "cvgmaroc-gmao",
-            storageBucket: "cvgmaroc-gmao.firebasestorage.app",
-            messagingSenderId: "72908747564",
-            appId: "1:72908747564:web:82f646ef5dd209d03b7289"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        let db = JSON.parse(localStorage.getItem('cvg_db')) || [];
         let charts = {};
 
-        function checkLogin() {
-            if(document.getElementById('pinInput').value === "3333") {
-                document.getElementById('login-screen').style.display = 'none';
+        function handleLogin() {
+            const p = document.getElementById('u-pass').value;
+            if(p === "3333") {
+                document.getElementById('login-overlay').style.display = 'none';
                 document.getElementById('app-content').style.display = 'block';
-                startAnalytics();
-            } else { alert("ACCESS DENIED"); }
+                refreshUI();
+            } else { alert("Code PIN incorrect!"); }
         }
 
-        function startAnalytics() {
-            database.ref('pannes/').on('value', snap => {
-                const data = snap.val() ? Object.values(snap.val()) : [];
-                updateVisuals(data);
+        function submitEntry() {
+            const p = document.getElementById('in-proj').value;
+            const m = document.getElementById('in-mach').value;
+            if(!m) return alert("Précisez la machine!");
+
+            db.unshift({
+                id: Date.now(),
+                proj: p, mach: m,
+                start: new Date(),
+                end: null,
+                dur: 0,
+                status: 'OPEN',
+                type: '',
+                shift: getShift()
             });
-            setInterval(() => { document.getElementById('timer').innerText = new Date().toLocaleTimeString(); }, 1000);
+            saveAndRefresh();
         }
 
-        function updateVisuals(data) {
-            const finished = data.filter(p => p.status === 'CLOSED');
+        function getShift() {
+            const h = new Date().getHours();
+            if(h >= 6 && h < 14) return 'MATIN';
+            if(h >= 14 && h < 22) return 'SOIR';
+            return 'NUIT';
+        }
+
+        function confirmClosing() {
+            const id = parseInt(document.getElementById('modal-id').value);
+            const idx = db.findIndex(x => x.id === id);
+            const type = document.getElementById('modal-type').value;
             
-            // 1. CALCUL OEE (Gauge)
-            const totalDown = finished.reduce((acc, p) => acc + (p.duration || 0), 0);
-            const oee = Math.round(((480 - totalDown) / 480) * 100);
-            document.getElementById('oeeText').innerText = oee + "%";
-            renderGauge(oee);
+            db[idx].end = new Date();
+            db[idx].dur = Math.round((new Date() - new Date(db[idx].start)) / 60000);
+            db[idx].status = 'CLOSED';
+            db[idx].type = type;
 
-            // 2. PROJECT CHART (With Gradients)
-            const projStats = { SKODA: 0, CRAFTER: 0, "G.CALIFORNIA": 0 };
-            finished.forEach(p => { if(projStats[p.proj] !== undefined) projStats[p.proj] += p.duration; });
-            renderBarChart(projStats);
+            document.getElementById('closeModal').style.display = 'none';
+            saveAndRefresh();
+        }
 
-            // 3. TYPE CHART (Nature of issues)
-            const typeStats = {};
-            finished.forEach(p => { if(p.type) typeStats[p.type] = (typeStats[p.type] || 0) + 1; });
-            renderPieChart(typeStats);
+        function saveAndRefresh() {
+            localStorage.setItem('cvg_db', JSON.stringify(db));
+            refreshUI();
+        }
 
-            // 4. CRITICAL MACHINES
-            const machStats = {};
-            data.forEach(p => { machStats[p.mach] = (machStats[p.mach] || 0) + 1; });
-            const top3 = Object.entries(machStats).sort((a,b) => b[1] - a[1]).slice(0,3);
-            document.getElementById('bad-machines-list').innerHTML = top3.map(m => `
-                <div style="display:flex; justify-content:space-between; padding:15px 0; border-bottom:1px solid #1e293b;">
-                    <span><i class="fas fa-robot" style="color:var(--neon-blue)"></i> ${m[0]}</span>
-                    <b style="color:var(--danger)">${m[1]} ARRÊTS</b>
-                </div>
+        function refreshUI() {
+            // Table
+            const table = document.getElementById('data-table');
+            table.innerHTML = db.map(x => `
+                <tr class="${x.status === 'OPEN' ? 'blink-danger' : ''}">
+                    <td><b>${x.mach}</b> <small>${x.proj}</small></td>
+                    <td>${new Date(x.start).toLocaleTimeString()}</td>
+                    <td>${x.end ? new Date(x.end).toLocaleTimeString() : '--:--'}</td>
+                    <td>${x.dur} min</td>
+                    <td><span style="font-weight:800; color:${x.status==='OPEN'?'red':'green'}">${x.status}</span></td>
+                    <td>
+                        ${x.status === 'OPEN' ? `<button class="btn-pro" style="padding:5px 10px; font-size:0.7rem;" onclick="openModal(${x.id})">FINIR</button>` : `<i class="fa-solid fa-check-double" style="color:var(--success)"></i>`}
+                    </td>
+                </tr>
             `).join('');
+
+            updateKPIs();
+            updateCharts();
+            checkAlerts();
         }
 
-        function renderGauge(val) {
-            const ctx = document.getElementById('oeeGauge').getContext('2d');
-            if(charts.gauge) charts.gauge.destroy();
-            charts.gauge = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    datasets: [{
-                        data: [val, 100 - val],
-                        backgroundColor: [val > 80 ? '#10b981' : '#ef4444', '#1e293b'],
-                        borderWidth: 0,
-                        circumference: 270,
-                        rotation: 225
-                    }]
-                },
-                options: { cutout: '85%', plugins: { legend: { display: false } } }
-            });
+        function openModal(id) {
+            document.getElementById('modal-id').value = id;
+            document.getElementById('closeModal').style.display = 'flex';
         }
 
-        function renderBarChart(stats) {
-            const ctx = document.getElementById('projectChart').getContext('2d');
-            const grad = ctx.createLinearGradient(0, 0, 0, 400);
-            grad.addColorStop(0, '#00d4ff');
-            grad.addColorStop(1, '#9d50bb');
+        function updateKPIs() {
+            const finished = db.filter(x => x.status === 'CLOSED');
+            const totalDur = finished.reduce((a, b) => a + b.dur, 0);
+            
+            document.getElementById('kpi-count').innerText = db.length;
+            document.getElementById('kpi-mttr').innerText = finished.length ? Math.round(totalDur / finished.length) + " min" : "0 min";
+            
+            // Intelligence: OEE Simple (Shift 480min)
+            const oee = Math.round(((480 - totalDur) / 480) * 100);
+            document.getElementById('kpi-oee').innerText = Math.max(0, oee) + "%";
+            document.getElementById('kpi-oee').style.color = oee < 85 ? 'var(--danger)' : 'var(--success)';
 
-            if(charts.bar) charts.bar.destroy();
-            charts.bar = new Chart(ctx, {
+            // AI Insight Logic
+            const ai = document.getElementById('ai-messages');
+            if(oee < 90) {
+                ai.innerHTML = `<p style="color:var(--danger)">⚠️ <b>Alerte:</b> La disponibilité est tombée en dessous de 90%. Vérifiez la ligne ${db[0]?.proj || ''}.</p>`;
+            } else {
+                ai.innerHTML = `<p style="color:var(--success)">✅ <b>Optimal:</b> Toutes les lignes fonctionnent dans les standards.</p>`;
+            }
+        }
+
+        function updateCharts() {
+            // Main Chart (Bar Gradient)
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            const dataProj = { SKODA: 0, CRAFTER: 0, "G.CALIFORNIA": 0 };
+            db.forEach(x => { if(dataProj[x.proj] !== undefined) dataProj[x.proj] += x.dur });
+
+            if(charts.main) charts.main.destroy();
+            charts.main = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(stats),
+                    labels: Object.keys(dataProj),
                     datasets: [{
-                        label: 'Minutes',
-                        data: Object.values(stats),
-                        backgroundColor: grad,
+                        label: 'Minutes perdues',
+                        data: Object.values(dataProj),
+                        backgroundColor: ['#00d4ff', '#002b5c', '#10b981'],
                         borderRadius: 10
                     }]
                 },
-                options: {
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } },
-                        x: { ticks: { color: '#64748b' } }
-                    }
-                }
+                options: { maintainAspectRatio: false }
+            });
+
+            // Shift Chart (Donut)
+            const ctx2 = document.getElementById('shiftChart').getContext('2d');
+            const shiftData = { MATIN: 0, SOIR: 0, NUIT: 0 };
+            db.forEach(x => shiftData[x.shift]++);
+            
+            if(charts.shift) charts.shift.destroy();
+            charts.shift = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(shiftData),
+                    datasets: [{ data: Object.values(shiftData), backgroundColor: ['#3b82f6', '#f59e0b', '#1e293b'] }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
         }
 
-        function renderPieChart(stats) {
-            const ctx = document.getElementById('typeChart').getContext('2d');
-            if(charts.pie) charts.pie.destroy();
-            charts.pie = new Chart(ctx, {
-                type: 'polarArea',
-                data: {
-                    labels: Object.keys(stats),
-                    datasets: [{
-                        data: Object.values(stats),
-                        backgroundColor: ['rgba(0, 212, 255, 0.5)', 'rgba(157, 80, 187, 0.5)', 'rgba(16, 185, 129, 0.5)']
-                    }]
-                },
-                options: {
-                    scales: { r: { grid: { color: '#1e293b' }, ticks: { display: false } } },
-                    plugins: { legend: { position: 'bottom', labels: { color: 'white' } } }
-                }
-            });
+        function checkAlerts() {
+            const open = db.filter(x => x.status === 'OPEN');
+            const marquee = document.getElementById('dynamic-alert-box');
+            if(open.length > 0) {
+                marquee.style.display = 'block';
+                marquee.innerHTML = `<marquee scrollamount="10">🚨 ATTENTION: ${open.length} MACHINE(S) EN ARRÊT : ${open.map(o => o.mach).join(', ')} - INTERVENTION REQUISE IMMÉDIATE !</marquee>`;
+                document.getElementById('alertSound').play();
+            } else {
+                marquee.style.display = 'none';
+            }
         }
+
+        function exportData() {
+            let csv = "Machine,Projet,Debut,Fin,Duree,Type,Shift\n";
+            db.forEach(x => {
+                csv += `${x.mach},${x.proj},${x.start},${x.end},${x.dur},${x.type},${x.shift}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'Rapport_CVG.csv');
+            a.click();
+        }
+
+        // Auto Refresh every 30 sec
+        setInterval(refreshUI, 30000);
     </script>
 </body>
 </html>
