@@ -56,7 +56,7 @@
 
         <div id="manager-panel" class="hidden">
             <div class="card">
-                <h4 style="margin-bottom:10px;"><i class="fas fa-chart-line"></i> ANALYTICS</h4>
+                <h4 style="margin-bottom:10px;"><i class="fas fa-chart-line"></i> PERFORMANCE</h4>
                 <div class="chart-container"><canvas id="machineChart"></canvas></div>
             </div>
             
@@ -92,15 +92,11 @@
     </div>
 
     <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-        <div class="card" style="width:100%; max-width:400px; position:relative;">
-            <div class="modal-header">
-                <h3>Ajouter Pièce</h3>
-                <button onclick="document.getElementById('stockModal').style.display='none'" style="border:none; background:none; font-size:1.5rem; color:#64748b; cursor:pointer;">&times;</button>
-            </div>
-            <input type="text" id="new-p-name" placeholder="Nom de la pièce">
-            <input type="number" id="new-p-qty" placeholder="Quantité initiale">
+        <div class="card" style="width:100%; max-width:400px;">
+            <div class="modal-header"><h3>Ajouter Pièce</h3><button onclick="document.getElementById('stockModal').style.display='none'">&times;</button></div>
+            <input type="text" id="new-p-name" placeholder="Nom">
+            <input type="number" id="new-p-qty" placeholder="Quantité">
             <button class="btn btn-success" onclick="addNewStock()">VALIDER</button>
-            <button class="btn btn-ghost" onclick="document.getElementById('stockModal').style.display='none'">ANNULER</button>
         </div>
     </div>
 
@@ -131,12 +127,12 @@
 
     <div id="closeModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
-            <h3>Validation</h3>
-            <input list="spareparts" id="modal-piece" placeholder="Pièce"><datalist id="spareparts"></datalist>
+            <h3>Validation Reprise</h3>
+            <input list="spareparts" id="modal-piece" placeholder="Pièce utilisée"><datalist id="spareparts"></datalist>
             <input type="number" id="modal-qty" value="1">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
                 <button class="btn btn-success" onclick="confirmClosing()">OK</button>
-                <button class="btn btn-ghost" onclick="document.getElementById('closeModal').style.display='none'">BACK</button>
+                <button class="btn btn-ghost" onclick="document.getElementById('closeModal').style.display='none'">ANNULER</button>
             </div>
         </div>
     </div>
@@ -187,11 +183,13 @@
             });
         }
 
+        // --- TA3DIL: REPRISE GHIR L-MAINTENANCE ---
         function renderUI() {
             const container = document.getElementById('pannes-list'); container.innerHTML = "";
             let alertOn = false; const openPannes = allData.filter(p => p.status === 'OPEN');
             document.getElementById('m-charge').innerText = openPannes.length;
             const ind = document.getElementById('charge-indicator');
+            
             if(openPannes.length > 3) { ind.innerText = "Saturé"; ind.style.background = "var(--danger)"; }
             else if(openPannes.length > 0) { ind.innerText = "Actif"; ind.style.background = "var(--warning)"; }
             else { ind.innerText = "Repos"; ind.style.background = "var(--success)"; }
@@ -199,11 +197,16 @@
             openPannes.slice(-10).reverse().forEach(p => {
                 alertOn = true;
                 container.innerHTML += `<div class="card" style="border-left:5px solid var(--danger)">
-                    <b>${p.mach}</b><br><small>${p.proj} | ${p.dateStr}</small><br>
-                    ${(currentUser === 'MAINTENANCE' || currentUser === 'MANAGER') ? `<button class="btn btn-success" style="padding:5px; margin-top:5px; font-size:0.7rem" onclick="openRepriseModal('${p.key}')">REPRISE</button>` : ''}
+                    <div style="display:flex; justify-content:space-between">
+                        <b>${p.mach}</b>
+                        ${(currentUser === 'MANAGER') ? `<button class="btn-del" onclick="deletePanne('${p.key}')"><i class="fas fa-trash"></i></button>` : ''}
+                    </div>
+                    <small>${p.proj} | ${p.dateStr}</small><br>
+                    ${(currentUser === 'MAINTENANCE') ? `<button class="btn btn-success" style="padding:5px; margin-top:5px; font-size:0.7rem" onclick="openRepriseModal('${p.key}')">REPRISE INTERVENTION</button>` : ''}
+                    ${(currentUser === 'MANAGER') ? `<small style="color:var(--warning); font-weight:bold;">En cours de réparation...</small>` : ''}
                 </div>`;
             });
-            if (openPannes.length === 0) container.innerHTML = "<p style='text-align:center;color:#94a3b8'>Aucun arrêt</p>";
+            if (openPannes.length === 0) container.innerHTML = "<p style='text-align:center;color:#94a3b8'>Tout est opérationnel</p>";
             if(alertOn && (currentUser === "MAINTENANCE" || currentUser === "MANAGER")) document.getElementById('alertSound').play().catch(()=>{}); else document.getElementById('alertSound').pause();
         }
 
@@ -212,7 +215,7 @@
             allData.filter(p => p.status === 'CLOSED').reverse().forEach(p => {
                 list.innerHTML += `<div style="font-size:0.8rem; padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between">
                     <div><b>${p.mach}</b> (${p.duration} min)<br><small>${p.dateStr} | Piece: ${p.piece}</small></div>
-                    <button class="btn-del" onclick="deletePanne('${p.key}')"><i class="fas fa-trash"></i></button>
+                    ${(currentUser === 'MANAGER') ? `<button class="btn-del" onclick="deletePanne('${p.key}')"><i class="fas fa-trash"></i></button>` : ''}
                 </div>`;
             });
         }
