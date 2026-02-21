@@ -28,7 +28,16 @@
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(5px); }
         .btn-del { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 1rem; }
         .alert-box { background: #b91c1c; color: white; padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 0.8rem; font-weight: bold; }
-        .scroll-list { max-height: 200px; overflow-y: auto; margin-top: 10px; }
+
+        /* --- T3DIL DYAL STOCK LIST --- */
+        #stock-list { 
+            max-height: 250px; 
+            overflow-y: auto; 
+            margin-top: 10px; 
+            padding-right: 5px;
+        }
+        #stock-list::-webkit-scrollbar { width: 4px; }
+        #stock-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body onclick="enableAudio()">
@@ -64,8 +73,11 @@
         </div>
 
         <div id="stock-panel" class="card hidden">
-            <h4><i class="fas fa-warehouse"></i> STOCK</h4>
-            <div id="stock-list" class="scroll-list"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h4><i class="fas fa-warehouse"></i> STOCK</h4>
+                <input type="text" id="stock-search" onkeyup="filterStock()" placeholder="Chercher pièce..." style="width:140px; padding:5px; margin:0; font-size:0.7rem;">
+            </div>
+            <div id="stock-list"></div>
         </div>
 
         <div id="op-panel" class="card hidden">
@@ -83,7 +95,7 @@
     <div id="stockModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
             <div style="display:flex; justify-content:space-between"><h3>Catalogue Pièces</h3><button onclick="this.closest('.modal').style.display='none'" style="border:none;background:none;font-size:1.5rem">&times;</button></div><br>
-            <input type="text" id="new-p-name" placeholder="Nom pièce (ex: Capteur X)">
+            <input type="text" id="new-p-name" placeholder="Nom pièce">
             <input type="number" id="new-p-qty" placeholder="Quantité">
             <button class="btn btn-success" onclick="addNewStock()">AJOUTER AU STOCK</button>
         </div>
@@ -94,13 +106,9 @@
             <div style="display:flex; justify-content:space-between"><h3>Gestion Users</h3><button onclick="this.closest('.modal').style.display='none'" style="border:none;background:none;font-size:1.5rem">&times;</button></div><br>
             <input type="text" id="u-name" placeholder="Nom">
             <input type="password" id="u-pass" placeholder="Pass">
-            <select id="u-role">
-                <option value="MAINTENANCE">MAINTENANCE</option>
-                <option value="OPERATEUR">OPERATEUR</option>
-                <option value="MANAGER">MANAGER</option>
-            </select>
+            <select id="u-role"><option value="MAINTENANCE">MAINTENANCE</option><option value="OPERATEUR">OPERATEUR</option><option value="MANAGER">MANAGER</option></select>
             <button class="btn" style="background:var(--primary); color:white" onclick="addNewUser()">CRÉER</button>
-            <div id="users-list-ui" class="scroll-list"></div>
+            <div id="users-list-ui" style="max-height:150px; overflow-y:auto; margin-top:10px;"></div>
         </div>
     </div>
 
@@ -110,7 +118,7 @@
             <h3>Fin d'intervention</h3><br>
             <input list="spareparts" id="modal-piece" placeholder="Pièce utilisée">
             <datalist id="spareparts"></datalist>
-            <input type="number" id="modal-qty" value="1" placeholder="Quantité">
+            <input type="number" id="modal-qty" value="1">
             <button class="btn btn-success" onclick="confirmClosing()">VALIDER REPRISE</button>
         </div>
     </div>
@@ -119,7 +127,6 @@
 
     <script>
         const machineData = { "SKODA": ["80008172", "80008173"], "CRAFTER": ["80008119", "80008122"], "G.CALIFORNIA": ["80006953"] };
-        
         const firebaseConfig = {
             apiKey: "AIzaSyASQa5cLXFllnV6EmYp-ARZ9dndWSKha6c",
             authDomain: "cvgmaroc-gmao.firebaseapp.com",
@@ -151,9 +158,7 @@
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('app-content').classList.remove('hidden');
             document.getElementById('roleText').innerText = role;
-            
-            listenFirebase();
-            listenStock();
+            listenFirebase(); listenStock();
             if(role === "MANAGER") { listenUsers(); document.getElementById('manager-panel').classList.remove('hidden'); }
             if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
             if(role !== "OPERATEUR") { document.getElementById('stock-panel').classList.remove('hidden'); }
@@ -168,22 +173,14 @@
         }
 
         function handlePanneSignal() {
-            const proj = document.getElementById('in-proj').value;
-            const mach = document.getElementById('in-mach').value;
-            database.ref('pannes/').push({
-                proj, mach, status: 'OPEN', startTs: Date.now(), dateStr: new Date().toLocaleString()
-            });
+            const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value;
+            database.ref('pannes/').push({ proj, mach, status: 'OPEN', startTs: Date.now(), dateStr: new Date().toLocaleString() });
             alert("Signal envoyé !");
         }
 
         function updateManagerDashboard() {
             let totalMin = 0, countClosed = 0;
-            allData.forEach(p => {
-                if (p.status === 'CLOSED' && p.duration) {
-                    totalMin += parseInt(p.duration) || 0;
-                    countClosed++;
-                }
-            });
+            allData.forEach(p => { if (p.status === 'CLOSED' && p.duration) { totalMin += parseInt(p.duration); countClosed++; }});
             document.getElementById('m-count').innerText = countClosed;
             document.getElementById('m-time').innerText = totalMin;
             document.getElementById('m-mtbf').innerText = countClosed > 0 ? Math.round((720 - (totalMin/60)) / countClosed) : 720;
@@ -194,13 +191,10 @@
             const container = document.getElementById('pannes-list'); container.innerHTML = "";
             let alertOn = false;
             allData.slice(-15).reverse().forEach(p => {
-                const isOpen = p.status === 'OPEN';
-                if(isOpen) alertOn = true;
+                const isOpen = p.status === 'OPEN'; if(isOpen) alertOn = true;
                 container.innerHTML += `<div class="card" style="border-left:5px solid ${isOpen?'var(--danger)':'var(--success)'}">
-                    <div style="display:flex; justify-content:space-between">
-                        <b>${p.mach}</b>
-                        ${(currentUser==='MANAGER'||currentUser==='MAINTENANCE') ? `<button class="btn-del" onclick="deletePanne('${p.key}')"><i class="fas fa-trash"></i></button>` : ''}
-                    </div>
+                    <div style="display:flex; justify-content:space-between"><b>${p.mach}</b>
+                    ${(currentUser==='MANAGER'||currentUser==='MAINTENANCE') ? `<button class="btn-del" onclick="deletePanne('${p.key}')"><i class="fas fa-trash"></i></button>` : ''}</div>
                     <small>${p.proj} | ${isOpen ? 'EN COURS' : (p.duration || 0) + ' min'}</small><br>
                     ${isOpen && (currentUser === 'MAINTENANCE' || currentUser === 'MANAGER') ? `<button class="btn btn-success" style="padding:5px; margin-top:5px; font-size:0.7rem" onclick="openRepriseModal('${p.key}')">REPRISE</button>` : ''}
                 </div>`;
@@ -211,17 +205,11 @@
 
         function listenStock() {
             database.ref('stock/').on('value', snap => {
-                const list = document.getElementById('stock-list');
-                const datalist = document.getElementById('spareparts');
-                const alertDiv = document.getElementById('alert-panel');
-                list.innerHTML = ""; datalist.innerHTML = "";
-                if(currentUser==='MANAGER') alertDiv.innerHTML = "";
-                
+                const list = document.getElementById('stock-list'), datalist = document.getElementById('spareparts'), alertDiv = document.getElementById('alert-panel');
+                list.innerHTML = ""; datalist.innerHTML = ""; if(currentUser==='MANAGER') alertDiv.innerHTML = "";
                 if(snap.val()) {
                     Object.entries(snap.val()).forEach(([name, data]) => {
-                        list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee">
-                            <span>${name}</span><b>${data.qty}</b>
-                        </div>`;
+                        list.innerHTML += `<div class="stock-item" style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee"><span>${name}</span><b>${data.qty}</b></div>`;
                         datalist.innerHTML += `<option value="${name}">`;
                         if(currentUser==='MANAGER' && data.qty <= 0) alertDiv.innerHTML += `<div class="alert-box">RUPTURE STOCK: ${name}</div>`;
                     });
@@ -229,51 +217,37 @@
             });
         }
 
+        function filterStock() {
+            let q = document.getElementById('stock-search').value.toUpperCase();
+            document.querySelectorAll('.stock-item').forEach(item => {
+                item.style.display = item.innerText.toUpperCase().includes(q) ? "flex" : "none";
+            });
+        }
+
         function addNewStock() {
-            const n = document.getElementById('new-p-name').value.toUpperCase().trim();
-            const q = parseInt(document.getElementById('new-p-qty').value);
-            if(n && !isNaN(q)) {
-                database.ref('stock/'+n).set({qty: q}).then(() => {
-                    alert("Ajouté"); document.getElementById('new-p-name').value=""; document.getElementById('new-p-qty').value="";
-                });
-            }
+            const n = document.getElementById('new-p-name').value.toUpperCase().trim(), q = parseInt(document.getElementById('new-p-qty').value);
+            if(n && !isNaN(q)) database.ref('stock/'+n).set({qty: q}).then(() => { alert("OK"); document.getElementById('new-p-name').value=""; document.getElementById('new-p-qty').value=""; });
         }
 
         function listenUsers() {
             database.ref('users/').on('value', snap => {
-                const div = document.getElementById('users-list-ui');
-                div.innerHTML = "";
-                if(snap.val()) {
-                    Object.entries(snap.val()).forEach(([key, u]) => {
-                        div.innerHTML += `<div style="font-size:0.75rem; border-bottom:1px solid #eee; padding:8px 0; display:flex; justify-content:space-between">
-                            ${u.name} (${u.role}) <button onclick="database.ref('users/${key}').remove()" style="color:red; border:none; background:none">Supp.</button>
-                        </div>`;
-                    });
-                }
+                const div = document.getElementById('users-list-ui'); div.innerHTML = "";
+                if(snap.val()) Object.entries(snap.val()).forEach(([key, u]) => {
+                    div.innerHTML += `<div style="font-size:0.75rem; border-bottom:1px solid #eee; padding:8px 0; display:flex; justify-content:space-between">${u.name} (${u.role}) <button onclick="database.ref('users/${key}').remove()" style="color:red; border:none; background:none">X</button></div>`;
+                });
             });
         }
 
         function addNewUser() {
-            const name = document.getElementById('u-name').value;
-            const pass = document.getElementById('u-pass').value;
-            const role = document.getElementById('u-role').value;
-            if(name && pass) {
-                database.ref('users/').push({name, pass, role}).then(() => alert("OK"));
-            }
+            const n = document.getElementById('u-name').value, p = document.getElementById('u-pass').value, r = document.getElementById('u-role').value;
+            if(n && p) database.ref('users/').push({name:n, pass:p, role:r}).then(() => alert("OK"));
         }
 
-        function openRepriseModal(key) {
-            document.getElementById('modal-key').value = key;
-            document.getElementById('closeModal').style.display = 'flex';
-        }
+        function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display = 'flex'; }
 
         function confirmClosing() {
-            const key = document.getElementById('modal-key').value;
-            const piece = document.getElementById('modal-piece').value.toUpperCase().trim();
-            const qtyUsed = parseInt(document.getElementById('modal-qty').value) || 1;
-            const item = allData.find(x => x.key === key);
-            const duration = Math.round((Date.now() - item.startTs) / 60000);
-
+            const key = document.getElementById('modal-key').value, piece = document.getElementById('modal-piece').value.toUpperCase().trim(), qtyUsed = parseInt(document.getElementById('modal-qty').value) || 1;
+            const item = allData.find(x => x.key === key), duration = Math.round((Date.now() - item.startTs) / 60000);
             database.ref('pannes/' + key).update({ status: 'CLOSED', duration, piece: piece || 'N/A' }).then(() => {
                 if(piece && piece !== 'N/A') {
                     const sRef = database.ref('stock/' + piece);
