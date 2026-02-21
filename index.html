@@ -22,15 +22,18 @@
         .kpi-card { background: white; padding: 12px; border-radius: 15px; border-left: 5px solid var(--accent); }
         .kpi-card span { display: block; font-size: 0.6rem; color: #64748b; font-weight: 800; text-transform: uppercase; }
         .kpi-card b { font-size: 1rem; color: var(--primary); }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
         .btn-stop { background: var(--danger); color: white; }
         .btn-success { background: var(--success); color: white; }
         input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 10px; outline: none; }
         .hidden { display: none !important; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(5px); }
+        
         .stock-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; font-size: 0.85rem; }
-        .stock-alert { background: #fee2e2; border: 1px solid var(--danger); padding: 5px 10px; border-radius: 8px; color: var(--danger); font-weight: bold; animation: blink 1.5s infinite; }
-        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.5;} 100% {opacity: 1;} }
+        .stock-empty { color: var(--danger); font-weight: 900; background: #fee2e2; padding: 2px 5px; border-radius: 4px; }
+        
+        .alert-box { background: #b91c1c; color: white; padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 0.8rem; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% {box-shadow: 0 0 0 0 rgba(185, 28, 28, 0.7);} 70% {box-shadow: 0 0 0 10px rgba(185, 28, 28, 0);} 100% {box-shadow: 0 0 0 0 rgba(185, 28, 28, 0);} }
     </style>
 </head>
 <body onclick="enableAudio()">
@@ -60,13 +63,13 @@
                 <div class="kpi-card"><span>MTTR (Min)</span><b id="m-mttr">0</b></div>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
-                <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('stockModal').style.display='flex'"><i class="fas fa-plus"></i> SPARE PARTS</button>
-                <button class="btn" style="background:#1e293b; color:white;" onclick="document.getElementById('userModal').style.display='flex'"><i class="fas fa-users-cog"></i> USERS</button>
+                <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('stockModal').style.display='flex'">CATALOGUE SPARE</button>
+                <button class="btn" style="background:#1e293b; color:white;" onclick="document.getElementById('userModal').style.display='flex'">USERS</button>
             </div>
         </div>
 
         <div id="stock-panel" class="card hidden">
-            <h4 style="font-size:0.8rem; margin-bottom:10px;"><i class="fas fa-warehouse"></i> ÉTAT DU STOCK</h4>
+            <h4 style="font-size:0.8rem; margin-bottom:10px;"><i class="fas fa-warehouse"></i> STOCK PIÈCES</h4>
             <div id="stock-list"></div>
         </div>
 
@@ -77,7 +80,7 @@
         </div>
 
         <div class="card">
-            <h4 style="margin-bottom:10px; font-size:0.9rem;"><i class="fas fa-history"></i> DERNIÈRES ACTIONS</h4>
+            <h4 style="margin-bottom:10px; font-size:0.9rem;"><i class="fas fa-history"></i> FLUX RÉEL</h4>
             <div id="pannes-list"></div>
         </div>
     </div>
@@ -87,32 +90,32 @@
             <input type="hidden" id="modal-key">
             <h3>Fin d'intervention</h3>
             <select id="modal-type"><option>🔧 Mécanique</option><option>⚡ Électrique</option><option>⚙️ Process</option></select>
-            <input list="spareparts" id="modal-piece" placeholder="Rechercher Spare Part...">
+            <input list="spareparts" id="modal-piece" placeholder="Saisir la pièce utilisée">
             <datalist id="spareparts"></datalist>
-            <input type="number" id="modal-qty" value="1" placeholder="Quantité utilisée">
-            <button class="btn btn-success" onclick="confirmClosing()">VALIDER REPRISE</button>
+            <input type="number" id="modal-qty" value="1" placeholder="Quantité">
+            <button class="btn btn-success" onclick="confirmClosing()">REDÉMARRER</button>
             <button class="btn" style="background:none;" onclick="document.getElementById('closeModal').style.display='none'">Annuler</button>
         </div>
     </div>
 
     <div id="stockModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
-            <h3>Ajouter au Catalogue</h3>
-            <input type="text" id="new-part-name" placeholder="Désignation Pièce">
-            <input type="number" id="new-part-qty" placeholder="Quantité Initiale">
-            <button class="btn btn-success" onclick="addNewPart()">ENREGISTRER</button>
+            <h3>Saisie Spare Part</h3>
+            <input type="text" id="new-part-name" placeholder="Désignation">
+            <input type="number" id="new-part-qty" placeholder="Stock Initial">
+            <button class="btn btn-success" onclick="addNewPart()">AJOUTER AU CATALOGUE</button>
             <button class="btn" style="background:none; margin-top:10px;" onclick="document.getElementById('stockModal').style.display='none'">Fermer</button>
         </div>
     </div>
 
     <div id="userModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
-            <h3>Gestion Utilisateurs</h3>
-            <input type="text" id="new-u-name" placeholder="Nom"><input type="password" id="new-u-pass" placeholder="Mot de passe">
+            <h3>Utilisateurs</h3>
+            <input type="text" id="new-u-name" placeholder="Nom"><input type="password" id="new-u-pass" placeholder="Pass">
             <select id="new-u-role"><option value="OPERATEUR">OPERATEUR</option><option value="MAINTENANCE">MAINTENANCE</option></select>
-            <button class="btn btn-success" onclick="addUser()">CRÉER COMPTE</button>
-            <div id="u-list" style="margin-top:10px; max-height:120px; overflow-y:auto;"></div>
-            <button class="btn" onclick="document.getElementById('userModal').style.display='none'">Quitter</button>
+            <button class="btn btn-success" onclick="addUser()">CRÉER</button>
+            <div id="u-list" style="margin-top:10px; max-height:100px; overflow-y:auto;"></div>
+            <button class="btn" onclick="document.getElementById('userModal').style.display='none'">Fermer</button>
         </div>
     </div>
 
@@ -143,7 +146,7 @@
                 if(snap.val()) Object.values(snap.val()).forEach(usr => {
                     if(usr.name.toLowerCase() === u && usr.pass === p) { found = true; startApp(usr.role); }
                 });
-                if(!found) alert("Identifiants incorrects");
+                if(!found) alert("Erreur Login");
             });
         }
 
@@ -151,14 +154,10 @@
             currentUser = role;
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('app-content').classList.remove('hidden');
-            document.getElementById('roleText').innerText = "RÔLE: " + role;
+            document.getElementById('roleText').innerText = role;
             if(role !== "OPERATEUR") { document.getElementById('stock-panel').classList.remove('hidden'); listenStock(); }
             if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
-            if(role === "MANAGER") { 
-                document.getElementById('manager-panel').classList.remove('hidden'); 
-                document.getElementById('alert-panel').classList.remove('hidden');
-                loadUsers(); 
-            }
+            if(role === "MANAGER") { document.getElementById('manager-panel').classList.remove('hidden'); document.getElementById('alert-panel').classList.remove('hidden'); loadUsers(); }
             listenFirebase();
         }
 
@@ -167,7 +166,7 @@
                 proj: document.getElementById('in-proj').value, mach: document.getElementById('in-mach').value,
                 startTs: Date.now(), dateStr: new Date().toLocaleDateString('fr-FR'),
                 monthStr: new Date().toISOString().slice(0, 7), status: 'OPEN'
-            }).then(()=>alert("Panne signalée !"));
+            });
         }
 
         function listenFirebase() {
@@ -182,9 +181,9 @@
             const container = document.getElementById('pannes-list'); container.innerHTML = ""; let alertOn = false;
             allData.slice(-10).reverse().forEach(p => {
                 const isOpen = p.status === 'OPEN'; if(isOpen) alertOn = true;
-                container.innerHTML += `<div class="card" style="border-left:5px solid ${isOpen?'var(--danger)':'var(--success)'}">
-                    <div style="display:flex; justify-content:space-between"><b>${p.mach}</b> <span>${p.proj}</span></div>
-                    ${isOpen && currentUser === 'MAINTENANCE' ? `<button class="btn btn-success" style="padding:5px; margin-top:8px;" onclick="openRepriseModal('${p.key}')">REPRISE</button>` : `<small>${p.duration || 0} min | ${p.piece || 'Aucune pièce'}</small>`}
+                container.innerHTML += `<div class="card" style="border-left:5px solid ${isOpen?'red':'green'}">
+                    <b>${p.mach}</b> | <small>${p.proj}</small><br>
+                    ${isOpen && currentUser === 'MAINTENANCE' ? `<button class="btn btn-success" style="padding:5px; margin-top:5px;" onclick="openRepriseModal('${p.key}')">REPRISE</button>` : `<small>${p.duration || 0} min | ${p.piece || 'S/S'}</small>`}
                 </div>`;
             });
             if(alertOn && currentUser === "MAINTENANCE") document.getElementById('alertSound').play();
@@ -201,6 +200,7 @@
                 database.ref('stock/' + name).set({ qty: qty }).then(() => {
                     document.getElementById('stockModal').style.display = 'none';
                     document.getElementById('new-part-name').value = "";
+                    document.getElementById('new-part-qty').value = "";
                 });
             }
         }
@@ -215,12 +215,13 @@
 
                 if(snap.val()) {
                     Object.entries(snap.val()).forEach(([name, data]) => {
-                        list.innerHTML += `<div class="stock-item ${data.qty<=2?'stock-low':''}"><span>${name}</span><b>${data.qty} pcs</b></div>`;
+                        let isZero = data.qty <= 0;
+                        list.innerHTML += `<div class="stock-item ${isZero?'stock-empty':''}"><span>${name}</span><b>${data.qty}</b></div>`;
                         datalist.innerHTML += `<option value="${name}">`;
                         
-                        // ALERTE MANAGER (Stock <= 2)
-                        if(currentUser === "MANAGER" && data.qty <= 2) {
-                            alertDiv.innerHTML += `<div class="stock-alert"><i class="fas fa-exclamation-circle"></i> STOCK CRITIQUE: ${name} (${data.qty} restants)</div>`;
+                        // ALERTE MANAGER (Ghir melli t-ssala l-pièce 0)
+                        if(currentUser === "MANAGER" && isZero) {
+                            alertDiv.innerHTML += `<div class="alert-box"><i class="fas fa-exclamation-triangle"></i> RUPTURE DE STOCK : ${name}</div>`;
                         }
                     });
                 }
@@ -241,6 +242,7 @@
                     });
                 }
                 document.getElementById('closeModal').style.display='none';
+                document.getElementById('modal-piece').value = "";
             });
         }
 
@@ -254,15 +256,15 @@
 
         function addUser() {
             const n = document.getElementById('new-u-name').value, p = document.getElementById('new-u-pass').value, r = document.getElementById('new-u-role').value;
-            if(n && p) database.ref('users/').push({name:n, pass:p, role:r}).then(()=>alert("User créé"));
+            if(n && p) database.ref('users/').push({name:n, pass:p, role:r}).then(()=>alert("OK"));
         }
 
         function loadUsers() {
             database.ref('users/').on('value', snap => {
                 const div = document.getElementById('u-list'); div.innerHTML = "";
                 if(snap.val()) Object.entries(snap.val()).forEach(([k, u]) => {
-                    div.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #eee; font-size:0.8rem;">
-                        <span>${u.name} (${u.role})</span><i class="fas fa-trash" onclick="database.ref('users/${k}').remove()"></i></div>`;
+                    div.innerHTML += `<div style="display:flex; justify-content:space-between; padding:4px; font-size:0.7rem; border-bottom:1px solid #eee;">
+                        <span>${u.name}</span><i class="fas fa-trash" onclick="database.ref('users/${k}').remove()"></i></div>`;
                 });
             });
         }
