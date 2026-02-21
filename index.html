@@ -72,7 +72,7 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button class="btn" style="background:#0ea5e9; color:white;" onclick="document.getElementById('viewStockModal').style.display='flex'"><i class="fas fa-boxes-stacked"></i> STOCK</button>
                 <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('archiveModal').style.display='flex'"><i class="fas fa-archive"></i> ARCHIVES</button>
-                <button class="btn" style="background:#16a34a; color:white;" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> EXCEL</button>
+                <button class="btn" style="background:#16a34a; color:white;" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> EXCEL + DASH</button>
                 <button class="btn" style="background:#64748b; color:white;" onclick="document.getElementById('stockModal').style.display='flex'"><i class="fas fa-plus"></i> CATALOGUE</button>
                 <button id="btn-users-ui" class="btn" style="background:#1e293b; color:white;" onclick="document.getElementById('userModal').style.display='flex'"><i class="fas fa-users"></i> USERS</button>
             </div>
@@ -102,7 +102,7 @@
             <input list="spareparts" id="modal-piece" placeholder="Nom de la pièce (Optionnel)">
             <datalist id="spareparts"></datalist>
             
-            <input type="number" id="modal-qty" value="1" placeholder="Quantité">
+            <input type="number" id="modal-qty" value="1">
             
             <button class="btn btn-success" onclick="confirmClosing()">TERMINER (DONE)</button>
             <button class="btn btn-ghost" onclick="document.getElementById('closeModal').style.display='none'">ANNULER</button>
@@ -120,30 +120,15 @@
     </div>
 
     <div id="viewStockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-        <div class="card" style="width:100%; max-width:450px;">
-            <h3>Stock Actuel</h3>
-            <div id="stock-list"></div>
-        </div>
+        <div class="card" style="width:100%; max-width:450px;"><h3>Stock Actuel</h3><div id="stock-list"></div></div>
     </div>
 
     <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-        <div class="card" style="width:100%; max-width:400px;">
-            <h3>Ajouter au Catalogue</h3>
-            <input type="text" id="new-p-name" placeholder="Nom de la pièce">
-            <input type="number" id="new-p-qty" placeholder="Quantité">
-            <button class="btn btn-success" onclick="addNewStock()">VALIDER</button>
-        </div>
+        <div class="card" style="width:100%; max-width:400px;"><h3>Ajouter au Catalogue</h3><input type="text" id="new-p-name" placeholder="Nom"><input type="number" id="new-p-qty" placeholder="Quantité"><button class="btn btn-success" onclick="addNewStock()">VALIDER</button></div>
     </div>
 
     <div id="userModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-        <div class="card" style="width:100%; max-width:400px;">
-            <h3>Utilisateurs</h3>
-            <input type="text" id="u-name" placeholder="Nom">
-            <input type="password" id="u-pass" placeholder="Pass">
-            <select id="u-role"><option value="MAINTENANCE">MAINTENANCE</option><option value="OPERATEUR">OPERATEUR</option><option value="MANAGER">MANAGER</option></select>
-            <button class="btn btn-success" onclick="addNewUser()">CRÉER</button>
-            <div id="users-list-ui" style="margin-top:10px;"></div>
-        </div>
+        <div class="card" style="width:100%; max-width:400px;"><h3>Utilisateurs</h3><input type="text" id="u-name" placeholder="Nom"><input type="password" id="u-pass" placeholder="Pass"><select id="u-role"><option value="MAINTENANCE">MAINTENANCE</option><option value="OPERATEUR">OPERATEUR</option><option value="MANAGER">MANAGER</option></select><button class="btn btn-success" onclick="addNewUser()">CRÉER</button><div id="users-list-ui" style="margin-top:10px;"></div></div>
     </div>
 
     <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
@@ -187,9 +172,7 @@
         function listenFirebase() {
             database.ref('pannes/').on('value', snap => {
                 allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
-                renderUI(); 
-                renderArchives();
-                updateStats();
+                renderUI(); renderArchives(); updateStats();
                 if(currentUser === "MANAGER" || currentUser === "MAINTENANCE") updateCharts();
             });
         }
@@ -204,10 +187,7 @@
             if(myChart) myChart.destroy();
             myChart = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: Object.keys(dataMap),
-                    datasets: [{ label: 'Min', data: Object.values(dataMap), backgroundColor: '#00d4ff', borderRadius: 8 }]
-                },
+                data: { labels: Object.keys(dataMap), datasets: [{ label: 'Min', data: Object.values(dataMap), backgroundColor: '#00d4ff', borderRadius: 8 }] },
                 options: { responsive: true, plugins: { legend: { display: false } } }
             });
         }
@@ -218,11 +198,10 @@
             document.getElementById('m-charge').innerText = actives.length;
             actives.reverse().forEach(p => {
                 let statusHtml = p.status === 'OPEN' ? `<span class="status-tag tag-open">EN ARRÊT</span>` : `<span class="status-tag tag-progress">RÉPARATION...</span>`;
-                let actionBtn = "";
-                if(currentUser === 'MAINTENANCE') {
-                    if(p.status === 'OPEN') actionBtn = `<button class="btn btn-warning" style="padding:8px; margin-top:8px;" onclick="takeCharge('${p.key}')">I'M GOING</button>`;
-                    else actionBtn = `<button class="btn btn-success" style="padding:8px; margin-top:8px;" onclick="openRepriseModal('${p.key}')">DONE</button>`;
-                }
+                let actionBtn = (currentUser === 'MAINTENANCE') ? (p.status === 'OPEN' ? 
+                    `<button class="btn btn-warning" style="padding:8px; margin-top:8px;" onclick="takeCharge('${p.key}')">I'M GOING</button>` : 
+                    `<button class="btn btn-success" style="padding:8px; margin-top:8px;" onclick="openRepriseModal('${p.key}')">DONE</button>`) : "";
+                
                 container.innerHTML += `<div class="card" style="border-left:5px solid ${p.status === 'OPEN' ? 'var(--danger)' : 'var(--warning)'}">
                     <div style="display:flex; justify-content:space-between"><b>${p.mach}</b>${statusHtml}</div>
                     <small>${p.proj} | ${p.dateStr}</small><br>${actionBtn}
@@ -261,18 +240,14 @@
             const piece = document.getElementById('modal-piece').value.toUpperCase().trim();
             const qtyUsed = parseInt(document.getElementById('modal-qty').value) || 1;
             
-            if(!problem || !solution) return alert("Remplir le problème et la solution !");
+            if(!problem || !solution) return alert("Veuillez saisir le Problème et la Solution !");
 
             const item = allData.find(x => x.key === key);
             const duration = Math.round((Date.now() - item.startTs) / 60000);
 
             database.ref('pannes/' + key).update({ 
-                status: 'CLOSED', 
-                duration, 
-                problem: problem,
-                solution: solution,
-                piece: piece || 'N/A',
-                qty: piece !== '' ? qtyUsed : 0
+                status: 'CLOSED', duration, problem, solution, 
+                piece: piece || 'N/A', qty: piece !== '' ? qtyUsed : 0 
             }).then(() => {
                 if(piece && piece !== 'N/A') {
                     const sRef = database.ref('stock/' + piece);
@@ -284,46 +259,68 @@
             });
         }
 
+        // --- EXCEL AVEC DASHBOARD ---
         function exportToExcel() {
-            const rows = allData.filter(p => p.status === 'CLOSED').map(p => ({
+            const closed = allData.filter(p => p.status === 'CLOSED');
+            if(closed.length === 0) return alert("Archive vide!");
+
+            // Sheet 1: Data Archive
+            const archiveRows = closed.map(p => ({
                 'Date': p.dateStr, 'Projet': p.proj, 'Machine': p.mach, 'Downtime(m)': p.duration,
                 'Problème': p.problem, 'Solution': p.solution, 'Pièce': p.piece, 'Qté': p.qty
             }));
-            const ws = XLSX.utils.json_to_sheet(rows);
+            const wsData = XLSX.utils.json_to_sheet(archiveRows);
+
+            // Sheet 2: Dashboard Summary
+            const totalDowntime = closed.reduce((acc, curr) => acc + (curr.duration || 0), 0);
+            const mttr = Math.round(totalDowntime / closed.length);
+            const statsProj = {}; closed.forEach(p => statsProj[p.proj] = (statsProj[p.proj] || 0) + 1);
+
+            const dashData = [
+                ['GMAO DASHBOARD SUMMARY', '', 'Généré le:', new Date().toLocaleDateString()],
+                [],
+                ['KPIs GLOBAUX', 'VALEUR', 'UNITE'],
+                ['Total Interventions', closed.length, 'Interv.'],
+                ['Total Downtime', totalDowntime, 'Minutes'],
+                ['MTTR (Mean Time To Repair)', mttr, 'Min/Interv.'],
+                ['MTBF (Heures)', document.getElementById('m-mtbf').innerText, 'Heures'],
+                [],
+                ['INTERVENTIONS PAR PROJET', 'NOMBRE'],
+                ...Object.entries(statsProj).map(([proj, count]) => [proj, count])
+            ];
+            const wsDash = XLSX.utils.aoa_to_sheet(dashData);
+
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Rapport");
-            XLSX.writeFile(wb, "GMAO_Export_" + new Date().toLocaleDateString() + ".xlsx");
+            XLSX.utils.book_append_sheet(wb, wsData, "Archives_Details");
+            XLSX.utils.book_append_sheet(wb, wsDash, "Dashboard_KPIs");
+            XLSX.writeFile(wb, "GMAO_Report_Full_" + new Date().toLocaleDateString() + ".xlsx");
         }
 
         function exportToPDF() {
             const { jsPDF } = window.jspdf; const doc = new jsPDF('l');
             doc.text("Rapport Maintenance CVG", 14, 15);
-            const rows = allData.filter(p => p.status === 'CLOSED').map(p => [p.dateStr, p.mach, p.duration + "m", p.problem, p.solution, p.piece]);
+            const rows = allData.filter(p => p.status === 'CLOSED').map(p => [p.dateStr, p.mach, p.duration+"m", p.problem, p.solution, p.piece]);
             doc.autoTable({ head: [['Date', 'Machine', 'Durée', 'Problème', 'Solution', 'Pièce']], body: rows, startY: 25 });
             doc.save("GMAO_Rapport.pdf");
         }
 
+        // Database listeners & actions
         function listenStock() {
             database.ref('stock/').on('value', snap => {
                 const list = document.getElementById('stock-list'); if(!list) return;
-                list.innerHTML = "";
-                const dl = document.getElementById('spareparts'); if(!dl) return;
-                dl.innerHTML = "";
+                list.innerHTML = ""; const dl = document.getElementById('spareparts'); if(!dl) return; dl.innerHTML = "";
                 if(snap.val()) Object.entries(snap.val()).forEach(([name, data]) => {
                     list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;"><span>${name}</span><b>${data.qty}</b></div>`;
                     dl.innerHTML += `<option value="${name}">`;
                 });
             });
         }
-
         function listenUsers() {
             database.ref('users/').on('value', snap => {
-                const div = document.getElementById('users-list-ui'); if(!div) return;
-                div.innerHTML = "";
+                const div = document.getElementById('users-list-ui'); if(!div) return; div.innerHTML = "";
                 if(snap.val()) Object.entries(snap.val()).forEach(([key, u]) => { div.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>${u.name}</span> <button onclick="database.ref('users/${key}').remove()" style="color:red; border:none; background:none;">&times;</button></div>`; });
             });
         }
-
         function takeCharge(key) { database.ref('pannes/' + key).update({ status: 'IN_PROGRESS' }); }
         function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display = 'flex'; }
         function handlePanneSignal() {
