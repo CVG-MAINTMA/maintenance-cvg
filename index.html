@@ -8,6 +8,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -18,9 +21,10 @@
         header { background: var(--primary); color: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .card { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
         .grid-kpi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
-        .kpi-card { background: white; padding: 12px; border-radius: 15px; border-left: 5px solid var(--accent); }
+        .kpi-card { background: white; padding: 12px; border-radius: 15px; border-left: 5px solid var(--accent); position: relative; }
         .kpi-card span { display: block; font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
         .kpi-card b { font-size: 1.1rem; color: var(--primary); }
+        .charge-badge { position: absolute; top: 10px; right: 10px; padding: 2px 8px; border-radius: 10px; font-size: 0.6rem; color: white; }
         .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
         .btn-stop { background: var(--danger); color: white; }
         .btn-success { background: var(--success); color: white; }
@@ -29,12 +33,8 @@
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(5px); }
         .btn-del { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 1rem; }
         .alert-box { background: #b91c1c; color: white; padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 0.8rem; font-weight: bold; }
-        #stock-list { max-height: 400px; overflow-y: auto; padding-right: 5px; }
-        .stock-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid #f1f5f9; }
-        .badge-qty { padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 800; }
-        .badge-low { background: #fee2e2; color: #ef4444; }
-        .badge-ok { background: #dcfce7; color: #10b981; }
-        .chart-container { position: relative; height: 180px; width: 100%; }
+        .chart-container { position: relative; height: 160px; width: 100%; }
+        #archive-list { max-height: 400px; overflow-y: auto; }
     </style>
 </head>
 <body onclick="enableAudio()">
@@ -58,18 +58,25 @@
 
         <div id="manager-panel" class="hidden">
             <div class="card">
-                <h4 style="margin-bottom:10px;"><i class="fas fa-chart-pie"></i> ANALYSE PAR MACHINE</h4>
+                <h4 style="margin-bottom:10px;"><i class="fas fa-chart-line"></i> PERFORMANCE ANALYTICS</h4>
                 <div class="chart-container"><canvas id="machineChart"></canvas></div>
             </div>
+            
             <div class="grid-kpi">
-                <div class="kpi-card"><span>Pannes (Closed)</span><b id="m-count">0</b></div>
-                <div class="kpi-card"><span>Downtime (Min)</span><b id="m-time">0</b></div>
+                <div class="kpi-card"><span>Interventions</span><b id="m-count">0</b></div>
+                <div class="kpi-card">
+                    <span>Charge Actuelle</span>
+                    <b id="m-charge">0</b>
+                    <div id="charge-indicator" class="charge-badge"></div>
+                </div>
                 <div class="kpi-card"><span>MTBF (H)</span><b id="m-mtbf">0</b></div>
                 <div class="kpi-card"><span>MTTR (Min)</span><b id="m-mttr">0</b></div>
             </div>
+            
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button class="btn" style="background:#0ea5e9; color:white;" onclick="document.getElementById('viewStockModal').style.display='flex'"><i class="fas fa-boxes-stacked"></i> STOCK</button>
-                <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('stockModal').style.display='flex'"><i class="fas fa-plus-circle"></i> CATALOGUE</button>
+                <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('archiveModal').style.display='flex'"><i class="fas fa-archive"></i> ARCHIVES</button>
+                <button class="btn" style="background:#64748b; color:white;" onclick="document.getElementById('stockModal').style.display='flex'"><i class="fas fa-plus"></i> CATALOGUE</button>
                 <button id="btn-users-ui" class="btn hidden" style="background:#1e293b; color:white;" onclick="document.getElementById('userModal').style.display='flex'"><i class="fas fa-users"></i> USERS</button>
             </div>
         </div>
@@ -81,49 +88,59 @@
         </div>
 
         <div class="card">
-            <h4><i class="fas fa-tools"></i> ARRÊTS EN COURS</h4>
+            <h4><i class="fas fa-bell"></i> ALERTES EN COURS</h4>
             <div id="pannes-list"></div>
+        </div>
+    </div>
+
+    <div id="archiveModal" class="modal">
+        <div class="card" style="width:100%; max-width:600px; border-radius:25px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3><i class="fas fa-history"></i> Historique des Arrêts</h3>
+                <button onclick="this.closest('.modal').style.display='none'" style="border:none;background:none;font-size:1.8rem;">&times;</button>
+            </div>
+            <button class="btn" style="background:var(--success); color:white; margin-bottom:10px;" onclick="exportToPDF()">
+                <i class="fas fa-file-pdf"></i> EXPORTER RAPPORT PDF
+            </button>
+            <div id="archive-list"></div>
         </div>
     </div>
 
     <div id="viewStockModal" class="modal">
         <div class="card" style="width:100%; max-width:450px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h4>Stock Actuel</h4><button onclick="this.closest('.modal').style.display='none'" style="border:none;background:none;font-size:1.5rem">&times;</button>
-            </div>
-            <input type="text" id="stock-search" onkeyup="filterStock()" placeholder="Chercher pièce...">
+            <div style="display:flex; justify-content:space-between"><h4>Stock</h4><button onclick="this.closest('.modal').style.display='none'">&times;</button></div>
             <div id="stock-list"></div>
         </div>
     </div>
 
     <div id="stockModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
-            <div style="display:flex; justify-content:space-between"><h3>Ajouter Pièce</h3><button onclick="this.closest('.modal').style.display='none'" style="border:none;background:none;font-size:1.5rem">&times;</button></div><br>
+            <h3>Ajouter Pièce</h3>
             <input type="text" id="new-p-name" placeholder="Nom">
             <input type="number" id="new-p-qty" placeholder="Quantité">
-            <button class="btn btn-success" onclick="addNewStock()">ENREGISTRER</button>
+            <button class="btn btn-success" onclick="addNewStock()">VALIDER</button>
         </div>
     </div>
 
     <div id="userModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
-            <div style="display:flex; justify-content:space-between"><h3>Gestion Users</h3><button onclick="this.closest('.modal').style.display='none'" style="border:none;background:none;font-size:1.5rem">&times;</button></div><br>
+            <h3>Users</h3>
             <input type="text" id="u-name" placeholder="Nom">
             <input type="password" id="u-pass" placeholder="Pass">
             <select id="u-role"><option value="MAINTENANCE">MAINTENANCE</option><option value="OPERATEUR">OPERATEUR</option><option value="MANAGER">MANAGER</option></select>
-            <button class="btn" style="background:var(--primary); color:white" onclick="addNewUser()">CRÉER</button>
-            <div id="users-list-ui" style="max-height:150px; overflow-y:auto; margin-top:10px;"></div>
+            <button class="btn btn-success" onclick="addNewUser()">CRÉER</button>
+            <div id="users-list-ui" style="margin-top:10px"></div>
         </div>
     </div>
 
     <div id="closeModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
             <input type="hidden" id="modal-key">
-            <h3>Validation Reprise</h3><br>
+            <h3>Fin d'Intervention</h3>
             <input list="spareparts" id="modal-piece" placeholder="Pièce utilisée">
             <datalist id="spareparts"></datalist>
             <input type="number" id="modal-qty" value="1">
-            <button class="btn btn-success" onclick="confirmClosing()">CONFIRMER</button>
+            <button class="btn btn-success" onclick="confirmClosing()">VALIDER REPRISE</button>
         </div>
     </div>
 
@@ -153,7 +170,7 @@
                 if(snap.val()) Object.values(snap.val()).forEach(usr => {
                     if(usr.name.toLowerCase() === u && usr.pass === p) { found = true; startApp(usr.role); }
                 });
-                if(!found) alert("Incorrect");
+                if(!found) alert("Refusé");
             });
         }
 
@@ -172,35 +189,53 @@
             database.ref('pannes/').on('value', snap => {
                 allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
                 renderUI();
+                renderArchives();
                 if(currentUser === "MANAGER" || currentUser === "MAINTENANCE") { updateManagerDashboard(); updateCharts(); }
             });
         }
 
         function renderUI() {
-            const container = document.getElementById('pannes-list'); 
-            container.innerHTML = "";
+            const container = document.getElementById('pannes-list'); container.innerHTML = "";
             let alertOn = false;
-
-            // FILTRE: GHIR LES OPEN
             const openPannes = allData.filter(p => p.status === 'OPEN');
+            
+            // Update Charge Indicator
+            document.getElementById('m-charge').innerText = openPannes.length;
+            const ind = document.getElementById('charge-indicator');
+            if(openPannes.length > 3) { ind.innerText = "Saturé"; ind.style.background = "var(--danger)"; }
+            else if(openPannes.length > 0) { ind.innerText = "Actif"; ind.style.background = "var(--warning)"; }
+            else { ind.innerText = "Repos"; ind.style.background = "var(--success)"; }
 
-            openPannes.slice(-15).reverse().forEach(p => {
+            openPannes.slice(-10).reverse().forEach(p => {
                 alertOn = true;
                 container.innerHTML += `<div class="card" style="border-left:5px solid var(--danger)">
-                    <div style="display:flex; justify-content:space-between"><b>${p.mach}</b>
-                    ${(currentUser==='MANAGER'||currentUser==='MAINTENANCE') ? `<button class="btn-del" onclick="deletePanne('${p.key}')"><i class="fas fa-trash"></i></button>` : ''}</div>
-                    <small>${p.proj} | <span style="color:var(--danger); font-weight:800">EN ARRÊT</span></small><br>
-                    <small style="color:#94a3b8">${p.dateStr}</small><br>
-                    ${(currentUser === 'MAINTENANCE' || currentUser === 'MANAGER') ? `<button class="btn btn-success" style="padding:8px; margin-top:8px; font-size:0.75rem" onclick="openRepriseModal('${p.key}')">VALIDER REPRISE</button>` : ''}
+                    <b>${p.mach}</b><br><small>${p.proj} | ${p.dateStr}</small><br>
+                    ${(currentUser === 'MAINTENANCE' || currentUser === 'MANAGER') ? `<button class="btn btn-success" style="padding:5px; margin-top:5px; font-size:0.7rem" onclick="openRepriseModal('${p.key}')">REPRISE</button>` : ''}
                 </div>`;
             });
-
-            if (openPannes.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;"><i class="fas fa-check-circle" style="font-size:2rem; color:var(--success)"></i><p>Aucun arrêt en cours.</p></div>`;
-            }
-
+            if (openPannes.length === 0) container.innerHTML = "<p style='text-align:center;color:#94a3b8'>Aucune alerte</p>";
+            
             if(alertOn && (currentUser === "MAINTENANCE" || currentUser === "MANAGER")) document.getElementById('alertSound').play().catch(()=>{});
             else document.getElementById('alertSound').pause();
+        }
+
+        function renderArchives() {
+            const list = document.getElementById('archive-list'); list.innerHTML = "";
+            allData.filter(p => p.status === 'CLOSED').reverse().forEach(p => {
+                list.innerHTML += `<div style="font-size:0.8rem; padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between">
+                    <div><b>${p.mach}</b> (${p.duration} min)<br><small>${p.dateStr} | Piece: ${p.piece}</small></div>
+                    <button class="btn-del" onclick="deletePanne('${p.key}')"><i class="fas fa-trash"></i></button>
+                </div>`;
+            });
+        }
+
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("RAPPORT DE MAINTENANCE - CVG DYNAMICS", 14, 15);
+            const rows = allData.filter(p => p.status === 'CLOSED').map(p => [p.dateStr, p.mach, p.proj, p.duration + " min", p.piece]);
+            doc.autoTable({ head: [['Date', 'Machine', 'Projet', 'Downtime', 'Pièce']], body: rows, startY: 25 });
+            doc.save("Rapport_GMAO.pdf");
         }
 
         function updateCharts() {
@@ -209,12 +244,9 @@
             allData.forEach(p => counts[p.mach] = (counts[p.mach] || 0) + 1);
             if (myChart) myChart.destroy();
             myChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(counts),
-                    datasets: [{ data: Object.values(counts), backgroundColor: ['#00d4ff', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b'] }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 9 } } } } }
+                type: 'bar',
+                data: { labels: Object.keys(counts), datasets: [{ label: 'Nbr Pannes', data: Object.values(counts), backgroundColor: '#00d4ff' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
 
@@ -227,27 +259,17 @@
             let totalMin = 0, countClosed = 0;
             allData.forEach(p => { if (p.status === 'CLOSED' && p.duration) { totalMin += parseInt(p.duration); countClosed++; }});
             document.getElementById('m-count').innerText = countClosed;
-            document.getElementById('m-time').innerText = totalMin;
             document.getElementById('m-mtbf').innerText = countClosed > 0 ? Math.round((720 - (totalMin/60)) / countClosed) : 720;
             document.getElementById('m-mttr').innerText = countClosed > 0 ? Math.round(totalMin / countClosed) : 0;
         }
 
         function listenStock() {
             database.ref('stock/').on('value', snap => {
-                const list = document.getElementById('stock-list'), datalist = document.getElementById('spareparts'), alertDiv = document.getElementById('alert-panel');
-                list.innerHTML = ""; datalist.innerHTML = ""; if(currentUser==='MANAGER') alertDiv.innerHTML = "";
+                const list = document.getElementById('stock-list'); list.innerHTML = "";
                 if(snap.val()) Object.entries(snap.val()).forEach(([name, data]) => {
-                    const isLow = data.qty <= 2;
-                    list.innerHTML += `<div class="stock-item"><span>${name}</span><b class="badge-qty ${isLow?'badge-low':'badge-ok'}">${data.qty}</b></div>`;
-                    datalist.innerHTML += `<option value="${name}">`;
-                    if(currentUser==='MANAGER' && data.qty <= 0) alertDiv.innerHTML += `<div class="alert-box">RUPTURE: ${name}</div>`;
+                    list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee"><span>${name}</span><b>${data.qty}</b></div>`;
                 });
             });
-        }
-
-        function filterStock() {
-            let q = document.getElementById('stock-search').value.toUpperCase();
-            document.querySelectorAll('.stock-item').forEach(item => item.style.display = item.innerText.toUpperCase().includes(q) ? "flex" : "none");
         }
 
         function addNewStock() {
@@ -259,14 +281,14 @@
             database.ref('users/').on('value', snap => {
                 const div = document.getElementById('users-list-ui'); div.innerHTML = "";
                 if(snap.val()) Object.entries(snap.val()).forEach(([key, u]) => {
-                    div.innerHTML += `<div style="font-size:0.75rem; border-bottom:1px solid #eee; padding:10px 0; display:flex; justify-content:space-between">${u.name} <button onclick="database.ref('users/${key}').remove()" style="color:red; border:none; background:none">X</button></div>`;
+                    div.innerHTML += `<div style="font-size:0.7rem; display:flex; justify-content:space-between">${u.name} <button onclick="database.ref('users/${key}').remove()">X</button></div>`;
                 });
             });
         }
 
         function addNewUser() {
             const n = document.getElementById('u-name').value, p = document.getElementById('u-pass').value, r = document.getElementById('u-role').value;
-            if(n && p) database.ref('users/').push({name:n, pass:p, role:r}).then(() => alert("OK"));
+            if(n && p) database.ref('users/').push({name:n, pass:p, role:r});
         }
 
         function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display = 'flex'; }
