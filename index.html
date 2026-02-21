@@ -78,21 +78,10 @@
                 <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('archiveModal').style.display='flex'"><i class="fas fa-archive"></i> ARCHIVES</button>
                 <button class="btn" style="background:#16a34a; color:white;" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> EXCEL + DASH</button>
                 <button class="btn" style="background:#64748b; color:white;" onclick="document.getElementById('stockModal').style.display='flex'"><i class="fas fa-plus"></i> CATALOGUE</button>
-            </div>
-
-            <div class="card" style="border: 2px dashed var(--purple); background: #fdfaff;">
-                <h4 style="color:var(--purple); margin-bottom:10px;"><i class="fas fa-user-plus"></i> Gestion des Comptes</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <input type="text" id="new-user-name" placeholder="Matricule">
-                    <input type="password" id="new-user-pass" placeholder="Password">
-                </div>
-                <select id="new-user-role">
-                    <option value="" disabled selected>Choisir Position</option>
-                    <option value="OPERATEUR">OPERATEUR</option>
-                    <option value="MAINTENANCE">MAINTENANCE</option>
-                    <option value="MANAGER">MANAGER</option>
-                </select>
-                <button class="btn" style="background:var(--purple); color:white" onclick="addNewUser()">AJOUTER UTILISATEUR</button>
+                
+                <button class="btn" style="background:var(--primary); color:white; grid-column: span 2;" onclick="document.getElementById('userModal').style.display='flex'">
+                    <i class="fas fa-users-gear"></i> GESTION DES COMPTES
+                </button>
             </div>
         </div>
 
@@ -109,6 +98,24 @@
         <div class="card">
             <h4><i class="fas fa-bell"></i> ALERTES ACTIVES</h4>
             <div id="pannes-list"></div>
+        </div>
+    </div>
+
+    <div id="userModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
+        <div class="card" style="width:100%; max-width:400px;">
+            <h3 style="color:var(--primary);"><i class="fas fa-user-plus"></i> Nouveau Compte</h3>
+            <div style="margin-top:15px;">
+                <input type="text" id="new-user-name" placeholder="Matricule">
+                <input type="password" id="new-user-pass" placeholder="Password">
+                <select id="new-user-role">
+                    <option value="" disabled selected>Position / Role</option>
+                    <option value="OPERATEUR">OPERATEUR</option>
+                    <option value="MAINTENANCE">MAINTENANCE</option>
+                    <option value="MANAGER">MANAGER</option>
+                </select>
+                <button class="btn btn-success" onclick="addNewUser()">CRÉER LE COMPTE</button>
+                <button class="btn btn-ghost" onclick="document.getElementById('userModal').style.display='none'">FERMER</button>
+            </div>
         </div>
     </div>
 
@@ -151,17 +158,13 @@
 
         function handleLogin() {
             const u = document.getElementById('login-user').value.trim().toLowerCase(), p = document.getElementById('login-pass').value;
-            // Admin default override
             if(u === "admin" && p === "3333") return startApp("MANAGER");
-            
-            // Check users in Firebase
             database.ref('users/').once('value', snap => {
                 let found = false; 
                 if(snap.val()) {
                     Object.values(snap.val()).forEach(usr => { 
                         if(usr.name.toLowerCase() === u && usr.pass === p) { 
-                            found = true; 
-                            startApp(usr.role); 
+                            found = true; startApp(usr.role); 
                         }
                     });
                 }
@@ -179,19 +182,16 @@
             if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
         }
 
-        // Logic Ajout Utilisateur
         function addNewUser() {
             const name = document.getElementById('new-user-name').value.trim();
             const pass = document.getElementById('new-user-pass').value.trim();
             const role = document.getElementById('new-user-role').value;
-            
-            if(!name || !pass || !role) return alert("Remplissez tous les champs utilisateur");
-            
+            if(!name || !pass || !role) return alert("Remplissez tous les champs !");
             database.ref('users/').push({ name, pass, role }).then(() => {
-                alert("Utilisateur " + name + " ajouté !");
+                alert("Compte " + name + " créé avec succès !");
                 document.getElementById('new-user-name').value = "";
                 document.getElementById('new-user-pass').value = "";
-                document.getElementById('new-user-role').value = "";
+                document.getElementById('userModal').style.display = 'none';
             });
         }
 
