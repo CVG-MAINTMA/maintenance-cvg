@@ -14,16 +14,15 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
-        :root { --primary: #002b5c; --accent: #00d4ff; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --bg: #f8fafc; }
+        :root { --primary: #002b5c; --accent: #00d4ff; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --bg: #f8fafc; --purple: #8b5cf6; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg); padding: 10px; }
 
         header { background: var(--primary); color: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
         
-        /* Manager KPIs */
         .grid-kpi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
-        .kpi-card { background: white; padding: 15px; border-radius: 15px; border-left: 5px solid var(--accent); position: relative; overflow: hidden; }
+        .kpi-card { background: white; padding: 15px; border-radius: 15px; border-left: 5px solid var(--accent); position: relative; overflow: hidden; transition: 0.3s; }
         .kpi-card i { position: absolute; right: 10px; bottom: 10px; opacity: 0.1; font-size: 2rem; }
         .kpi-card span { display: block; font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; }
         .kpi-card b { font-size: 1.2rem; color: var(--primary); }
@@ -32,6 +31,9 @@
         .btn-pdf { background: #1e293b; color: white; margin-top: 10px; }
         .btn-stop { background: var(--danger); color: white; }
         
+        .alert-blink { animation: blinker 1.5s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0.3; } }
+
         select, input { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 10px; outline: none; background: #fff; }
         .hidden { display: none !important; }
         #closeModal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(4px); }
@@ -59,15 +61,15 @@
 
         <div id="manager-panel" class="hidden">
             <div class="grid-kpi">
-                <div class="kpi-card"><span>Total Pannes</span><b id="m-count">0</b><i class="fas fa-exclamation-triangle"></i></div>
-                <div class="kpi-card" style="border-left-color: var(--danger);"><span>Downtime (Min)</span><b id="m-time">0</b><i class="fas fa-clock"></i></div>
-                <div class="kpi-card" style="border-left-color: var(--success);"><span>MTBF (Moy)</span><b id="m-mtbf">0</b><i class="fas fa-chart-line"></i></div>
-                <div class="kpi-card" style="border-left-color: var(--warning);"><span>Pièces Util.</span><b id="m-parts">0</b><i class="fas fa-cog"></i></div>
+                <div class="kpi-card" id="card-pannes"><span>Total Pannes</span><b id="m-count">0</b><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="kpi-card" id="card-time" style="border-left-color: var(--danger);"><span>Downtime (Min)</span><b id="m-time">0</b><i class="fas fa-clock"></i></div>
+                <div class="kpi-card" id="card-mtbf" style="border-left-color: var(--success);"><span>MTBF (Moy)</span><b id="m-mtbf">0</b><i class="fas fa-chart-line"></i></div>
+                <div class="kpi-card" id="card-mttr" style="border-left-color: var(--purple);"><span>MTTR (Répar.)</span><b id="m-mttr">0</b><i class="fas fa-tools"></i></div>
             </div>
             <div class="card">
                 <canvas id="managerChart"></canvas>
             </div>
-            <button class="btn btn-pdf" onclick="generateDailyPDF()"><i class="fas fa-file-pdf"></i> EXPORT RAPPORT PDF</button>
+            <button class="btn btn-pdf" onclick="generateDailyPDF()"><i class="fas fa-file-pdf"></i> EXPORT RAPPORT PERFORMANCE</button>
         </div>
 
         <div id="op-panel" class="card hidden">
@@ -203,20 +205,38 @@
 
         function updateManagerDashboard() {
             const stats = { "SKODA": 0, "CRAFTER": 0, "G.CALIFORNIA": 0 };
-            let totalTime = 0; let partsCount = 0;
-            
+            let totalDowntime = 0;
+            const tempsProductionTotal = 1440; // 24h en min
+
             allData.forEach(p => { 
-                if(p.duration) { stats[p.proj] += p.duration; totalTime += p.duration; }
-                if(p.piece && p.piece !== '-' && p.piece !== 'Aucune') partsCount++;
+                if(p.duration) { 
+                    stats[p.proj] += p.duration; 
+                    totalDowntime += p.duration; 
+                }
             });
 
-            // Calcul MTBF (Hypothèse: 1440 min de production par jour)
-            const mtbf = allData.length > 0 ? Math.round(1440 / allData.length) : 1440;
-            
-            document.getElementById('m-count').innerText = allData.length;
-            document.getElementById('m-time').innerText = totalTime + " min";
+            const nbPannes = allData.length;
+            const mtbf = nbPannes > 0 ? Math.round((tempsProductionTotal - totalDowntime) / nbPannes) : tempsProductionTotal;
+            const mttr = nbPannes > 0 ? Math.round(totalDowntime / nbPannes) : 0;
+
+            // Affichage des valeurs
+            document.getElementById('m-count').innerText = nbPannes;
+            document.getElementById('m-time').innerText = totalDowntime + " min";
             document.getElementById('m-mtbf').innerText = mtbf + " min";
-            document.getElementById('m-parts').innerText = partsCount;
+            document.getElementById('m-mttr').innerText = mttr + " min";
+
+            // Alerte Visuelle MTTR > 1 min
+            const mttrCard = document.getElementById('card-mttr');
+            const mttrVal = document.getElementById('m-mttr');
+            if(mttr > 1) {
+                mttrCard.style.borderLeftColor = "var(--danger)";
+                mttrVal.style.color = "var(--danger)";
+                mttrVal.classList.add('alert-blink');
+            } else {
+                mttrCard.style.borderLeftColor = "var(--purple)";
+                mttrVal.style.color = "var(--primary)";
+                mttrVal.classList.remove('alert-blink');
+            }
 
             const ctx = document.getElementById('managerChart').getContext('2d');
             if(myChart) myChart.destroy();
@@ -234,19 +254,24 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             doc.setFontSize(18); doc.setTextColor(0, 43, 92);
-            doc.text("RAPPORT QUOTIDIEN GMAO - CVG", 15, 20);
+            doc.text("RAPPORT PERFORMANCE GMAO - CVG", 15, 20);
+            
+            doc.setFontSize(11); doc.setTextColor(50);
+            const summary = `Pannes: ${allData.length} | Downtime: ${document.getElementById('m-time').innerText} | MTBF: ${document.getElementById('m-mtbf').innerText} | MTTR: ${document.getElementById('m-mttr').innerText}`;
+            doc.text(summary, 15, 30);
+
             doc.setFontSize(10); doc.setTextColor(100);
-            doc.text("Généré le: " + new Date().toLocaleString(), 15, 28);
+            doc.text("Généré le: " + new Date().toLocaleString(), 15, 38);
             
             const rows = allData.map(p => [p.dateStr, p.mach, p.proj, p.startStr, p.duration || '0', p.type || '-', p.piece]);
             doc.autoTable({
-                head: [['Date', 'Machine', 'Projet', 'Start', 'Durée', 'Type', 'Pièce']],
+                head: [['Date', 'Machine', 'Projet', 'Heure', 'Durée(m)', 'Type', 'Pièce']],
                 body: rows,
-                startY: 35,
+                startY: 45,
                 theme: 'striped',
                 headStyles: { fillColor: [0, 43, 92] }
             });
-            doc.save(`Rapport_CVG_${new Date().toLocaleDateString()}.pdf`);
+            doc.save(`Performance_CVG_${new Date().toLocaleDateString()}.pdf`);
         }
     </script>
 </body>
