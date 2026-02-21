@@ -29,11 +29,12 @@
         .hidden { display: none !important; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(5px); }
         
-        .stock-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; font-size: 0.85rem; }
-        .stock-empty { color: var(--danger); font-weight: 900; background: #fee2e2; padding: 2px 5px; border-radius: 4px; }
+        .stock-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #eee; font-size: 0.85rem; }
+        .stock-empty { color: var(--danger); font-weight: 900; background: #fee2e2; padding: 5px; border-radius: 8px; }
         
-        .alert-box { background: #b91c1c; color: white; padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 0.8rem; animation: pulse 2s infinite; }
+        .alert-box { background: #b91c1c; color: white; padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 0.8rem; animation: pulse 2s infinite; font-weight: bold; }
         @keyframes pulse { 0% {box-shadow: 0 0 0 0 rgba(185, 28, 28, 0.7);} 70% {box-shadow: 0 0 0 10px rgba(185, 28, 28, 0);} 100% {box-shadow: 0 0 0 0 rgba(185, 28, 28, 0);} }
+        .btn-plus { background: var(--success); color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; border: none; cursor: pointer; }
     </style>
 </head>
 <body onclick="enableAudio()">
@@ -63,8 +64,8 @@
                 <div class="kpi-card"><span>MTTR (Min)</span><b id="m-mttr">0</b></div>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
-                <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('stockModal').style.display='flex'">CATALOGUE SPARE</button>
-                <button class="btn" style="background:#1e293b; color:white;" onclick="document.getElementById('userModal').style.display='flex'">USERS</button>
+                <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('stockModal').style.display='flex'"><i class="fas fa-plus"></i> NEW SPARE</button>
+                <button class="btn" style="background:#1e293b; color:white;" onclick="document.getElementById('userModal').style.display='flex'"><i class="fas fa-users-cog"></i> USERS</button>
             </div>
         </div>
 
@@ -80,7 +81,7 @@
         </div>
 
         <div class="card">
-            <h4 style="margin-bottom:10px; font-size:0.9rem;"><i class="fas fa-history"></i> FLUX RÉEL</h4>
+            <h4 style="margin-bottom:10px; font-size:0.9rem;"><i class="fas fa-history"></i> DERNIÈRES ACTIONS</h4>
             <div id="pannes-list"></div>
         </div>
     </div>
@@ -90,21 +91,21 @@
             <input type="hidden" id="modal-key">
             <h3>Fin d'intervention</h3>
             <select id="modal-type"><option>🔧 Mécanique</option><option>⚡ Électrique</option><option>⚙️ Process</option></select>
-            <input list="spareparts" id="modal-piece" placeholder="Saisir la pièce utilisée">
+            <input list="spareparts" id="modal-piece" placeholder="Pièce utilisée">
             <datalist id="spareparts"></datalist>
-            <input type="number" id="modal-qty" value="1" placeholder="Quantité">
-            <button class="btn btn-success" onclick="confirmClosing()">REDÉMARRER</button>
+            <input type="number" id="modal-qty" value="1">
+            <button class="btn btn-success" onclick="confirmClosing()">VALIDER</button>
             <button class="btn" style="background:none;" onclick="document.getElementById('closeModal').style.display='none'">Annuler</button>
         </div>
     </div>
 
     <div id="stockModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
-            <h3>Saisie Spare Part</h3>
-            <input type="text" id="new-part-name" placeholder="Désignation">
-            <input type="number" id="new-part-qty" placeholder="Stock Initial">
-            <button class="btn btn-success" onclick="addNewPart()">AJOUTER AU CATALOGUE</button>
-            <button class="btn" style="background:none; margin-top:10px;" onclick="document.getElementById('stockModal').style.display='none'">Fermer</button>
+            <h3>Ajouter Nouvelle Pièce</h3>
+            <input type="text" id="new-part-name" placeholder="Nom de la pièce">
+            <input type="number" id="new-part-qty" placeholder="Quantité initiale">
+            <button class="btn btn-success" onclick="addNewPart()">AJOUTER</button>
+            <button class="btn" style="background:none;" onclick="document.getElementById('stockModal').style.display='none'">Fermer</button>
         </div>
     </div>
 
@@ -146,7 +147,7 @@
                 if(snap.val()) Object.values(snap.val()).forEach(usr => {
                     if(usr.name.toLowerCase() === u && usr.pass === p) { found = true; startApp(usr.role); }
                 });
-                if(!found) alert("Erreur Login");
+                if(!found) alert("Identifiants incorrects");
             });
         }
 
@@ -200,7 +201,17 @@
                 database.ref('stock/' + name).set({ qty: qty }).then(() => {
                     document.getElementById('stockModal').style.display = 'none';
                     document.getElementById('new-part-name').value = "";
-                    document.getElementById('new-part-qty').value = "";
+                });
+            }
+        }
+
+        function restock(name) {
+            const add = prompt("Combien de pièces ajouter pour " + name + " ?");
+            if(add && !isNaN(add)) {
+                const sRef = database.ref('stock/' + name);
+                sRef.once('value', s => {
+                    const current = s.val() ? s.val().qty : 0;
+                    sRef.set({ qty: current + parseInt(add) });
                 });
             }
         }
@@ -216,12 +227,16 @@
                 if(snap.val()) {
                     Object.entries(snap.val()).forEach(([name, data]) => {
                         let isZero = data.qty <= 0;
-                        list.innerHTML += `<div class="stock-item ${isZero?'stock-empty':''}"><span>${name}</span><b>${data.qty}</b></div>`;
+                        list.innerHTML += `<div class="stock-item ${isZero?'stock-empty':''}">
+                            <span>${name}</span>
+                            <div>
+                                <b style="margin-right:10px;">${data.qty}</b>
+                                ${currentUser === 'MANAGER' ? `<button class="btn-plus" onclick="restock('${name}')"><i class="fas fa-plus"></i></button>` : ''}
+                            </div>
+                        </div>`;
                         datalist.innerHTML += `<option value="${name}">`;
-                        
-                        // ALERTE MANAGER (Ghir melli t-ssala l-pièce 0)
                         if(currentUser === "MANAGER" && isZero) {
-                            alertDiv.innerHTML += `<div class="alert-box"><i class="fas fa-exclamation-triangle"></i> RUPTURE DE STOCK : ${name}</div>`;
+                            alertDiv.innerHTML += `<div class="alert-box"><i class="fas fa-exclamation-triangle"></i> RUPTURE : ${name}</div>`;
                         }
                     });
                 }
@@ -242,7 +257,6 @@
                     });
                 }
                 document.getElementById('closeModal').style.display='none';
-                document.getElementById('modal-piece').value = "";
             });
         }
 
@@ -256,15 +270,14 @@
 
         function addUser() {
             const n = document.getElementById('new-u-name').value, p = document.getElementById('new-u-pass').value, r = document.getElementById('new-u-role').value;
-            if(n && p) database.ref('users/').push({name:n, pass:p, role:r}).then(()=>alert("OK"));
+            if(n && p) database.ref('users/').push({name:n, pass:p, role:r});
         }
 
         function loadUsers() {
             database.ref('users/').on('value', snap => {
                 const div = document.getElementById('u-list'); div.innerHTML = "";
                 if(snap.val()) Object.entries(snap.val()).forEach(([k, u]) => {
-                    div.innerHTML += `<div style="display:flex; justify-content:space-between; padding:4px; font-size:0.7rem; border-bottom:1px solid #eee;">
-                        <span>${u.name}</span><i class="fas fa-trash" onclick="database.ref('users/${k}').remove()"></i></div>`;
+                    div.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px; font-size:0.7rem;"><span>${u.name}</span><i class="fas fa-trash" onclick="database.ref('users/${k}').remove()"></i></div>`;
                 });
             });
         }
