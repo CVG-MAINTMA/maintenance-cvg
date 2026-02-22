@@ -24,6 +24,17 @@
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         @keyframes stockBlink { 0% { background-color: #fee2e2; } 50% { background-color: transparent; } 100% { background-color: #fee2e2; } }
 
+        /* Style dyal l-interventions li khdamin */
+        .tag-progress { 
+            background: #fef3c7; 
+            color: #d97706; 
+            animation: blink 1s infinite; /* Klyontaj */
+            border: 1px solid #fcd34d;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
         .low-stock-alert { animation: stockBlink 0.8s infinite; border: 1.5px solid #ef4444 !important; border-radius: 10px; }
 
         header { background: var(--primary); color: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -46,7 +57,6 @@
         
         .status-tag { font-size: 0.7rem; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; }
         .tag-open { background: #fee2e2; color: #ef4444; }
-        .tag-progress { background: #fef3c7; color: #d97706; animation: blink 1s infinite; border: 1px solid #fcd34d; }
 
         #reader { width: 100%; border-radius: 15px; overflow: hidden; background: #000; }
         .user-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
@@ -235,7 +245,8 @@
             const actives = allData.filter(p => p.status === 'OPEN' || p.status === 'IN_PROGRESS');
             document.getElementById('m-charge').innerText = actives.length;
             actives.reverse().forEach(p => {
-                let statusHtml = p.status === 'OPEN' ? `<span class="status-tag tag-open">EN ARRÊT</span>` : `<span class="status-tag tag-progress">RÉPARATION...</span>`;
+                // Izafa dyal l-icon o l-blinking f l-HTML
+                let statusHtml = p.status === 'OPEN' ? `<span class="status-tag tag-open">EN ARRÊT</span>` : `<span class="status-tag tag-progress"><i class="fas fa-tools"></i> RÉPARATION...</span>`;
                 let actionBtn = "";
                 if(currentUser === 'MAINTENANCE') {
                     actionBtn = p.status === 'OPEN' ? `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">J'Y VAIS</button>` : `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">TERMINER</button>`;
