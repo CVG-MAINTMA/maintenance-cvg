@@ -249,7 +249,7 @@
                 let statusHtml = p.status === 'OPEN' ? `<span class="status-tag tag-open">EN ARRÊT</span>` : `<span class="status-tag tag-progress"><i class="fas fa-tools"></i> RÉPARATION...</span>`;
                 let actionBtn = "";
                 if(currentUser === 'MAINTENANCE') {
-                    actionBtn = p.status === 'OPEN' ? `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">J'Y VAIS</button>` : `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">TERMINER</button>`;
+                    actionBtn = p.status === 'OPEN' ? `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">Received</button>` : `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">TERMINER</button>`;
                 }
                 container.innerHTML += `<div class="card" style="border-left:5px solid ${p.status === 'OPEN' ? 'var(--danger)' : 'var(--warning)'}"><div style="display:flex; justify-content:space-between"><b>${p.mach}</b>${statusHtml}</div><small>${p.proj}</small><br>${actionBtn}</div>`;
             });
@@ -277,3 +277,4 @@
     </script>
 </body>
 </html>
+
