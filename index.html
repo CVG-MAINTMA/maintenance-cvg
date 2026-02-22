@@ -279,7 +279,16 @@
                 <div style="margin-top:10px;">${actionBtn}</div>
             </div>`;
     }); // هنا كيتسد الـ forEach
-
+   // 3. التحكم ف الصوت
+    const alertSound = document.getElementById('alertSound');
+    if(alertSound) {
+        if(actives.some(p => p.status === 'OPEN') && currentUser !== 'OPERATEUR') {
+            alertSound.play().catch(()=>{});
+        } else {
+            alertSound.pause();
+        }
+    }
+}
         function takeCharge(key) { database.ref('pannes/'+key).update({status:'IN_PROGRESS'}); }
         function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display='flex'; }
         function confirmClosing() {
@@ -345,6 +354,7 @@
     </script>
 </body>
 </html>
+
 
 
 
