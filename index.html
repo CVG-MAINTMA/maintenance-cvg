@@ -14,12 +14,6 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#002b5c">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="logo.png">
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
         :root { --primary: #002b5c; --accent: #00d4ff; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --bg: #f8fafc; --purple: #8b5cf6; }
@@ -44,6 +38,7 @@
         .tag-open { background: #fee2e2; color: #ef4444; }
         .tag-progress { background: #fef3c7; color: #d97706; }
         #reader { width: 100%; border-radius: 15px; overflow: hidden; background: #000; }
+        .user-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body onclick="enableAudio()">
@@ -102,9 +97,10 @@
     </div>
 
     <div id="userModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-        <div class="card" style="width:100%; max-width:400px;">
-            <h3 style="color:var(--primary);"><i class="fas fa-user-plus"></i> Nouveau Compte</h3>
-            <div style="margin-top:15px;">
+        <div class="card" style="width:100%; max-width:400px; max-height:90vh; overflow-y:auto;">
+            <h3 style="color:var(--primary);"><i class="fas fa-users-gear"></i> Gestion des Comptes</h3>
+            <div style="margin-top:15px; background:#f8fafc; padding:10px; border-radius:12px;">
+                <input type="hidden" id="edit-user-key">
                 <input type="text" id="new-user-name" placeholder="Matricule">
                 <input type="password" id="new-user-pass" placeholder="Password">
                 <select id="new-user-role">
@@ -113,9 +109,14 @@
                     <option value="MAINTENANCE">MAINTENANCE</option>
                     <option value="MANAGER">MANAGER</option>
                 </select>
-                <button class="btn btn-success" onclick="addNewUser()">CRÉER LE COMPTE</button>
-                <button class="btn btn-ghost" onclick="document.getElementById('userModal').style.display='none'">FERMER</button>
+                <button id="btn-user-save" class="btn btn-success" onclick="saveUser()">CRÉER LE COMPTE</button>
+                <button id="btn-user-cancel" class="btn btn-ghost hidden" onclick="resetUserForm()">ANNULER</button>
             </div>
+            
+            <h4 style="margin:15px 0 10px 0; font-size:0.9rem;">Liste des Utilisateurs</h4>
+            <div id="users-list-container"></div>
+            
+            <button class="btn btn-ghost" onclick="document.getElementById('userModal').style.display='none'">FERMER</button>
         </div>
     </div>
 
@@ -177,23 +178,70 @@
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('app-content').classList.remove('hidden');
             document.getElementById('roleText').innerText = role;
-            listenFirebase(); listenStock();
+            listenFirebase(); listenStock(); listenUsers();
             if(role === "MANAGER" || role === "MAINTENANCE") document.getElementById('manager-panel').classList.remove('hidden');
             if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
         }
 
-        function addNewUser() {
+        // --- GESTION DES COMPTES FIXE ---
+        function listenUsers() {
+            database.ref('users/').on('value', snap => {
+                const container = document.getElementById('users-list-container');
+                container.innerHTML = "";
+                if(snap.val()) {
+                    Object.entries(snap.val()).forEach(([key, usr]) => {
+                        container.innerHTML += `
+                            <div class="user-item">
+                                <div style="font-size:0.85rem;"><b>${usr.name}</b> <small>(${usr.role})</small></div>
+                                <div>
+                                    <button onclick="prepareEditUser('${key}', '${usr.name}', '${usr.pass}', '${usr.role}')" style="color:var(--warning); border:none; background:none; cursor:pointer; margin-right:10px;"><i class="fas fa-edit"></i></button>
+                                    <button onclick="deleteUser('${key}')" style="color:var(--danger); border:none; background:none; cursor:pointer;"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>`;
+                    });
+                }
+            });
+        }
+
+        function saveUser() {
+            const key = document.getElementById('edit-user-key').value;
             const name = document.getElementById('new-user-name').value.trim();
             const pass = document.getElementById('new-user-pass').value.trim();
             const role = document.getElementById('new-user-role').value;
             if(!name || !pass || !role) return alert("Remplissez tous les champs !");
-            database.ref('users/').push({ name, pass, role }).then(() => {
-                alert("Compte " + name + " créé !");
-                document.getElementById('new-user-name').value = "";
-                document.getElementById('new-user-pass').value = "";
-                document.getElementById('userModal').style.display = 'none';
-            });
+            
+            const userData = { name, pass, role };
+            if(key) {
+                database.ref('users/' + key).update(userData).then(() => { alert("Modifié !"); resetUserForm(); });
+            } else {
+                database.ref('users/').push(userData).then(() => { alert("Créé !"); resetUserForm(); });
+            }
         }
+
+        function prepareEditUser(key, name, pass, role) {
+            document.getElementById('edit-user-key').value = key;
+            document.getElementById('new-user-name').value = name;
+            document.getElementById('new-user-pass').value = pass;
+            document.getElementById('new-user-role').value = role;
+            document.getElementById('btn-user-save').innerText = "MODIFIER LE COMPTE";
+            document.getElementById('btn-user-save').classList.replace('btn-success', 'btn-warning');
+            document.getElementById('btn-user-cancel').classList.remove('hidden');
+        }
+
+        function resetUserForm() {
+            document.getElementById('edit-user-key').value = "";
+            document.getElementById('new-user-name').value = "";
+            document.getElementById('new-user-pass').value = "";
+            document.getElementById('new-user-role').value = "";
+            document.getElementById('btn-user-save').innerText = "CRÉER LE COMPTE";
+            document.getElementById('btn-user-save').classList.replace('btn-warning', 'btn-success');
+            document.getElementById('btn-user-cancel').classList.add('hidden');
+        }
+
+        function deleteUser(key) {
+            if(confirm("Supprimer ce compte ?")) database.ref('users/' + key).remove();
+        }
+        // --- FIN GESTION DES COMPTES ---
 
         function startScanner() {
             html5QrCode = new Html5Qrcode("reader");
@@ -248,18 +296,14 @@
             
             actives.reverse().forEach(p => {
                 let statusHtml = p.status === 'OPEN' ? `<span class="status-tag tag-open">EN ARRÊT</span>` : `<span class="status-tag tag-progress">RÉPARATION...</span>`;
-                
-                // RESTRICTION: Done button only for MAINTENANCE role
                 let actionBtn = "";
                 if(currentUser === 'MAINTENANCE') {
                     actionBtn = p.status === 'OPEN' ? 
                         `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">I'M GOING</button>` : 
                         `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">DONE</button>`;
                 } else if(currentUser === 'MANAGER' && p.status === 'OPEN') {
-                    // Manager can only "I'm going" if they want, but usually just watches
                     actionBtn = `<small style="color:#64748b"><i>En attente d'intervention...</i></small>`;
                 }
-
                 container.innerHTML += `<div class="card" style="border-left:5px solid ${p.status === 'OPEN' ? 'var(--danger)' : 'var(--warning)'}">
                     <div style="display:flex; justify-content:space-between"><b>${p.mach}</b>${statusHtml}</div>
                     <small>${p.proj} | ${p.dateStr}</small><br>${actionBtn}
@@ -333,6 +377,3 @@
     </script>
 </body>
 </html>
-
-
-
