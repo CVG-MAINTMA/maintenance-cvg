@@ -23,8 +23,8 @@
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         @keyframes stockBlink { 0% { background-color: #fee2e2; } 50% { background-color: transparent; } 100% { background-color: #fee2e2; } }
 
-        .tag-progress { background: #fef3c7; color: #d97706; animation: blink 1s infinite; border: 1px solid #fcd34d; display: inline-flex; align-items: center; gap: 5px; }
-        .low-stock-alert { animation: stockBlink 0.8s infinite; border: 1.5px solid #ef4444 !important; border-radius: 10px; }
+        .tag-progress { background: #fef3c7; color: #d97706; animation: blink 1s infinite; border: 1px solid #fcd34d; display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; }
+        .low-stock-alert { color: var(--danger) !important; background-color: #fff1f2 !important; font-weight: bold; }
 
         header { background: var(--primary); color: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .card { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
@@ -47,7 +47,12 @@
         .status-tag { font-size: 0.7rem; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; }
         .tag-open { background: #fee2e2; color: #ef4444; }
 
-        #reader { width: 100%; border-radius: 15px; overflow: hidden; background: #000; margin-bottom: 10px; border: 2px dashed #ccc;}
+        #reader { width: 100%; border-radius: 15px; overflow: hidden; background: #000; margin-bottom: 10px; border: 2px dashed #ccc; }
+        
+        /* Stock List Style (Image Sync) */
+        #stock-list div { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.95rem; color: #334155; }
+        #stock-list b { color: #1e293b; font-weight: 800; }
+
         .user-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
     </style>
 </head>
@@ -105,25 +110,32 @@
         </div>
     </div>
 
+    <div id="viewStockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
+        <div class="card" style="width:100%; max-width:450px;">
+            <h3 style="border-bottom:2px solid var(--accent); padding-bottom:5px; margin-bottom:10px;"><i class="fas fa-boxes-stacked"></i> État du Stock</h3>
+            <div id="stock-list" style="max-height: 400px; overflow-y: auto;"></div>
+            <button class="btn btn-ghost" onclick="document.getElementById('viewStockModal').style.display='none'">FERMER</button>
+        </div>
+    </div>
+
     <div id="closeModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
             <h3>Clôture d'intervention</h3>
             <input type="hidden" id="modal-key">
-            <input type="text" id="modal-tech-id" placeholder="Matricule Tech">
-            <textarea id="modal-problem" placeholder="Problème"></textarea>
-            <textarea id="modal-solution" placeholder="Solution"></textarea>
-            <input list="spareparts" id="modal-piece" placeholder="Pièce">
+            <input type="text" id="modal-tech-id" placeholder="Matricule Technicien">
+            <textarea id="modal-problem" placeholder="Description du problème"></textarea>
+            <textarea id="modal-solution" placeholder="Action corrective effectuée"></textarea>
+            <input list="spareparts" id="modal-piece" placeholder="Pièce utilisée (Optionnel)">
             <datalist id="spareparts"></datalist>
-            <input type="number" id="modal-qty" value="1">
+            <input type="number" id="modal-qty" value="1" placeholder="Quantité">
             <button class="btn btn-success" onclick="confirmClosing()">TERMINER</button>
             <button class="btn btn-ghost" onclick="document.getElementById('closeModal').style.display='none'">ANNULER</button>
         </div>
     </div>
 
-    <div id="userModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:400px; max-height:90vh; overflow-y:auto;"><h3>Gestion Comptes</h3><div style="background:#f8fafc; padding:10px; border-radius:12px; margin-top:10px;"><input type="hidden" id="edit-user-key"><input type="text" id="new-user-name" placeholder="Matricule"><input type="password" id="new-user-pass" placeholder="Password"><select id="new-user-role"><option value="OPERATEUR">OPERATEUR</option><option value="MAINTENANCE">MAINTENANCE</option><option value="MANAGER">MANAGER</option></select><button id="btn-user-save" class="btn btn-success" onclick="saveUser()">ENREGISTRER</button><button id="btn-user-cancel" class="btn btn-ghost hidden" onclick="resetUserForm()">ANNULER</button></div><div id="users-list-container" style="margin-top:15px;"></div><button class="btn btn-ghost" onclick="document.getElementById('userModal').style.display='none'">FERMER</button></div></div>
-    <div id="viewStockModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:450px;"><h3>État du Stock</h3><div id="stock-list"></div><button class="btn btn-ghost" onclick="document.getElementById('viewStockModal').style.display='none'">FERMER</button></div></div>
-    <div id="archiveModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:600px;"><div id="archive-list" style="max-height:400px; overflow-y:auto;"></div></div></div>
-    <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:400px;"><h3>Ajouter Stock</h3><input type="text" id="new-p-name" placeholder="Nom"><input type="number" id="new-p-qty" placeholder="Quantité"><button class="btn btn-success" onclick="addNewStock()">VALIDER</button></div></div>
+    <div id="userModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:400px;"><h3>Gestion Comptes</h3><input type="hidden" id="edit-user-key"><input type="text" id="new-user-name" placeholder="Matricule"><input type="password" id="new-user-pass" placeholder="Password"><select id="new-user-role"><option value="OPERATEUR">OPERATEUR</option><option value="MAINTENANCE">MAINTENANCE</option><option value="MANAGER">MANAGER</option></select><button id="btn-user-save" class="btn btn-success" onclick="saveUser()">ENREGISTRER</button><div id="users-list-container" style="margin-top:15px; max-height:200px; overflow-y:auto;"></div></div></div>
+    <div id="archiveModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:600px;"><h3>Archives</h3><div id="archive-list" style="max-height:400px; overflow-y:auto;"></div></div></div>
+    <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:400px;"><h3>Nouveau Catalogue</h3><input type="text" id="new-p-name" placeholder="Référence Pièce"><input type="number" id="new-p-qty" placeholder="Quantité Initiale"><button class="btn btn-success" onclick="addNewStock()">VALIDER</button></div></div>
 
     <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
@@ -141,7 +153,7 @@
             database.ref('users/').once('value', snap => {
                 let found = false;
                 if(snap.val()) Object.values(snap.val()).forEach(usr => { if(usr.name.toLowerCase() === u && usr.pass === p) { found = true; startApp(usr.role); } });
-                if(!found) alert("Refusé");
+                if(!found) alert("Accès refusé");
             });
         }
 
@@ -155,7 +167,6 @@
             if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
         }
 
-        // --- NEW SCANNER LOGIC ---
         function startScanner() {
             if (html5QrCode) {
                 html5QrCode.stop().then(() => { doStartCamera(); }).catch(() => { doStartCamera(); });
@@ -176,11 +187,11 @@
                         }
                     }
                     html5QrCode.stop().then(() => {
-                        if(machineFound) alert("✅ Machine ID: " + decodedText);
-                        else alert("⚠️ Code inconnu: " + decodedText);
+                        if(machineFound) alert("Machine " + decodedText + " identifiée.");
+                        else alert("Code inconnu: " + decodedText);
                     });
                 }
-            ).catch(err => alert("Erreur: " + err));
+            ).catch(err => alert("Erreur Caméra: " + err));
         }
 
         function listenFirebase() {
@@ -190,7 +201,6 @@
             });
         }
 
-        // --- UPDATED RENDER UI (RESTRICTED ACTIONS) ---
         function renderUI() {
             const container = document.getElementById('pannes-list'); 
             container.innerHTML = "";
@@ -199,9 +209,8 @@
 
             actives.reverse().forEach(p => {
                 let statusHtml = p.status === 'OPEN' ? `<span class="status-tag tag-open">EN ARRÊT</span>` : `<span class="status-tag tag-progress"><i class="fas fa-tools"></i> RÉPARATION...</span>`;
-                
                 let actionBtn = "";
-                // Seul le rôle MAINTENANCE peut agir sur les alertes
+                
                 if(currentUser === 'MAINTENANCE') {
                     actionBtn = p.status === 'OPEN' ? 
                         `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">REÇU</button>` : 
@@ -215,30 +224,46 @@
             if(actives.some(p => p.status === 'OPEN') && (currentUser === 'MANAGER' || currentUser === 'MAINTENANCE')) document.getElementById('alertSound').play().catch(()=>{}); else document.getElementById('alertSound').pause();
         }
 
-        // REST OF THE FUNCTIONS (original logic)
         function takeCharge(key) { database.ref('pannes/'+key).update({status:'IN_PROGRESS'}); }
         function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display='flex'; }
+        
         function confirmClosing() {
             const key = document.getElementById('modal-key').value, tech = document.getElementById('modal-tech-id').value, prob = document.getElementById('modal-problem').value, sol = document.getElementById('modal-solution').value, piece = document.getElementById('modal-piece').value.toUpperCase(), qty = parseInt(document.getElementById('modal-qty').value) || 0;
             const item = allData.find(x => x.key === key), duration = Math.round((Date.now() - item.startTs) / 60000);
             database.ref('pannes/'+key).update({status:'CLOSED', duration, techId:tech, problem:prob, solution:sol, piece, qty}).then(() => {
-                if(piece && piece !== 'N/A') { const sRef = database.ref('stock/'+piece); sRef.once('value', s => { if(s.exists()) sRef.set({qty: Math.max(0, s.val().qty - qty)}); }); }
+                if(piece && piece !== '') { 
+                    const sRef = database.ref('stock/'+piece); 
+                    sRef.once('value', s => { if(s.exists()) sRef.update({qty: Math.max(0, s.val().qty - qty)}); }); 
+                }
                 document.getElementById('closeModal').style.display='none';
             });
         }
+
         function handlePanneSignal() { const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value; database.ref('pannes/').push({proj, mach, status:'OPEN', startTs:Date.now(), dateStr:new Date().toLocaleString()}); }
         function updateMachineList() { const p = document.getElementById('in-proj').value, s = document.getElementById('in-mach'); s.innerHTML = ""; (machineData[p] || []).forEach(m => s.innerHTML += `<option value="${m}">${m}</option>`); }
         function addNewStock() { const n = document.getElementById('new-p-name').value.toUpperCase(), q = parseInt(document.getElementById('new-p-qty').value); if(n && !isNaN(q)) database.ref('stock/'+n).set({qty:q}).then(()=>document.getElementById('stockModal').style.display='none'); }
+        
+        function listenStock() {
+            database.ref('stock/').on('value', snap => {
+                const list = document.getElementById('stock-list'); if(!list) return;
+                list.innerHTML = ""; const dl = document.getElementById('spareparts'); if(dl) dl.innerHTML = "";
+                if(snap.val()) {
+                    Object.entries(snap.val()).sort().forEach(([name, data]) => {
+                        const isLow = data.qty <= 4 ? 'low-stock-alert' : '';
+                        list.innerHTML += `<div class="${isLow}"><span>${name}</span><b>${data.qty}</b></div>`;
+                        if(dl) dl.innerHTML += `<option value="${name}">`;
+                    });
+                }
+            });
+        }
+
         function updateStats() { const closed = allData.filter(p => p.status === 'CLOSED'); let total = 0; closed.forEach(p => total += p.duration || 0); document.getElementById('m-count').innerText = closed.length; document.getElementById('m-mttr').innerText = closed.length > 0 ? Math.round(total/closed.length) : 0; document.getElementById('m-mtbf').innerText = closed.length > 0 ? Math.round(720/closed.length) : 720; }
         function updateCharts() { const ctx = document.getElementById('downtimeChart').getContext('2d'); const dataMap = {}; allData.filter(p => p.status === 'CLOSED').forEach(p => { const label = `${p.proj}-${p.mach}`; dataMap[label] = (dataMap[label] || 0) + (p.duration || 0); }); if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(dataMap), datasets: [{ label: 'Min', data: Object.values(dataMap), backgroundColor: '#00d4ff' }] }, options: { responsive: true, plugins: { legend: { display: false } } } }); }
         function exportToExcel() { const closed = allData.filter(p => p.status === 'CLOSED'); const wsData = XLSX.utils.json_to_sheet(closed.map(p => ({ 'Date': p.dateStr, 'Tech': p.techId, 'Machine': p.mach, 'Downtime(m)': p.duration, 'Problème': p.problem, 'Solution': p.solution }))); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, wsData, "Logs"); XLSX.writeFile(wb, "GMAO_Report.xlsx"); }
-        function renderArchives() { const list = document.getElementById('archive-list'); if(!list) return; list.innerHTML = "<h3>Archives</h3>"; allData.filter(p => p.status === 'CLOSED').reverse().forEach(p => { list.innerHTML += `<div class="card" style="border-left:5px solid var(--success); font-size:0.8rem;"><b>${p.mach}</b> - ${p.duration}m<br><small>Tech: ${p.techId}</small></div>`; }); }
-        function listenStock() { database.ref('stock/').on('value', snap => { const list = document.getElementById('stock-list'); if(!list) return; list.innerHTML = ""; const dl = document.getElementById('spareparts'); if(dl) dl.innerHTML = ""; if(snap.val()) Object.entries(snap.val()).forEach(([name, data]) => { const isLow = data.qty <= 4 ? 'low-stock-alert' : ''; list.innerHTML += `<div class="${isLow}" style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;"><span>${data.qty<=4?'⚠️ ':''}${name}</span><b>${data.qty}</b></div>`; if(dl) dl.innerHTML += `<option value="${name}">`; }); }); }
-        function listenUsers() { database.ref('users/').on('value', snap => { const container = document.getElementById('users-list-container'); container.innerHTML = ""; if(snap.val()) Object.entries(snap.val()).forEach(([key, usr]) => { container.innerHTML += `<div class="user-item"><div><b>${usr.name}</b> (${usr.role})</div><div><button onclick="prepareEditUser('${key}','${usr.name}','${usr.pass}','${usr.role}')" style="color:var(--warning); border:none; background:none; margin-right:8px;"><i class="fas fa-edit"></i></button><button onclick="deleteUser('${key}')" style="color:var(--danger); border:none; background:none;"><i class="fas fa-trash"></i></button></div></div>`; }); }); }
-        function saveUser() { const key = document.getElementById('edit-user-key').value, name = document.getElementById('new-user-name').value.trim(), pass = document.getElementById('new-user-pass').value.trim(), role = document.getElementById('new-user-role').value; if(!name || !pass) return alert("Remplir tout"); if(key) database.ref('users/'+key).update({name, pass, role}).then(()=>resetUserForm()); else database.ref('users/').push({name, pass, role}).then(()=>resetUserForm()); }
-        function prepareEditUser(key, name, pass, role) { document.getElementById('edit-user-key').value = key; document.getElementById('new-user-name').value = name; document.getElementById('new-user-pass').value = pass; document.getElementById('new-user-role').value = role; document.getElementById('btn-user-save').innerText = "MODIFIER"; document.getElementById('btn-user-cancel').classList.remove('hidden'); }
-        function resetUserForm() { document.getElementById('edit-user-key').value = ""; document.getElementById('new-user-name').value = ""; document.getElementById('new-user-pass').value = ""; document.getElementById('btn-user-save').innerText = "ENREGISTRER"; document.getElementById('btn-user-cancel').classList.add('hidden'); }
-        function deleteUser(key) { if(confirm("Supprimer?")) database.ref('users/'+key).remove(); }
+        function renderArchives() { const list = document.getElementById('archive-list'); if(!list) return; list.innerHTML = ""; allData.filter(p => p.status === 'CLOSED').reverse().forEach(p => { list.innerHTML += `<div class="card" style="border-left:5px solid var(--success); font-size:0.8rem;"><b>${p.mach}</b> - ${p.duration}m<br><small>Tech: ${p.techId}</small></div>`; }); }
+        function listenUsers() { database.ref('users/').on('value', snap => { const container = document.getElementById('users-list-container'); container.innerHTML = ""; if(snap.val()) Object.entries(snap.val()).forEach(([key, usr]) => { container.innerHTML += `<div class="user-item"><div><b>${usr.name}</b></div><div><button onclick="deleteUser('${key}')" style="color:var(--danger); border:none; background:none;"><i class="fas fa-trash"></i></button></div></div>`; }); }); }
+        function saveUser() { const name = document.getElementById('new-user-name').value.trim(), pass = document.getElementById('new-user-pass').value.trim(), role = document.getElementById('new-user-role').value; if(name && pass) database.ref('users/').push({name, pass, role}); }
+        function deleteUser(key) { if(confirm("Supprimer ce compte?")) database.ref('users/'+key).remove(); }
         function enableAudio() { window.audioAllowed = true; }
     </script>
 </body>
