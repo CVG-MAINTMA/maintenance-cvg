@@ -275,28 +275,51 @@
         function renderArchives() { const list = document.getElementById('archive-list'); if(!list) return; list.innerHTML = "<h3>Archives</h3>"; allData.filter(p => p.status === 'CLOSED').reverse().forEach(p => { list.innerHTML += `<div class="card" style="border-left:5px solid var(--success); font-size:0.8rem;"><b>${p.mach}</b> - ${p.duration}m<br><small>Tech: ${p.techId}</small></div>`; }); }
         function enableAudio() { window.audioAllowed = true; }
 
+
         function startScanner() {
     const html5QrCode = new Html5Qrcode("reader");
+    
     html5QrCode.start(
         { facingMode: "environment" }, 
         { fps: 10, qrbox: { width: 250, height: 250 } },
         (decodedText) => {
-            // كنفترضو QR فيه غير رقم الماكينة
-            const selectMach = document.getElementById('in-mach');
-            const options = Array.from(selectMach.options);
-            const found = options.find(opt => opt.value === decodedText);
-            
+            const scannedMachine = decodedText.trim();
+            let found = false;
+
+            // 1. كنقلبو ف كاع لبيانات ديال الماكينات
+            for (const [project, machines] of Object.entries(machineData)) {
+                if (machines.includes(scannedMachine)) {
+                    // 2. إذا لقيناها، كنختارو البروجي هو الأول
+                    document.getElementById('in-proj').value = project;
+                    
+                    // 3. كنعمروا لستة ديال الماكينات ديال هاد البروجي
+                    updateMachineList();
+                    
+                    // 4. كنختاروا الماكينة اللي تسكانات
+                    document.getElementById('in-mach').value = scannedMachine;
+                    
+                    found = true;
+                    break;
+                }
+            }
+
             if(found) {
-                selectMach.value = decodedText;
-                html5QrCode.stop();
-                alert("Machine " + decodedText + " détectée !");
+                html5QrCode.stop(); // كنوقفو الكاميرا ملي كنلقاو الماكينة
+                alert("✅ Machine détectée: " + scannedMachine);
+                // تفعيل هاد السطر إذا بغيتي يصيفط Signal Arrêt أوتوماتيكياً
+                // handlePanneSignal(); 
+            } else {
+                alert("❌ Code QR invalide ou machine non répertoriée");
             }
         }
-    ).catch(err => console.error("Erreur caméra:", err));
+    ).catch(err => {
+        console.error("Erreur caméra:", err);
+        alert("Impossible d'accéder à la caméra");
+    });
 }
-    
     
     </script>
 </body>
 </html>
+
 
