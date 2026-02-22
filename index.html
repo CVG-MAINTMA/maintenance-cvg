@@ -22,18 +22,9 @@
         
         /* Animations */
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        
-        @keyframes stockBlink {
-            0% { background-color: #fee2e2; }
-            50% { background-color: transparent; }
-            100% { background-color: #fee2e2; }
-        }
+        @keyframes stockBlink { 0% { background-color: #fee2e2; } 50% { background-color: transparent; } 100% { background-color: #fee2e2; } }
 
-        .low-stock-alert { 
-            animation: stockBlink 0.8s infinite; 
-            border: 1.5px solid #ef4444 !important;
-            border-radius: 10px;
-        }
+        .low-stock-alert { animation: stockBlink 0.8s infinite; border: 1.5px solid #ef4444 !important; border-radius: 10px; }
 
         header { background: var(--primary); color: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .card { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
@@ -58,11 +49,9 @@
         .tag-progress { background: #fef3c7; color: #d97706; animation: blink 1s infinite; border: 1px solid #fcd34d; }
 
         #reader { width: 100%; border-radius: 15px; overflow: hidden; background: #000; }
+        .user-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
         
-        /* Fix Stock UI */
-        #stock-list { max-height: 400px; overflow-y: auto; padding-right: 5px; margin-top: 10px; }
-        #stock-list::-webkit-scrollbar { width: 5px; }
-        #stock-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        #stock-list { max-height: 400px; overflow-y: auto; padding-right: 5px; }
     </style>
 </head>
 <body onclick="enableAudio()">
@@ -97,13 +86,12 @@
                 <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('archiveModal').style.display='flex'"><i class="fas fa-archive"></i> ARCHIVES</button>
                 <button class="btn" style="background:#16a34a; color:white;" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> EXCEL</button>
                 <button class="btn" style="background:#64748b; color:white;" onclick="document.getElementById('stockModal').style.display='flex'"><i class="fas fa-plus"></i> CATALOGUE</button>
+                <button class="btn" style="background:var(--primary); color:white; grid-column: span 2;" onclick="document.getElementById('userModal').style.display='flex'"><i class="fas fa-users-gear"></i> GESTION COMPTES</button>
             </div>
         </div>
 
         <div id="op-panel" class="card hidden">
-            <button class="btn" style="background:var(--primary); color:white; margin-bottom:10px;" onclick="startScanner()">
-                <i class="fas fa-qrcode"></i> SCANNER MACHINE
-            </button>
+            <button class="btn" style="background:var(--primary); color:white; margin-bottom:10px;" onclick="startScanner()"><i class="fas fa-qrcode"></i> SCANNER MACHINE</button>
             <div id="reader"></div>
             <select id="in-proj" onchange="updateMachineList()"><option value="SKODA A8">SKODA A8</option><option value="CRAFTER">CRAFTER</option><option value="G.CALIFORNIA">G.CALIFORNIA</option></select>
             <select id="in-mach"></select>
@@ -113,6 +101,26 @@
         <div class="card">
             <h4><i class="fas fa-bell"></i> ALERTES ACTIVES</h4>
             <div id="pannes-list" style="margin-top:10px;"></div>
+        </div>
+    </div>
+
+    <div id="userModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
+        <div class="card" style="width:100%; max-width:400px; max-height:90vh; overflow-y:auto;">
+            <h3>Gestion Comptes</h3>
+            <div style="background:#f8fafc; padding:10px; border-radius:12px; margin-top:10px;">
+                <input type="hidden" id="edit-user-key">
+                <input type="text" id="new-user-name" placeholder="Matricule">
+                <input type="password" id="new-user-pass" placeholder="Password">
+                <select id="new-user-role">
+                    <option value="OPERATEUR">OPERATEUR</option>
+                    <option value="MAINTENANCE">MAINTENANCE</option>
+                    <option value="MANAGER">MANAGER</option>
+                </select>
+                <button id="btn-user-save" class="btn btn-success" onclick="saveUser()">ENREGISTRER</button>
+                <button id="btn-user-cancel" class="btn btn-ghost hidden" onclick="resetUserForm()">ANNULER</button>
+            </div>
+            <div id="users-list-container" style="margin-top:15px;"></div>
+            <button class="btn btn-ghost" onclick="document.getElementById('userModal').style.display='none'">FERMER</button>
         </div>
     </div>
 
@@ -126,35 +134,27 @@
 
     <div id="closeModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
-            <h3>Rapport d'Intervention</h3>
+            <h3>Clôture d'intervention</h3>
             <input type="hidden" id="modal-key">
-            <input type="text" id="modal-tech-id" placeholder="Matricule Technicien">
-            <textarea id="modal-problem" placeholder="Description du problème"></textarea>
-            <textarea id="modal-solution" placeholder="Solution apportée"></textarea>
-            <input list="spareparts" id="modal-piece" placeholder="Pièce utilisée">
+            <input type="text" id="modal-tech-id" placeholder="Matricule Tech">
+            <textarea id="modal-problem" placeholder="Problème"></textarea>
+            <textarea id="modal-solution" placeholder="Solution"></textarea>
+            <input list="spareparts" id="modal-piece" placeholder="Pièce">
             <datalist id="spareparts"></datalist>
             <input type="number" id="modal-qty" value="1">
-            <button class="btn btn-success" onclick="confirmClosing()">TERMINER (DONE)</button>
+            <button class="btn btn-success" onclick="confirmClosing()">TERMINER</button>
             <button class="btn btn-ghost" onclick="document.getElementById('closeModal').style.display='none'">ANNULER</button>
         </div>
     </div>
 
     <div id="archiveModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:600px;"><div id="archive-list" style="max-height:400px; overflow-y:auto;"></div></div></div>
-    <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:400px;"><h3>Ajouter au Stock</h3><input type="text" id="new-p-name" placeholder="Nom"><input type="number" id="new-p-qty" placeholder="Quantité"><button class="btn btn-success" onclick="addNewStock()">VALIDER</button></div></div>
+    <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:400px;"><h3>Ajouter Stock</h3><input type="text" id="new-p-name" placeholder="Nom"><input type="number" id="new-p-qty" placeholder="Quantité"><button class="btn btn-success" onclick="addNewStock()">VALIDER</button></div></div>
 
     <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
         const machineData = { "SKODA A8": ["80005631", "80007235", "80007236", "80007237", "80007238", "80007239", "80007240", "80007241", "80007242", "80007243", "80007244", "80007245", "80007246"], "CRAFTER": ["80003403", "80003857", "80006951", "80006953", "80007608", "80008117", "80008118", "80008119", "80008120", "80008121", "80008122", "80008125", "8000818431"], "G.CALIFORNIA": ["80006958"] };
-        const firebaseConfig = {
-            apiKey: "AIzaSyASQa5cLXFllnV6EmYp-ARZ9dndWSKha6c",
-            authDomain: "cvgmaroc-gmao.firebaseapp.com",
-            databaseURL: "https://cvgmaroc-gmao-default-rtdb.firebaseio.com",
-            projectId: "cvgmaroc-gmao",
-            storageBucket: "cvgmaroc-gmao.firebasestorage.app",
-            messagingSenderId: "72908747564",
-            appId: "1:72908747564:web:82f646ef5dd209d03b7289"
-        };
+        const firebaseConfig = { apiKey: "AIzaSyASQa5cLXFllnV6EmYp-ARZ9dndWSKha6c", authDomain: "cvgmaroc-gmao.firebaseapp.com", databaseURL: "https://cvgmaroc-gmao-default-rtdb.firebaseio.com", projectId: "cvgmaroc-gmao", storageBucket: "cvgmaroc-gmao.firebasestorage.app", messagingSenderId: "72908747564", appId: "1:72908747564:web:82f646ef5dd209d03b7289" };
 
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
@@ -162,9 +162,12 @@
 
         function handleLogin() {
             const u = document.getElementById('login-user').value.trim().toLowerCase(), p = document.getElementById('login-pass').value;
-            if((u === "admin" && p === "3333") || (u === "tech" && p === "1111")) startApp(u === "admin" ? "MANAGER" : "MAINTENANCE");
-            else if(u === "op" && p === "0000") startApp("OPERATEUR");
-            else alert("Identifiants incorrects");
+            if(u === "admin" && p === "3333") return startApp("MANAGER");
+            database.ref('users/').once('value', snap => {
+                let found = false;
+                if(snap.val()) Object.values(snap.val()).forEach(usr => { if(usr.name.toLowerCase() === u && usr.pass === p) { found = true; startApp(usr.role); } });
+                if(!found) alert("Refusé");
+            });
         }
 
         function startApp(role) {
@@ -172,16 +175,58 @@
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('app-content').classList.remove('hidden');
             document.getElementById('roleText').innerText = role;
-            listenFirebase(); listenStock();
+            listenFirebase(); listenStock(); listenUsers();
             if(role === "MANAGER" || role === "MAINTENANCE") document.getElementById('manager-panel').classList.remove('hidden');
             if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
+        }
+
+        function listenUsers() {
+            database.ref('users/').on('value', snap => {
+                const container = document.getElementById('users-list-container'); container.innerHTML = "";
+                if(snap.val()) Object.entries(snap.val()).forEach(([key, usr]) => {
+                    container.innerHTML += `<div class="user-item"><div><b>${usr.name}</b> (${usr.role})</div>
+                    <div><button onclick="prepareEditUser('${key}','${usr.name}','${usr.pass}','${usr.role}')" style="color:var(--warning); border:none; background:none; margin-right:8px;"><i class="fas fa-edit"></i></button>
+                    <button onclick="deleteUser('${key}')" style="color:var(--danger); border:none; background:none;"><i class="fas fa-trash"></i></button></div></div>`;
+                });
+            });
+        }
+
+        function saveUser() {
+            const key = document.getElementById('edit-user-key').value, name = document.getElementById('new-user-name').value.trim(), pass = document.getElementById('new-user-pass').value.trim(), role = document.getElementById('new-user-role').value;
+            if(!name || !pass) return alert("Remplir tout");
+            if(key) database.ref('users/'+key).update({name, pass, role}).then(()=>resetUserForm());
+            else database.ref('users/').push({name, pass, role}).then(()=>resetUserForm());
+        }
+
+        function prepareEditUser(key, name, pass, role) {
+            document.getElementById('edit-user-key').value = key; document.getElementById('new-user-name').value = name;
+            document.getElementById('new-user-pass').value = pass; document.getElementById('new-user-role').value = role;
+            document.getElementById('btn-user-save').innerText = "MODIFIER"; document.getElementById('btn-user-cancel').classList.remove('hidden');
+        }
+
+        function resetUserForm() {
+            document.getElementById('edit-user-key').value = ""; document.getElementById('new-user-name').value = ""; document.getElementById('new-user-pass').value = "";
+            document.getElementById('btn-user-save').innerText = "ENREGISTRER"; document.getElementById('btn-user-cancel').classList.add('hidden');
+        }
+
+        function deleteUser(key) { if(confirm("Supprimer?")) database.ref('users/'+key).remove(); }
+
+        function listenStock() {
+            database.ref('stock/').on('value', snap => {
+                const list = document.getElementById('stock-list'); if(!list) return;
+                list.innerHTML = ""; const dl = document.getElementById('spareparts'); if(dl) dl.innerHTML = "";
+                if(snap.val()) Object.entries(snap.val()).forEach(([name, data]) => {
+                    const isLow = data.qty <= 4 ? 'low-stock-alert' : '';
+                    list.innerHTML += `<div class="${isLow}" style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;"><span>${data.qty<=4?'⚠️ ':''}${name}</span><b>${data.qty}</b></div>`;
+                    if(dl) dl.innerHTML += `<option value="${name}">`;
+                });
+            });
         }
 
         function listenFirebase() {
             database.ref('pannes/').on('value', snap => {
                 allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
-                renderUI(); renderArchives(); updateStats();
-                if(currentUser !== "OPERATEUR") updateCharts();
+                renderUI(); renderArchives(); updateStats(); if(currentUser !== "OPERATEUR") updateCharts();
             });
         }
 
@@ -189,77 +234,32 @@
             const container = document.getElementById('pannes-list'); container.innerHTML = "";
             const actives = allData.filter(p => p.status === 'OPEN' || p.status === 'IN_PROGRESS');
             document.getElementById('m-charge').innerText = actives.length;
-            
             actives.reverse().forEach(p => {
-                let statusHtml = p.status === 'OPEN' ? `<span class="status-tag tag-open">EN ARRÊT</span>` : `<span class="status-tag tag-progress">REPARATION...</span>`;
+                let statusHtml = p.status === 'OPEN' ? `<span class="status-tag tag-open">EN ARRÊT</span>` : `<span class="status-tag tag-progress">RÉPARATION...</span>`;
                 let actionBtn = "";
                 if(currentUser === 'MAINTENANCE') {
                     actionBtn = p.status === 'OPEN' ? `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">J'Y VAIS</button>` : `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">TERMINER</button>`;
                 }
-                container.innerHTML += `<div class="card" style="border-left:5px solid ${p.status === 'OPEN' ? 'var(--danger)' : 'var(--warning)'}">
-                    <div style="display:flex; justify-content:space-between"><b>${p.mach}</b>${statusHtml}</div>
-                    <small>${p.proj} | ${p.dateStr}</small><br>${actionBtn}
-                </div>`;
+                container.innerHTML += `<div class="card" style="border-left:5px solid ${p.status === 'OPEN' ? 'var(--danger)' : 'var(--warning)'}"><div style="display:flex; justify-content:space-between"><b>${p.mach}</b>${statusHtml}</div><small>${p.proj}</small><br>${actionBtn}</div>`;
             });
             if(actives.some(p => p.status === 'OPEN') && currentUser !== 'OPERATEUR') document.getElementById('alertSound').play().catch(()=>{}); else document.getElementById('alertSound').pause();
         }
 
-        function listenStock() {
-            database.ref('stock/').on('value', snap => {
-                const list = document.getElementById('stock-list'); if(!list) return;
-                list.innerHTML = "";
-                const dl = document.getElementById('spareparts'); if(dl) dl.innerHTML = "";
-                
-                if(snap.val()) {
-                    Object.entries(snap.val()).forEach(([name, data]) => {
-                        const isLow = data.qty <= 4 ? 'low-stock-alert' : '';
-                        const alertIcon = data.qty <= 4 ? '<i class="fas fa-exclamation-triangle" style="color:#ef4444; margin-right:5px;"></i>' : '';
-                        
-                        list.innerHTML += `
-                            <div class="${isLow}" style="display:flex; justify-content:space-between; align-items:center; padding:12px 8px; border-bottom:1px solid #f1f5f9; margin:2px 0;">
-                                <span style="font-weight:600; color:var(--primary);">${alertIcon}${name}</span>
-                                <b style="background:var(--bg); padding:4px 10px; border-radius:8px;">${data.qty}</b>
-                            </div>`;
-                        if(dl) dl.innerHTML += `<option value="${name}">`;
-                    });
-                }
-            });
-        }
-
-        function updateStats() {
-            const closed = allData.filter(p => p.status === 'CLOSED');
-            let totalTime = 0; closed.forEach(p => totalTime += (p.duration || 0));
-            document.getElementById('m-count').innerText = closed.length;
-            document.getElementById('m-mttr').innerText = closed.length > 0 ? Math.round(totalTime / closed.length) : 0;
-            document.getElementById('m-mtbf').innerText = closed.length > 0 ? Math.round(720 / closed.length) : 720;
-        }
-
-        function updateCharts() {
-            const ctx = document.getElementById('downtimeChart').getContext('2d');
-            const dataMap = {};
-            allData.filter(p => p.status === 'CLOSED').forEach(p => { const label = `${p.proj}-${p.mach}`; dataMap[label] = (dataMap[label] || 0) + (p.duration || 0); });
-            if(myChart) myChart.destroy();
-            myChart = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(dataMap), datasets: [{ label: 'Min', data: Object.values(dataMap), backgroundColor: '#00d4ff' }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
-        }
-
-        function takeCharge(key) { database.ref('pannes/' + key).update({ status: 'IN_PROGRESS' }); }
-        function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display = 'flex'; }
+        function takeCharge(key) { database.ref('pannes/'+key).update({status:'IN_PROGRESS'}); }
+        function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display='flex'; }
         function confirmClosing() {
-            const key = document.getElementById('modal-key').value, tech = document.getElementById('modal-tech-id').value.trim(), prob = document.getElementById('modal-problem').value.trim(), sol = document.getElementById('modal-solution').value.trim(), piece = document.getElementById('modal-piece').value.toUpperCase().trim(), qty = parseInt(document.getElementById('modal-qty').value) || 0;
-            if(!tech || !prob || !sol) return alert("Remplir tout!");
+            const key = document.getElementById('modal-key').value, tech = document.getElementById('modal-tech-id').value, prob = document.getElementById('modal-problem').value, sol = document.getElementById('modal-solution').value, piece = document.getElementById('modal-piece').value.toUpperCase(), qty = parseInt(document.getElementById('modal-qty').value) || 0;
             const item = allData.find(x => x.key === key), duration = Math.round((Date.now() - item.startTs) / 60000);
-            database.ref('pannes/' + key).update({ status: 'CLOSED', duration, techId: tech, problem: prob, solution: sol, piece, qty }).then(() => {
-                if(piece && piece !== 'N/A') { const sRef = database.ref('stock/' + piece); sRef.once('value', s => { if(s.exists()) sRef.set({ qty: Math.max(0, s.val().qty - qty) }); }); }
-                document.getElementById('closeModal').style.display = 'none';
+            database.ref('pannes/'+key).update({status:'CLOSED', duration, techId:tech, problem:prob, solution:sol, piece, qty}).then(() => {
+                if(piece && piece !== 'N/A') { const sRef = database.ref('stock/'+piece); sRef.once('value', s => { if(s.exists()) sRef.set({qty: Math.max(0, s.val().qty - qty)}); }); }
+                document.getElementById('closeModal').style.display='none';
             });
         }
-
-        function handlePanneSignal() { 
-            const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value;
-            database.ref('pannes/').push({ proj, mach, status: 'OPEN', startTs: Date.now(), dateStr: new Date().toLocaleString() });
-        }
+        function handlePanneSignal() { const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value; database.ref('pannes/').push({proj, mach, status:'OPEN', startTs:Date.now(), dateStr:new Date().toLocaleString()}); }
         function updateMachineList() { const p = document.getElementById('in-proj').value, s = document.getElementById('in-mach'); s.innerHTML = ""; (machineData[p] || []).forEach(m => s.innerHTML += `<option value="${m}">${m}</option>`); }
-        function addNewStock() { const n = document.getElementById('new-p-name').value.toUpperCase().trim(), q = parseInt(document.getElementById('new-p-qty').value); if(n && !isNaN(q)) database.ref('stock/'+n).set({qty:q}).then(()=>document.getElementById('stockModal').style.display='none'); }
+        function addNewStock() { const n = document.getElementById('new-p-name').value.toUpperCase(), q = parseInt(document.getElementById('new-p-qty').value); if(n && !isNaN(q)) database.ref('stock/'+n).set({qty:q}).then(()=>document.getElementById('stockModal').style.display='none'); }
+        function updateStats() { const closed = allData.filter(p => p.status === 'CLOSED'); let total = 0; closed.forEach(p => total += p.duration || 0); document.getElementById('m-count').innerText = closed.length; document.getElementById('m-mttr').innerText = closed.length > 0 ? Math.round(total/closed.length) : 0; document.getElementById('m-mtbf').innerText = closed.length > 0 ? Math.round(720/closed.length) : 720; }
+        function updateCharts() { const ctx = document.getElementById('downtimeChart').getContext('2d'); const dataMap = {}; allData.filter(p => p.status === 'CLOSED').forEach(p => { const label = `${p.proj}-${p.mach}`; dataMap[label] = (dataMap[label] || 0) + (p.duration || 0); }); if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(dataMap), datasets: [{ label: 'Min', data: Object.values(dataMap), backgroundColor: '#00d4ff' }] }, options: { responsive: true, plugins: { legend: { display: false } } } }); }
         function exportToExcel() { const closed = allData.filter(p => p.status === 'CLOSED'); const wsData = XLSX.utils.json_to_sheet(closed.map(p => ({ 'Date': p.dateStr, 'Tech': p.techId, 'Machine': p.mach, 'Downtime(m)': p.duration, 'Problème': p.problem, 'Solution': p.solution }))); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, wsData, "Logs"); XLSX.writeFile(wb, "GMAO_Report.xlsx"); }
         function renderArchives() { const list = document.getElementById('archive-list'); if(!list) return; list.innerHTML = "<h3>Archives</h3>"; allData.filter(p => p.status === 'CLOSED').reverse().forEach(p => { list.innerHTML += `<div class="card" style="border-left:5px solid var(--success); font-size:0.8rem;"><b>${p.mach}</b> - ${p.duration}m<br><small>Tech: ${p.techId}</small></div>`; }); }
         function enableAudio() { window.audioAllowed = true; }
