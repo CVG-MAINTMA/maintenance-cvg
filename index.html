@@ -20,7 +20,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg); padding: 10px; color: #1e293b; }
         
-        /* Animation d klyontaj */
+        /* Animation Blinking */
         @keyframes blink {
             0% { opacity: 1; }
             50% { opacity: 0.4; }
@@ -50,12 +50,17 @@
         .tag-progress { 
             background: #fef3c7; 
             color: #d97706; 
-            animation: blink 1s infinite; /* Klyontaj dyalk */
+            animation: blink 1s infinite; 
             border: 1px solid #fcd34d;
         }
 
         #reader { width: 100%; border-radius: 15px; overflow: hidden; background: #000; }
         .user-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
+        
+        /* Fix Stock Scrollbar */
+        #stock-list { max-height: 400px; overflow-y: auto; padding-right: 5px; }
+        #stock-list::-webkit-scrollbar { width: 5px; }
+        #stock-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body onclick="enableAudio()">
@@ -151,14 +156,21 @@
     </div>
 
     <div id="archiveModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:600px;"><div id="archive-list" style="max-height:400px; overflow-y:auto;"></div></div></div>
-    <div id="viewStockModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:450px;"><div id="stock-list"></div></div></div>
+
+    <div id="viewStockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
+        <div class="card" style="width:100%; max-width:450px;">
+            <h3 style="margin-bottom:10px; border-bottom:2px solid var(--accent); padding-bottom:5px;"><i class="fas fa-boxes-stacked"></i> État du Stock</h3>
+            <div id="stock-list"></div>
+            <button class="btn btn-ghost" style="margin-top:15px;" onclick="document.getElementById('viewStockModal').style.display='none'">FERMER</button>
+        </div>
+    </div>
+
     <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:400px;"><h3>Ajouter au Stock</h3><input type="text" id="new-p-name" placeholder="Nom"><input type="number" id="new-p-qty" placeholder="Quantité"><button class="btn btn-success" onclick="addNewStock()">VALIDER</button></div></div>
 
     <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
         const machineData = { "SKODA A8": ["80005631", "80007235", "80007236", "80007237", "80007238", "80007239", "80007240", "80007241", "80007242", "80007243", "80007244", "80007245", "80007246"], "CRAFTER": ["80003403", "80003857", "80006951", "80006953", "80007608", "80008117", "80008118", "80008119", "80008120", "80008121", "80008122", "80008125", "8000818431"], "G.CALIFORNIA": ["80006958"] };
-        
         const firebaseConfig = {
             apiKey: "AIzaSyASQa5cLXFllnV6EmYp-ARZ9dndWSKha6c",
             authDomain: "cvgmaroc-gmao.firebaseapp.com",
@@ -177,14 +189,11 @@
             const u = document.getElementById('login-user').value.trim().toLowerCase();
             const p = document.getElementById('login-pass').value;
             if(u === "admin" && p === "3333") return startApp("MANAGER");
-            
             database.ref('users/').once('value', snap => {
                 let found = false; 
                 if(snap.val()) {
                     Object.values(snap.val()).forEach(usr => { 
-                        if(usr.name.toLowerCase() === u && usr.pass === p) { 
-                            found = true; startApp(usr.role); 
-                        }
+                        if(usr.name.toLowerCase() === u && usr.pass === p) { found = true; startApp(usr.role); }
                     });
                 }
                 if(!found) alert("Refusé : Identifiants incorrects");
@@ -220,11 +229,8 @@
         }
 
         function saveUser() {
-            const key = document.getElementById('edit-user-key').value;
-            const name = document.getElementById('new-user-name').value.trim();
-            const pass = document.getElementById('new-user-pass').value.trim();
-            const role = document.getElementById('new-user-role').value;
-            if(!name || !pass || !role) return alert("Remplissez tous les champs !");
+            const key = document.getElementById('edit-user-key').value, name = document.getElementById('new-user-name').value.trim(), pass = document.getElementById('new-user-pass').value.trim(), role = document.getElementById('new-user-role').value;
+            if(!name || !pass || !role) return alert("Remplissez tout!");
             const userData = { name, pass, role };
             if(key) database.ref('users/' + key).update(userData).then(() => { alert("Modifié !"); resetUserForm(); });
             else database.ref('users/').push(userData).then(() => { alert("Créé !"); resetUserForm(); });
@@ -240,12 +246,8 @@
         }
 
         function resetUserForm() {
-            document.getElementById('edit-user-key').value = "";
-            document.getElementById('new-user-name').value = "";
-            document.getElementById('new-user-pass').value = "";
-            document.getElementById('new-user-role').value = "";
-            document.getElementById('btn-user-save').innerText = "CRÉER LE COMPTE";
-            document.getElementById('btn-user-cancel').classList.add('hidden');
+            document.getElementById('edit-user-key').value = ""; document.getElementById('new-user-name').value = ""; document.getElementById('new-user-pass').value = ""; document.getElementById('new-user-role').value = "";
+            document.getElementById('btn-user-save').innerText = "CRÉER LE COMPTE"; document.getElementById('btn-user-cancel').classList.add('hidden');
         }
 
         function deleteUser(key) { if(confirm("Supprimer ce compte ?")) database.ref('users/' + key).remove(); }
@@ -262,10 +264,8 @@
             if ("vibrate" in navigator) navigator.vibrate(200);
             for (let proj in machineData) {
                 if (machineData[proj].includes(code)) {
-                    document.getElementById('in-proj').value = proj;
-                    updateMachineList();
-                    document.getElementById('in-mach').value = code;
-                    return;
+                    document.getElementById('in-proj').value = proj; updateMachineList();
+                    document.getElementById('in-mach').value = code; return;
                 }
             }
             alert("Machine inconnue: " + code);
@@ -302,7 +302,6 @@
             document.getElementById('m-charge').innerText = actives.length;
             
             actives.reverse().forEach(p => {
-                // LOGIQUE MODIFIÉE ICI POUR LE BLINKING
                 let statusHtml = p.status === 'OPEN' ? 
                     `<span class="status-tag tag-open">EN ARRÊT</span>` : 
                     `<span class="status-tag tag-progress"><i class="fas fa-tools"></i> TAWER REPARATION...</span>`;
@@ -312,8 +311,6 @@
                     actionBtn = p.status === 'OPEN' ? 
                         `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">I'M GOING</button>` : 
                         `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">DONE</button>`;
-                } else if(currentUser === 'MANAGER' && p.status === 'OPEN') {
-                    actionBtn = `<small style="color:#64748b"><i>En attente d'intervention...</i></small>`;
                 }
                 container.innerHTML += `<div class="card" style="border-left:5px solid ${p.status === 'OPEN' ? 'var(--danger)' : 'var(--warning)'}">
                     <div style="display:flex; justify-content:space-between"><b>${p.mach}</b>${statusHtml}</div>
@@ -342,8 +339,7 @@
         }
 
         function confirmClosing() {
-            const key = document.getElementById('modal-key').value, tech = document.getElementById('modal-tech-id').value.trim();
-            const prob = document.getElementById('modal-problem').value.trim(), sol = document.getElementById('modal-solution').value.trim();
+            const key = document.getElementById('modal-key').value, tech = document.getElementById('modal-tech-id').value.trim(), prob = document.getElementById('modal-problem').value.trim(), sol = document.getElementById('modal-solution').value.trim();
             const piece = document.getElementById('modal-piece').value.toUpperCase().trim(), qty = parseInt(document.getElementById('modal-qty').value) || 0;
             if(!tech || !prob || !sol) return alert("Remplir tout!");
             const item = allData.find(x => x.key === key), duration = Math.round((Date.now() - item.startTs) / 60000);
@@ -358,12 +354,8 @@
 
         function exportToExcel() {
             const closed = allData.filter(p => p.status === 'CLOSED');
-            const wsData = XLSX.utils.json_to_sheet(closed.map(p => ({
-                'Date': p.dateStr, 'Tech': p.techId, 'Machine': p.mach, 'Downtime(m)': p.duration, 'Problème': p.problem, 'Solution': p.solution
-            })));
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, wsData, "Logs");
-            XLSX.writeFile(wb, "GMAO_Report.xlsx");
+            const wsData = XLSX.utils.json_to_sheet(closed.map(p => ({ 'Date': p.dateStr, 'Tech': p.techId, 'Machine': p.mach, 'Downtime(m)': p.duration, 'Problème': p.problem, 'Solution': p.solution })));
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, wsData, "Logs"); XLSX.writeFile(wb, "GMAO_Report.xlsx");
         }
 
         function takeCharge(key) { database.ref('pannes/' + key).update({ status: 'IN_PROGRESS' }); }
@@ -373,16 +365,22 @@
             database.ref('pannes/').push({ proj, mach, status: 'OPEN', startTs: Date.now(), dateStr: new Date().toLocaleString() });
         }
         function updateMachineList() { const p = document.getElementById('in-proj').value, s = document.getElementById('in-mach'); s.innerHTML = ""; (machineData[p] || []).forEach(m => s.innerHTML += `<option value="${m}">${m}</option>`); }
+        
         function listenStock() {
             database.ref('stock/').on('value', snap => {
-                const list = document.getElementById('stock-list'); if(!list) return; list.innerHTML = "<h3>État du Stock</h3>";
-                const dl = document.getElementById('spareparts'); if(!dl) return; dl.innerHTML = "";
+                const list = document.getElementById('stock-list'); if(!list) return;
+                list.innerHTML = "";
+                const dl = document.getElementById('spareparts'); if(dl) dl.innerHTML = "";
                 if(snap.val()) Object.entries(snap.val()).forEach(([name, data]) => {
-                    list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;"><span>${name}</span><b>${data.qty}</b></div>`;
-                    dl.innerHTML += `<option value="${name}">`;
+                    list.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; padding:12px 8px; border-bottom:1px solid #f1f5f9;">
+                        <span style="font-weight:600; color:var(--primary); font-size:0.9rem;">${name}</span>
+                        <b style="background:var(--bg); padding:4px 10px; border-radius:8px; color:var(--primary);">${data.qty}</b>
+                    </div>`;
+                    if(dl) dl.innerHTML += `<option value="${name}">`;
                 });
             });
         }
+
         function addNewStock() { const n = document.getElementById('new-p-name').value.toUpperCase().trim(), q = parseInt(document.getElementById('new-p-qty').value); if(n && !isNaN(q)) database.ref('stock/'+n).set({qty:q}).then(()=>document.getElementById('stockModal').style.display='none'); }
         function enableAudio() { window.audioAllowed = true; }
     </script>
