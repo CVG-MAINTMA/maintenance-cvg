@@ -24,10 +24,11 @@
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         @keyframes stockBlink { 0% { background-color: #fee2e2; } 50% { background-color: transparent; } 100% { background-color: #fee2e2; } }
 
+        /* Style dyal l-interventions li khdamin */
         .tag-progress { 
             background: #fef3c7; 
             color: #d97706; 
-            animation: blink 1s infinite;
+            animation: blink 1s infinite; /* Klyontaj */
             border: 1px solid #fcd34d;
             display: inline-flex;
             align-items: center;
@@ -57,7 +58,10 @@
         .status-tag { font-size: 0.7rem; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; }
         .tag-open { background: #fee2e2; color: #ef4444; }
 
-        #reader { width: 100%; border-radius: 15px; overflow: hidden; background: #000; display: none; margin-bottom: 10px; }
+        #reader { width: 100%; border-radius: 15px; overflow: hidden; background: #000; }
+        .user-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
+        
+        #stock-list { max-height: 400px; overflow-y: auto; padding-right: 5px; }
     </style>
 </head>
 <body onclick="enableAudio()">
@@ -84,7 +88,9 @@
                 <div class="kpi-card"><span>MTBF (H)</span><b id="m-mtbf">0</b></div>
                 <div class="kpi-card"><span>MTTR (Min)</span><b id="m-mttr">0</b></div>
             </div>
+            
             <div class="card" style="padding:10px;"><canvas id="downtimeChart" style="width:100%; max-height:200px;"></canvas></div>
+            
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button class="btn" style="background:#0ea5e9; color:white;" onclick="document.getElementById('viewStockModal').style.display='flex'"><i class="fas fa-boxes-stacked"></i> STOCK</button>
                 <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('archiveModal').style.display='flex'"><i class="fas fa-archive"></i> ARCHIVES</button>
@@ -95,7 +101,7 @@
         </div>
 
         <div id="op-panel" class="card hidden">
-            <button id="btn-scan" class="btn" style="background:var(--primary); color:white; margin-bottom:10px;" onclick="startScanner()"><i class="fas fa-qrcode"></i> SCANNER MACHINE</button>
+            <button class="btn" style="background:var(--primary); color:white; margin-bottom:10px;" onclick="startScanner()"><i class="fas fa-qrcode"></i> SCANNER MACHINE</button>
             <div id="reader"></div>
             <select id="in-proj" onchange="updateMachineList()"><option value="SKODA A8">SKODA A8</option><option value="CRAFTER">CRAFTER</option><option value="G.CALIFORNIA">G.CALIFORNIA</option></select>
             <select id="in-mach"></select>
@@ -112,18 +118,27 @@
         <div class="card" style="width:100%; max-width:400px; max-height:90vh; overflow-y:auto;">
             <h3>Gestion Comptes</h3>
             <div style="background:#f8fafc; padding:10px; border-radius:12px; margin-top:10px;">
-                <input type="hidden" id="edit-user-key"><input type="text" id="new-user-name" placeholder="Matricule"><input type="password" id="new-user-pass" placeholder="Password">
-                <select id="new-user-role"><option value="OPERATEUR">OPERATEUR</option><option value="MAINTENANCE">MAINTENANCE</option><option value="MANAGER">MANAGER</option></select>
+                <input type="hidden" id="edit-user-key">
+                <input type="text" id="new-user-name" placeholder="Matricule">
+                <input type="password" id="new-user-pass" placeholder="Password">
+                <select id="new-user-role">
+                    <option value="OPERATEUR">OPERATEUR</option>
+                    <option value="MAINTENANCE">MAINTENANCE</option>
+                    <option value="MANAGER">MANAGER</option>
+                </select>
                 <button id="btn-user-save" class="btn btn-success" onclick="saveUser()">ENREGISTRER</button>
+                <button id="btn-user-cancel" class="btn btn-ghost hidden" onclick="resetUserForm()">ANNULER</button>
             </div>
             <div id="users-list-container" style="margin-top:15px;"></div>
+            <button class="btn btn-ghost" onclick="document.getElementById('userModal').style.display='none'">FERMER</button>
         </div>
     </div>
 
     <div id="viewStockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
         <div class="card" style="width:100%; max-width:450px;">
-            <h3><i class="fas fa-boxes-stacked"></i> État du Stock</h3>
+            <h3 style="border-bottom:2px solid var(--accent); padding-bottom:5px;"><i class="fas fa-boxes-stacked"></i> État du Stock</h3>
             <div id="stock-list"></div>
+            <button class="btn btn-ghost" onclick="document.getElementById('viewStockModal').style.display='none'">FERMER</button>
         </div>
     </div>
 
@@ -134,7 +149,8 @@
             <input type="text" id="modal-tech-id" placeholder="Matricule Tech">
             <textarea id="modal-problem" placeholder="Problème"></textarea>
             <textarea id="modal-solution" placeholder="Solution"></textarea>
-            <input list="spareparts" id="modal-piece" placeholder="Pièce"><datalist id="spareparts"></datalist>
+            <input list="spareparts" id="modal-piece" placeholder="Pièce">
+            <datalist id="spareparts"></datalist>
             <input type="number" id="modal-qty" value="1">
             <button class="btn btn-success" onclick="confirmClosing()">TERMINER</button>
             <button class="btn btn-ghost" onclick="document.getElementById('closeModal').style.display='none'">ANNULER</button>
@@ -152,7 +168,7 @@
 
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        let currentUser = null, allData = [], myChart = null, html5QrCode = null;
+        let currentUser = null, allData = [], myChart = null;
 
         function handleLogin() {
             const u = document.getElementById('login-user').value.trim().toLowerCase(), p = document.getElementById('login-pass').value;
@@ -174,59 +190,72 @@
             if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
         }
 
-        // --- SCANNER LOGIC ---
-        function startScanner() {
-            const readerDiv = document.getElementById("reader");
-            readerDiv.style.display = "block";
-            html5QrCode = new Html5Qrcode("reader");
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
-                (decodedText) => {
-                    handleScanResult(decodedText.trim());
-                    stopScanner();
-                },
-                (err) => {}
-            ).catch(err => alert("Erreur Caméra. Utilisez HTTPS."));
-        }
-
-        function handleScanResult(code) {
-            let found = false;
-            for (let proj in machineData) {
-                if (machineData[proj].includes(code)) {
-                    document.getElementById('in-proj').value = proj;
-                    updateMachineList();
-                    document.getElementById('in-mach').value = code;
-                    found = true; break;
-                }
-            }
-            if(!found) alert("Machine non reconnue: " + code);
-        }
-
-        function stopScanner() {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    document.getElementById("reader").style.display = "none";
+        function listenUsers() {
+            database.ref('users/').on('value', snap => {
+                const container = document.getElementById('users-list-container'); container.innerHTML = "";
+                if(snap.val()) Object.entries(snap.val()).forEach(([key, usr]) => {
+                    container.innerHTML += `<div class="user-item"><div><b>${usr.name}</b> (${usr.role})</div>
+                    <div><button onclick="prepareEditUser('${key}','${usr.name}','${usr.pass}','${usr.role}')" style="color:var(--warning); border:none; background:none; margin-right:8px;"><i class="fas fa-edit"></i></button>
+                    <button onclick="deleteUser('${key}')" style="color:var(--danger); border:none; background:none;"><i class="fas fa-trash"></i></button></div></div>`;
                 });
-            }
+            });
         }
 
-        // --- REST OF LOGIC ---
-        function listenUsers() { database.ref('users/').on('value', snap => { const container = document.getElementById('users-list-container'); container.innerHTML = ""; if(snap.val()) Object.entries(snap.val()).forEach(([key, usr]) => { container.innerHTML += `<div class="user-item"><b>${usr.name}</b> (${usr.role}) <button onclick="deleteUser('${key}')" style="color:red; border:none; background:none;"><i class="fas fa-trash"></i></button></div>`; }); }); }
-        function saveUser() { const name = document.getElementById('new-user-name').value.trim(), pass = document.getElementById('new-user-pass').value.trim(), role = document.getElementById('new-user-role').value; if(name && pass) database.ref('users/').push({name, pass, role}).then(()=> { document.getElementById('new-user-name').value=""; document.getElementById('new-user-pass').value=""; }); }
+        function saveUser() {
+            const key = document.getElementById('edit-user-key').value, name = document.getElementById('new-user-name').value.trim(), pass = document.getElementById('new-user-pass').value.trim(), role = document.getElementById('new-user-role').value;
+            if(!name || !pass) return alert("Remplir tout");
+            if(key) database.ref('users/'+key).update({name, pass, role}).then(()=>resetUserForm());
+            else database.ref('users/').push({name, pass, role}).then(()=>resetUserForm());
+        }
+
+        function prepareEditUser(key, name, pass, role) {
+            document.getElementById('edit-user-key').value = key; document.getElementById('new-user-name').value = name;
+            document.getElementById('new-user-pass').value = pass; document.getElementById('new-user-role').value = role;
+            document.getElementById('btn-user-save').innerText = "MODIFIER"; document.getElementById('btn-user-cancel').classList.remove('hidden');
+        }
+
+        function resetUserForm() {
+            document.getElementById('edit-user-key').value = ""; document.getElementById('new-user-name').value = ""; document.getElementById('new-user-pass').value = "";
+            document.getElementById('btn-user-save').innerText = "ENREGISTRER"; document.getElementById('btn-user-cancel').classList.add('hidden');
+        }
+
         function deleteUser(key) { if(confirm("Supprimer?")) database.ref('users/'+key).remove(); }
-        function listenStock() { database.ref('stock/').on('value', snap => { const list = document.getElementById('stock-list'); if(!list) return; list.innerHTML = ""; const dl = document.getElementById('spareparts'); if(dl) dl.innerHTML = ""; if(snap.val()) Object.entries(snap.val()).forEach(([name, data]) => { const isLow = data.qty <= 4 ? 'low-stock-alert' : ''; list.innerHTML += `<div class="${isLow}" style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;"><span>${data.qty<=4?'⚠️ ':''}${name}</span><b>${data.qty}</b></div>`; if(dl) dl.innerHTML += `<option value="${name}">`; }); }); }
-        function listenFirebase() { database.ref('pannes/').on('value', snap => { allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : []; renderUI(); renderArchives(); updateStats(); if(currentUser !== "OPERATEUR") updateCharts(); }); }
+
+        function listenStock() {
+            database.ref('stock/').on('value', snap => {
+                const list = document.getElementById('stock-list'); if(!list) return;
+                list.innerHTML = ""; const dl = document.getElementById('spareparts'); if(dl) dl.innerHTML = "";
+                if(snap.val()) Object.entries(snap.val()).forEach(([name, data]) => {
+                    const isLow = data.qty <= 4 ? 'low-stock-alert' : '';
+                    list.innerHTML += `<div class="${isLow}" style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;"><span>${data.qty<=4?'⚠️ ':''}${name}</span><b>${data.qty}</b></div>`;
+                    if(dl) dl.innerHTML += `<option value="${name}">`;
+                });
+            });
+        }
+
+        function listenFirebase() {
+            database.ref('pannes/').on('value', snap => {
+                allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
+                renderUI(); renderArchives(); updateStats(); if(currentUser !== "OPERATEUR") updateCharts();
+            });
+        }
+
         function renderUI() {
             const container = document.getElementById('pannes-list'); container.innerHTML = "";
             const actives = allData.filter(p => p.status === 'OPEN' || p.status === 'IN_PROGRESS');
             document.getElementById('m-charge').innerText = actives.length;
             actives.reverse().forEach(p => {
+                // Izafa dyal l-icon o l-blinking f l-HTML
                 let statusHtml = p.status === 'OPEN' ? `<span class="status-tag tag-open">EN ARRÊT</span>` : `<span class="status-tag tag-progress"><i class="fas fa-tools"></i> RÉPARATION...</span>`;
                 let actionBtn = "";
-                if(currentUser === 'MAINTENANCE') { actionBtn = p.status === 'OPEN' ? `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">Reçu</button>` : `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">TERMINER</button>`; }
+                if(currentUser === 'MAINTENANCE') {
+                    actionBtn = p.status === 'OPEN' ? `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">Reçu</button>` : `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">TERMINER</button>`;
+                }
                 container.innerHTML += `<div class="card" style="border-left:5px solid ${p.status === 'OPEN' ? 'var(--danger)' : 'var(--warning)'}"><div style="display:flex; justify-content:space-between"><b>${p.mach}</b>${statusHtml}</div><small>${p.proj}</small><br>${actionBtn}</div>`;
             });
             if(actives.some(p => p.status === 'OPEN') && currentUser !== 'OPERATEUR') document.getElementById('alertSound').play().catch(()=>{}); else document.getElementById('alertSound').pause();
         }
+
         function takeCharge(key) { database.ref('pannes/'+key).update({status:'IN_PROGRESS'}); }
         function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display='flex'; }
         function confirmClosing() {
@@ -248,3 +277,6 @@
     </script>
 </body>
 </html>
+
+
+
