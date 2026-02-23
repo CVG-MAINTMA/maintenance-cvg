@@ -63,12 +63,13 @@
         
         #stock-list { max-height: 400px; overflow-y: auto; padding-right: 5px; }
     </style>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body onclick="enableAudio()">
 
     <div id="login-overlay" style="position:fixed; inset:0; background:var(--primary); z-index:9999; display:flex; justify-content:center; align-items:center;">
         <div class="card" style="width:340px; text-align:center;">
-            <h2 style="color:var(--primary); font-weight: 800; letter-spacing: -1px;">CVG <span style="color:var(--accent)">CONNECT</span></h2>
+            <h2 style="margin-bottom:15px; color:var(--primary)">GMAO CVG</h2>
             <input type="text" id="login-user" placeholder="Utilisateur / Matricule">
             <input type="password" id="login-pass" placeholder="Mot de passe">
             <button class="btn" style="background:var(--primary); color:white" onclick="handleLogin()">ACCÉDER</button>
@@ -98,6 +99,9 @@
                 <button class="btn" style="background:#64748b; color:white;" onclick="document.getElementById('stockModal').style.display='flex'"><i class="fas fa-plus"></i> CATALOGUE</button>
                 <button class="btn" style="background:var(--primary); color:white; grid-column: span 2;" onclick="document.getElementById('userModal').style.display='flex'"><i class="fas fa-users-gear"></i> GESTION COMPTES</button>
             </div>
+			<button class="btn" style="background:var(--danger); color:white;" onclick="exportToPDF()">
+    <i class="fas fa-file-pdf"></i> PDF REPORT
+</button>
         </div>
 
         <div id="op-panel" class="card hidden">
@@ -351,6 +355,66 @@
     });
 }
     
+	
+	
+	function exportToPDF() {
+    const closedInterventions = allData.filter(p => p.status === 'CLOSED');
+    
+    if (closedInterventions.length === 0) {
+        alert("Aucune intervention clôturée à exporter.");
+        return;
+    }
+
+    // نفس الديزاين القديم مع خانة Pièce
+    let content = `
+        <div style="padding: 20px; font-family: Arial, sans-serif;">
+            <h1 style="color: #002b5c; text-align: center;">Rapport d'Interventions Maintenance</h1>
+            <p style="text-align: right;">Date d'extraction: ${new Date().toLocaleString()}</p>
+            <table border="1" style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                <thead style="background-color: #f1f5f9;">
+                    <tr>
+                        <th style="padding: 8px;">Date</th>
+                        <th style="padding: 8px;">Machine</th>
+                        <th style="padding: 8px;">Technicien</th>
+                        <th style="padding: 8px;">Pièce Rechange</th>
+                        <th style="padding: 8px;">Downtime</th>
+                        <th style="padding: 8px;">Problème/Solution</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    closedInterventions.forEach(p => {
+        // تحديد النص اللي غايبان فخانة السطوك
+        const pieceText = (p.piece && p.piece !== 'N/A') ? `${p.piece} (x${p.qty})` : '-';
+
+        content += `
+            <tr>
+                <td style="padding: 8px; font-size: 12px;">${p.dateStr}</td>
+                <td style="padding: 8px; font-size: 12px;"><b>${p.mach}</b><br><small>${p.proj}</small></td>
+                <td style="padding: 8px; font-size: 12px;">${p.techId || 'N/A'}</td>
+                <td style="padding: 8px; font-size: 12px; text-align: center;">${pieceText}</td>
+                <td style="padding: 8px; font-size: 12px; text-align: center;">${p.duration} min</td>
+                <td style="padding: 8px; font-size: 12px;">
+                    <b>P:</b> ${p.problem || '-'}<br>
+                    <b>S:</b> ${p.solution || '-'}
+                </td>
+            </tr>
+        `;
+    });
+
+    content += `</tbody></table></div>`;
+
+    const opt = {
+        margin:       10,
+        filename:     'Rapport_GMAO_CVG.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    };
+
+    html2pdf().set(opt).from(content).save();
+}
     </script>
 </body>
 </html>
