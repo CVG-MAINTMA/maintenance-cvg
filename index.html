@@ -60,18 +60,112 @@
         .stock-table td { padding: 12px; border-bottom: 1px solid #eee; }
         .user-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; background: #fff; border-radius: 8px; margin-bottom: 5px; }
         .user-actions i { cursor: pointer; margin-left: 10px; padding: 5px; }
-    </style>
+		.archive-item {
+    border-left: 4px solid var(--primary);
+    padding: 12px;
+    margin-bottom: 12px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    position: relative;
+}
+.archive-item b { color: var(--primary); font-size: 1rem; display: block; margin-bottom: 4px; }
+.archive-item .meta { font-size: 0.75rem; color: #64748b; font-weight: 600; display: flex; justify-content: space-between; margin-top: 8px; border-top: 1px solid #f1f5f9; padding-top: 5px; }
+.archive-item .badge-proj { background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; }
+.archive-item .duration-tag { color: var(--success); font-weight: 800; }
+    /* الخلفية الكاملة للشاشة */
+#login-overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #001a3d 0%, #002b5c 100%); /* تدرج أزرق غامق */
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(10px);
+}
+
+/* الكارط ديال الدخول */
+#login-overlay .card {
+    width: 360px;
+    padding: 40px 30px;
+    background: rgba(255, 255, 255, 0.95); /* أبيض شفاف شوية */
+    border-radius: 28px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* العنوان (GMAO CVG) */
+#login-overlay h2 {
+    color: #002b5c;
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 30px;
+    letter-spacing: -1px;
+}
+
+/* الخانات (Inputs) */
+#login-overlay input {
+    width: 100%;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f8fafc;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+#login-overlay input:focus {
+    border-color: #00d4ff;
+    background: #ffffff;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.15);
+}
+
+/* زر الدخول (ACCÉDER) */
+#login-overlay .btn-warning {
+    width: 100%;
+    padding: 16px;
+    background: #002b5c;
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.3s;
+    margin-top: 10px;
+}
+
+#login-overlay .btn-warning:hover {
+    background: #003d82;
+    transform: translateY(-2px);
+}
+
+#login-overlay .btn-warning:active {
+    transform: translateY(0);
+}
+	</style>
 </head>
 <body onclick="enableAudio()">
 
-    <div id="login-overlay" style="position:fixed; inset:0; background:var(--primary); z-index:9999; display:flex; justify-content:center; align-items:center;">
-        <div class="card" style="width:340px; text-align:center;">
-            <h2 style="margin-bottom:15px; color:var(--primary)">GMAO CVG</h2>
+   <div id="login-overlay">
+    <div class="card">
+        <h2 style="margin-bottom:15px; color:var(--primary)">
+    CVG-<span style="color:var(--accent)">Innovation</span>
+</h2>
+        <div style="position:relative;">
             <input type="text" id="login-user" placeholder="Matricule">
-            <input type="password" id="login-pass" placeholder="Mot de passe">
-            <button class="btn btn-warning" style="background:var(--primary); color:white" onclick="handleLogin()">ACCÉDER</button>
         </div>
+        <div style="position:relative;">
+            <input type="password" id="login-pass" placeholder="Mot de passe">
+        </div>
+        <button class="btn btn-warning" onclick="handleLogin()">ACCÉDER</button>
+        <p style="margin-top: 20px; font-size: 0.75rem; color: #64748b; font-weight: 600;">CVG CONNECT SYSTEM v2.0</p>
     </div>
+</div>
 
     <div id="app-content" class="hidden">
         <header>
@@ -131,9 +225,43 @@
     </div>
 
     <div id="closeModal" class="modal"><div class="card" style="width:100%; max-width:400px;"><h3>Clôture d'intervention</h3><input type="hidden" id="modal-key"><input type="text" id="modal-tech-id" placeholder="Matricule Tech"><textarea id="modal-problem" placeholder="Problème"></textarea><textarea id="modal-solution" placeholder="Solution"></textarea><input list="spareparts" id="modal-piece" placeholder="Pièce (Optionnel)"><datalist id="spareparts"></datalist><input type="number" id="modal-qty" value="1"><button class="btn btn-success" onclick="confirmClosing()">TERMINER</button><button class="btn btn-ghost" onclick="document.getElementById('closeModal').style.display='none'">ANNULER</button></div></div>
-    <div id="viewStockModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:450px; max-height: 85vh; display: flex; flex-direction: column;"><h3>État du Stock</h3><input type="text" id="stockSearchInput" placeholder="🔍 Rechercher..." onkeyup="searchStock()"><div id="stock-list" style="overflow-y:auto; flex-grow: 1;"></div><button class="btn btn-ghost" onclick="document.getElementById('viewStockModal').style.display='none'">FERMER</button></div></div>
+    <div id="viewStockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
+    <div class="card" style="width:100%; max-width:450px; max-height: 85vh; display: flex; flex-direction: column;">
+        <h3>État du Stock</h3>
+        
+        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+            <button class="btn" style="background:var(--primary); color:white; font-size:0.7rem; padding:8px;" onclick="filterStockDisplay('ALL')">TOUT</button>
+            <button class="btn" style="background:#64748b; color:white; font-size:0.7rem; padding:8px;" onclick="filterStockDisplay('PIECE')">PIÈCES</button>
+            <button class="btn" style="background:#8b5cf6; color:white; font-size:0.7rem; padding:8px;" onclick="filterStockDisplay('TOOL')">TOOLS</button>
+        </div>
+
+        <input type="text" id="stockSearchInput" placeholder="🔍 Rechercher..." onkeyup="searchStock()">
+        
+        <div id="stock-list" style="overflow-y:auto; flex-grow: 1;"></div>
+        
+        <button class="btn btn-ghost" onclick="document.getElementById('viewStockModal').style.display='none'">FERMER</button>
+    </div>
+</div>
     <div id="archiveModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:600px;"><div id="archive-list" style="max-height:400px; overflow-y:auto;"></div></div></div>
-    <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:400px;"><h3>Ajouter Catalogue</h3><input type="text" id="new-p-name" placeholder="Nom de la pièce"><input type="number" id="new-p-qty" placeholder="Quantité"><button class="btn btn-success" onclick="addNewStock()">VALIDER</button></div></div>
+   <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
+    <div class="card" style="width:100%; max-width:400px;">
+        <h3>Ajouter Catalogue</h3>
+        
+        <label style="font-size: 0.8rem; font-weight: 800;">CATÉGORIE :</label>
+        <select id="cat-type" onchange="updateCatalogueList()">
+            <option value="PIECE">PIÈCES DE RECHANGE</option>
+            <option value="TOOL">TOOLS (OUTILLAGE)</option>
+        </select>
+
+        <label style="font-size: 0.8rem; font-weight: 800;">ARTICLE :</label>
+        <select id="new-p-name">
+            <option value="">-- Sélectionner --</option>
+        </select>
+
+        <input type="number" id="new-p-qty" placeholder="Quantité">
+        <button class="btn btn-success" onclick="addNewStock()">VALIDER</button>
+    </div>
+</div>
 
     <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
@@ -196,16 +324,69 @@
         function handlePanneSignal() { const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value; database.ref('pannes/').push({proj, mach, status:'OPEN', startTs:Date.now(), dateStr:new Date().toLocaleString()}); }
         function updateMachineList() { const p = document.getElementById('in-proj').value, s = document.getElementById('in-mach'); s.innerHTML = ""; (machineData[p] || []).forEach(m => s.innerHTML += `<option value="${m}">${m}</option>`); }
         function updateLiveTimers() { document.querySelectorAll('.live-timer').forEach(el => { const start = parseInt(el.getAttribute('data-start')), diff = Math.floor((Date.now() - start) / 1000), h = Math.floor(diff/3600), m = Math.floor((diff%3600)/60), s = diff%60; el.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }); }
-        function updateStats() { const closed = allData.filter(p => p.status === 'CLOSED'); let total = 0; closed.forEach(p => total += p.duration || 0); document.getElementById('m-count').innerText = closed.length; document.getElementById('m-mttr').innerText = closed.length > 0 ? Math.round(total/closed.length) : 0; }
+//MTTR-MTBF*****************************************************
+
+// MTTR:  (كيحسب المعدل بالدقائق).
+
+//MTBF: زدت ليك منطق كيحسب الساعات الكلية اللي دازت من أول "Arrêt" تسجل فالسيستيم وقسمناها على عدد الأعطال. هادشي كيعطيك فكرة شحال من ساعة كتدوز الماكينة بلا مشاكل.
+
+//Protection: زدت شرط بلي الـ MTBF ميبدا يتحسب حتى يوقعو على الأقل 2 أعطال (حيت منطقياً ميمكنش تحسب "المسافة بين الأعطال" وأنت عندك غير عطل واحد)
+
+function updateStats() {
+    const closed = allData.filter(p => p.status === 'CLOSED');
+    let totalRepairTime = 0;
+    
+    // حساب مجموع وقت الإصلاح
+    closed.forEach(p => totalRepairTime += p.duration || 0);
+
+    // 1. تحديث عدد التدخلات
+    document.getElementById('m-count').innerText = closed.length;
+
+    // 2. حساب MTTR (بالمينيت)
+    const mttr = closed.length > 0 ? Math.round(totalRepairTime / closed.length) : 0;
+    document.getElementById('m-mttr').innerText = mttr;
+
+    // 3. حساب MTBF (بالساعات)
+    if (closed.length > 1) {
+        // كنجيبو أوع فالتاريخ وآخر عطل
+        const timestamps = closed.map(p => p.startTs);
+        const firstFailure = Math.min(...timestamps);
+        const lastFailure = Math.max(...timestamps);
+        
+        // الوقت الكلي للتشغيل (بالساعات) من أول عطل حتى لدابا
+        const totalOperatingTimeHours = (Date.now() - firstFailure) / (1000 * 60 * 60);
+        
+        // MTBF = الوقت الكلي / عدد الأعطال
+        const mtbf = Math.round(totalOperatingTimeHours / closed.length);
+        document.getElementById('m-mtbf').innerText = mtbf;
+    } else {
+        document.getElementById('m-mtbf').innerText = "---"; // مازال خاص كتر من عطل واحد باش يتحسب
+    }
+}
+//***************************************************
         function updateCharts() { const ctx = document.getElementById('downtimeChart').getContext('2d'), dataMap = {}; allData.filter(p => p.status === 'CLOSED').forEach(p => { const label = p.mach; dataMap[label] = (dataMap[label] || 0) + (p.duration || 0); }); if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type:'bar', data: { labels: Object.keys(dataMap), datasets:[{label:'Min', data:Object.values(dataMap), backgroundColor:'#00d4ff'}] }, options:{responsive:true, plugins:{legend:{display:false}}}}); }
         
-        function listenStock() { 
-            database.ref('stock/').on('value', snap => { 
-                const list = document.getElementById('stock-list'); let html = '<table class="stock-table"><tbody>'; 
-                if(snap.val()) { Object.entries(snap.val()).forEach(([name, data]) => { const isLow = data.qty <= 4; html += `<tr class="${isLow?'low-stock-alert':''}"><td>${isLow?'⚠️ ':''}${name}</td><td style="text-align:right;"><b>${data.qty}</b></td></tr>`; }); }
-                list.innerHTML = html + '</tbody></table>'; 
+       function listenStock() { 
+    database.ref('stock/').on('value', snap => { 
+        const list = document.getElementById('stock-list'); 
+        const selectCatalogue = document.getElementById('new-p-name'); // هاد السطر جديد
+        
+        let html = '<table class="stock-table"><tbody>'; 
+        let optionsHtml = '<option value="">-- Sélectionner la pièce --</option>'; // هاد السطر جديد
+
+        if(snap.val()) { 
+            Object.entries(snap.val()).forEach(([name, data]) => { 
+                const isLow = data.qty <= 4; 
+                html += `<tr class="${isLow ? 'low-stock-alert' : ''}"><td>${isLow ? '⚠️ ' : ''}${name}</td><td style="text-align:right;"><b>${data.qty}</b></td></tr>`; 
+                
+                // هنا كنزيدو القطعة للـ Select أوتوماتيكياً
+                optionsHtml += `<option value="${name}">${name}</option>`; 
             }); 
-        }
+        } 
+        list.innerHTML = html + '</tbody></table>'; 
+        selectCatalogue.innerHTML = optionsHtml; // هنا كنحطو اللستة فالمودال
+    }); 
+}
 
         // --- EXCEL CVG REPORT WITH MONTH FOR DASHBOARD ---
         function exportToExcel() {
@@ -249,10 +430,141 @@
         }
         function resetUserForm() { document.getElementById('edit-user-key').value = ""; document.getElementById('new-user-name').value = ""; document.getElementById('new-user-pass').value = ""; document.getElementById('new-user-role').value = "OPERATEUR"; document.getElementById('btn-user-action').innerText = "ENREGISTRER"; document.getElementById('btn-user-action').style.background = "var(--success)"; }
         function searchStock() { const f = document.getElementById('stockSearchInput').value.toUpperCase(), rows = document.querySelector(".stock-table tbody").rows; for(let r of rows) r.style.display = r.cells[0].innerText.toUpperCase().includes(f) ? "" : "none"; }
-        function addNewStock() { const n = document.getElementById('new-p-name').value.toUpperCase(), q = parseInt(document.getElementById('new-p-qty').value); if(n && !isNaN(q)) database.ref('stock/'+n).set({qty:q}); }
-        function renderArchives() { const l = document.getElementById('archive-list'); l.innerHTML = "<h3>Historique</h3>"; allData.filter(p => p.status === 'CLOSED').reverse().forEach(p => { l.innerHTML += `<div class="card" style="font-size:0.8rem;"><b>${p.mach}</b> - ${p.duration} min<br><small>${p.dateStr}</small></div>`; }); }
+        function addNewStock() {
+    const n = document.getElementById('new-p-name').value.toUpperCase();
+    const q = parseInt(document.getElementById('new-p-qty').value);
+
+    if (n && !isNaN(q)) {
+        database.ref('stock/' + n).set({ qty: q }).then(() => {
+            // هاد السطر هو اللي كيسد النافذة أوتوماتيكياً
+            document.getElementById('stockModal').style.display = 'none';
+            
+            // اختياري: تنظيف الخانات باش المرة الجاية تلقاهم خاويين
+            document.getElementById('new-p-qty').value = "";
+            alert("Pièce ajoutée avec succès !");
+        });
+    } else {
+        alert("Veuillez remplir tous les champs !");
+    }
+}
+        function renderArchives() {
+    const l = document.getElementById('archive-list');
+    l.innerHTML = "<h3 style='margin-bottom:15px; color:var(--primary)'><i class='fas fa-history'></i> Historique des Interventions</h3>";
+    
+    // كنجيبو غير التدخلات اللي مسدودة وكنرتبوهم من الأحدث للأقدم
+    const closedPannes = allData.filter(p => p.status === 'CLOSED').reverse();
+    
+    if (closedPannes.length === 0) {
+        l.innerHTML += "<p style='text-align:center; color:#94a3b8; margin-top:20px;'>Aucun historique disponible.</p>";
+        return;
+    }
+
+    closedPannes.forEach(p => {
+        l.innerHTML += `
+            <div class="archive-item">
+                <span class="badge-proj">${p.proj}</span>
+                <b>Machine: ${p.mach}</b>
+                <div style="font-size: 0.85rem; color: #475569; margin: 5px 0;">
+                    <i class="fas fa-wrench" style="font-size:0.7rem"></i> ${p.solution || 'Pas de solution renseignée'}
+                </div>
+                <div class="meta">
+                    <span><i class="far fa-calendar-alt"></i> ${p.dateStr.split(',')[0]}</span>
+                    <span class="duration-tag"><i class="far fa-clock"></i> ${p.duration} min</span>
+                </div>
+            </div>`;
+    });
+}
         function startScanner() { const s = new Html5Qrcode("reader"); s.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (t) => { for(let [p, m] of Object.entries(machineData)) { if(m.includes(t.trim())) { document.getElementById('in-proj').value = p; updateMachineList(); document.getElementById('in-mach').value = t.trim(); s.stop(); break; } } }); }
         function enableAudio() { window.audioAllowed = true; }
+		
+		
+		// لستة ديال الـ Tools (30 أرتيكل)
+const toolsList = Array.from({length: 30}, (_, i) => `TOOL-${i + 1}`);
+
+function updateCatalogueList() {
+    const type = document.getElementById('cat-type').value;
+    const selectArticle = document.getElementById('new-p-name');
+    let optionsHtml = '<option value="">-- Sélectionner l\'article --</option>';
+
+    if (type === "TOOL") {
+        // إذا اختار Tools، كنعطيوه اللستة من 1 لـ 30
+        toolsList.forEach(tool => {
+            optionsHtml += `<option value="${tool}">${tool}</option>`;
+        });
+        selectArticle.innerHTML = optionsHtml;
+    } else {
+        // إذا اختار PIECE، كنجيبو داكشي اللي ديجا كاين فـ Stock (A001...)
+        database.ref('stock/').once('value', snap => {
+            if (snap.val()) {
+                Object.keys(snap.val()).forEach(name => {
+                    // كنفلترو باش ما يطلعوش الـ Tools وسط الـ Pieces
+                    if(!name.startsWith('TOOL-')) {
+                        optionsHtml += `<option value="${name}">${name}</option>`;
+                    }
+                });
+            }
+            selectArticle.innerHTML = optionsHtml;
+        });
+    }
+}
+
+// تعديل بسيط فـ listenStock باش يبقا يخدم مع النوعين
+function listenStock() { 
+    database.ref('stock/').on('value', snap => { 
+        const list = document.getElementById('stock-list'); 
+        let html = '<table class="stock-table"><tbody>'; 
+        if(snap.val()) { 
+            Object.entries(snap.val()).forEach(([name, data]) => { 
+                const isLow = data.qty <= 4; 
+                html += `<tr class="${isLow?'low-stock-alert':''}"><td>${isLow?'⚠️ ':''}${name}</td><td style="text-align:right;"><b>${data.qty}</b></td></tr>`; 
+            }); 
+        } 
+        list.innerHTML = html + '</tbody></table>'; 
+        updateCatalogueList(); // تحديث اللستة فالمودال
+    }); 
+}
+
+let currentStockFilter = 'ALL'; // هادي كتعقل على الفلتر اللي اختاريتي
+
+function filterStockDisplay(type) {
+    currentStockFilter = type;
+    renderStockTable(); // كنقولو ليه عاود رسم الجدول بالفلتر الجديد
+}
+
+function listenStock() { 
+    database.ref('stock/').on('value', snap => { 
+        window.rawStockData = snap.val(); // كنخزنو الداتا الخام باش نستعملوها فالفلتر
+        renderStockTable();
+        updateCatalogueList(); // هادي ديجا صاوبناها للكاتالوج
+    }); 
+}
+
+function renderStockTable() {
+    const list = document.getElementById('stock-list');
+    if (!window.rawStockData) return;
+
+    let html = '<table class="stock-table"><tbody>';
+    
+    Object.entries(window.rawStockData).forEach(([name, data]) => {
+        const isTool = name.startsWith('TOOL-');
+        
+        // المنطق ديال الفلتر
+        let show = false;
+        if (currentStockFilter === 'ALL') show = true;
+        else if (currentStockFilter === 'TOOL' && isTool) show = true;
+        else if (currentStockFilter === 'PIECE' && !isTool) show = true;
+
+        if (show) {
+            const isLow = data.qty <= 4;
+            html += `<tr class="${isLow ? 'low-stock-alert' : ''}">
+                        <td>${isLow ? '⚠️ ' : ''}${name}</td>
+                        <td style="text-align:right;"><b>${data.qty}</b></td>
+                     </tr>`;
+        }
+    });
+    
+    list.innerHTML = html + '</tbody></table>';
+}
     </script>
 </body>
 </html>
