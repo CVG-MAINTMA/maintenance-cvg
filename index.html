@@ -63,7 +63,6 @@
         
         #stock-list { max-height: 400px; overflow-y: auto; padding-right: 5px; }
     </style>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body onclick="enableAudio()">
 
@@ -95,25 +94,10 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button class="btn" style="background:#0ea5e9; color:white;" onclick="document.getElementById('viewStockModal').style.display='flex'"><i class="fas fa-boxes-stacked"></i> STOCK</button>
                 <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('archiveModal').style.display='flex'"><i class="fas fa-archive"></i> ARCHIVES</button>
-               <div style="position: relative; grid-column: span 2;">
-    <button class="btn" style="background: #16a34a; color: white;" onclick="toggleExportMenu()">
-        <i class="fas fa-download"></i> EXPORTER LES DONNÉES <i class="fas fa-chevron-down" style="font-size: 0.8rem; margin-left: 5px;"></i>
-    </button>
-    
-    <div id="exportMenu" class="hidden" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 1000; margin-top: 5px; border: 1px solid #e2e8f0; overflow: hidden;">
-        <button class="btn" style="background: transparent; color: #16a34a; border-radius: 0; border-bottom: 1px solid #f1f5f9;" onclick="exportToExcel(); toggleExportMenu();">
-            <i class="fas fa-file-excel"></i> Format EXCEL (.xlsx)
-        </button>
-        <button class="btn" style="background: transparent; color: #ef4444; border-radius: 0;" onclick="exportToPDF(); toggleExportMenu();">
-            <i class="fas fa-file-pdf"></i> Format PDF (.pdf)
-        </button>
-    </div>
-</div>
+                <button class="btn" style="background:#16a34a; color:white;" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> EXCEL</button>
                 <button class="btn" style="background:#64748b; color:white;" onclick="document.getElementById('stockModal').style.display='flex'"><i class="fas fa-plus"></i> CATALOGUE</button>
                 <button class="btn" style="background:var(--primary); color:white; grid-column: span 2;" onclick="document.getElementById('userModal').style.display='flex'"><i class="fas fa-users-gear"></i> GESTION COMPTES</button>
             </div>
-			
-</button>
         </div>
 
         <div id="op-panel" class="card hidden">
@@ -367,86 +351,6 @@
     });
 }
     
-	
-	
-	function exportToPDF() {
-    const closedInterventions = allData.filter(p => p.status === 'CLOSED');
-    
-    if (closedInterventions.length === 0) {
-        alert("Aucune intervention clôturée à exporter.");
-        return;
-    }
-
-    // نفس الديزاين القديم مع خانة Pièce
-    let content = `
-        <div style="padding: 20px; font-family: Arial, sans-serif;">
-            <h1 style="color: #002b5c; text-align: center;">Rapport d'Interventions Maintenance</h1>
-            <p style="text-align: right;">Date d'extraction: ${new Date().toLocaleString()}</p>
-            <table border="1" style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-                <thead style="background-color: #f1f5f9;">
-                    <tr>
-                        <th style="padding: 8px;">Date</th>
-                        <th style="padding: 8px;">Machine</th>
-                        <th style="padding: 8px;">Technicien</th>
-                        <th style="padding: 8px;">Pièce Rechange</th>
-                        <th style="padding: 8px;">Downtime</th>
-                        <th style="padding: 8px;">Problème/Solution</th>
-                    </tr>
-                </thead>
-                <tbody>
-    `;
-
-    closedInterventions.forEach(p => {
-        // تحديد النص اللي غايبان فخانة السطوك
-        const pieceText = (p.piece && p.piece !== 'N/A') ? `${p.piece} (x${p.qty})` : '-';
-
-        content += `
-            <tr>
-                <td style="padding: 8px; font-size: 12px;">${p.dateStr}</td>
-                <td style="padding: 8px; font-size: 12px;"><b>${p.mach}</b><br><small>${p.proj}</small></td>
-                <td style="padding: 8px; font-size: 12px;">${p.techId || 'N/A'}</td>
-                <td style="padding: 8px; font-size: 12px; text-align: center;">${pieceText}</td>
-                <td style="padding: 8px; font-size: 12px; text-align: center;">${p.duration} min</td>
-                <td style="padding: 8px; font-size: 12px;">
-                    <b>P:</b> ${p.problem || '-'}<br>
-                    <b>S:</b> ${p.solution || '-'}
-                </td>
-            </tr>
-        `;
-    });
-
-    content += `</tbody></table></div>`;
-
-    const opt = {
-        margin:       10,
-        filename:     'Rapport_GMAO_CVG.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
-    };
-
-    html2pdf().set(opt).from(content).save();
-}
-
-
-function toggleExportMenu() {
-    const menu = document.getElementById('exportMenu');
-    if (menu.classList.contains('hidden')) {
-        menu.classList.remove('hidden');
-    } else {
-        menu.classList.add('hidden');
-    }
-}
-
-// إضافة لإغلاق المنيو إذا كليكا المستخدم فبلاصة خرى
-window.onclick = function(event) {
-    if (!event.target.matches('.btn') && !event.target.closest('#exportMenu')) {
-        const menu = document.getElementById('exportMenu');
-        if (menu && !menu.classList.contains('hidden')) {
-            menu.classList.add('hidden');
-        }
-    }
-}
     </script>
 </body>
 </html>
