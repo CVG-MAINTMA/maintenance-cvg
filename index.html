@@ -16,28 +16,26 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
         :root { --primary: #002b5c; --accent: #00d4ff; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --bg: #f8fafc; --purple: #8b5cf6; }
-        
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg); padding: 10px; color: #1e293b; }
         
-        /* Animations */
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        @keyframes pulse-heart { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
         @keyframes stockBlink { 0% { background-color: #fee2e2; } 50% { background-color: transparent; } 100% { background-color: #fee2e2; } }
-
-        /* Style dyal l-interventions li khdamin */
-        .tag-progress { 
-            background: #fef3c7; 
-            color: #d97706; 
-            animation: blink 1s infinite; /* Klyontaj */
-            border: 1px solid #fcd34d;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
+        
+        .heart-blink { color: #ff4d4d; display: inline-block; animation: pulse-heart 0.8s infinite; margin-left: 3px; }
+        
+        header { 
+            background: var(--primary); color: white; padding: 15px 20px; border-radius: 15px; margin-bottom: 15px; 
+            box-shadow: 0 4px 12px rgba(0, 43, 92, 0.2);
         }
+        .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px; }
+        .header-info h2 { font-size: 1.4rem; margin: 0; }
+        .header-info small { color: var(--accent); font-weight: 800; text-transform: uppercase; font-size: 0.7rem; display: block; }
+        .logout-btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px; }
+        .slogan-container { width: 100%; display: flex; justify-content: center; align-items: center; padding-top: 5px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .slogan { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #ffffff; }
 
-        .low-stock-alert { animation: stockBlink 0.8s infinite; border: 1.5px solid #ef4444 !important; border-radius: 10px; }
-
-        header { background: var(--primary); color: white; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .card { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
         .grid-kpi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
         .kpi-card { background: white; padding: 12px; border-radius: 15px; border-left: 5px solid var(--accent); position: relative; }
@@ -51,17 +49,17 @@
         .btn-ghost { background: #f1f5f9; color: #64748b; margin-top: 8px; }
         
         input, select, textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 10px; outline: none; background: #fff; font-size: 0.9rem; }
-        
         .hidden { display: none !important; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(5px); }
-        
         .status-tag { font-size: 0.7rem; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; }
         .tag-open { background: #fee2e2; color: #ef4444; }
-
-        #reader { width: 100%; border-radius: 15px; overflow: hidden; background: #000; }
-        .user-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
+        .tag-progress { background: #fef3c7; color: #d97706; animation: blink 1s infinite; border: 1px solid #fcd34d; display: inline-flex; align-items: center; gap: 5px; }
+        .low-stock-alert { animation: stockBlink 1.5s infinite; border: 1.5px solid #ef4444 !important; }
         
-        #stock-list { max-height: 400px; overflow-y: auto; padding-right: 5px; }
+        .stock-table { width: 100%; border-collapse: collapse; }
+        .stock-table td { padding: 12px; border-bottom: 1px solid #eee; }
+        .user-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; background: #fff; border-radius: 8px; margin-bottom: 5px; }
+        .user-actions i { cursor: pointer; margin-left: 10px; padding: 5px; }
     </style>
 </head>
 <body onclick="enableAudio()">
@@ -69,16 +67,24 @@
     <div id="login-overlay" style="position:fixed; inset:0; background:var(--primary); z-index:9999; display:flex; justify-content:center; align-items:center;">
         <div class="card" style="width:340px; text-align:center;">
             <h2 style="margin-bottom:15px; color:var(--primary)">GMAO CVG</h2>
-            <input type="text" id="login-user" placeholder="Utilisateur / Matricule">
+            <input type="text" id="login-user" placeholder="Matricule">
             <input type="password" id="login-pass" placeholder="Mot de passe">
-            <button class="btn" style="background:var(--primary); color:white" onclick="handleLogin()">ACCÉDER</button>
+            <button class="btn btn-warning" style="background:var(--primary); color:white" onclick="handleLogin()">ACCÉDER</button>
         </div>
     </div>
 
     <div id="app-content" class="hidden">
         <header>
-            <div><small id="roleText" style="color:var(--accent); font-weight:800;"></small><h2>CVG Connect</h2></div>
-            <button onclick="location.reload()" style="background:none; border:none; color:white;"><i class="fas fa-power-off"></i></button>
+            <div class="header-top">
+                <div class="header-info">
+                    <small id="roleText"></small>
+                    <h2>CVG Connect</h2>
+                </div>
+                <button class="logout-btn" onclick="location.reload()"><i class="fas fa-power-off"></i></button>
+            </div>
+            <div class="slogan-container">
+                <div class="slogan">WE SERVE OUR COMMUNITY WITH <span class="heart-blink">❤️</span></div>
+            </div>
         </header>
 
         <div id="manager-panel" class="hidden">
@@ -88,9 +94,7 @@
                 <div class="kpi-card"><span>MTBF (H)</span><b id="m-mtbf">0</b></div>
                 <div class="kpi-card"><span>MTTR (Min)</span><b id="m-mttr">0</b></div>
             </div>
-            
             <div class="card" style="padding:10px;"><canvas id="downtimeChart" style="width:100%; max-height:200px;"></canvas></div>
-            
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button class="btn" style="background:#0ea5e9; color:white;" onclick="document.getElementById('viewStockModal').style.display='flex'"><i class="fas fa-boxes-stacked"></i> STOCK</button>
                 <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('archiveModal').style.display='flex'"><i class="fas fa-archive"></i> ARCHIVES</button>
@@ -101,7 +105,7 @@
         </div>
 
         <div id="op-panel" class="card hidden">
-            <button class="btn" style="background:var(--primary); color:white; margin-bottom:10px;" onclick="startScanner()"><i class="fas fa-qrcode"></i> SCANNER MACHINE</button>
+            <button class="btn btn-warning" style="background:var(--primary); color:white; margin-bottom:10px;" onclick="startScanner()"><i class="fas fa-qrcode"></i> SCANNER MACHINE</button>
             <div id="reader"></div>
             <select id="in-proj" onchange="updateMachineList()"><option value="SKODA A8">SKODA A8</option><option value="CRAFTER">CRAFTER</option><option value="G.CALIFORNIA">G.CALIFORNIA</option></select>
             <select id="in-mach"></select>
@@ -114,58 +118,29 @@
         </div>
     </div>
 
-    <div id="userModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-        <div class="card" style="width:100%; max-width:400px; max-height:90vh; overflow-y:auto;">
+    <div id="userModal" class="modal" onclick="if(event.target == this) { this.style.display='none'; resetUserForm(); }">
+        <div class="card" style="width:100%; max-width:400px; max-height: 90vh; display:flex; flex-direction:column;">
             <h3>Gestion Comptes</h3>
-            <div style="background:#f8fafc; padding:10px; border-radius:12px; margin-top:10px;">
-                <input type="hidden" id="edit-user-key">
-                <input type="text" id="new-user-name" placeholder="Matricule">
-                <input type="password" id="new-user-pass" placeholder="Password">
-                <select id="new-user-role">
-                    <option value="OPERATEUR">OPERATEUR</option>
-                    <option value="MAINTENANCE">MAINTENANCE</option>
-                    <option value="MANAGER">MANAGER</option>
-                </select>
-                <button id="btn-user-save" class="btn btn-success" onclick="saveUser()">ENREGISTRER</button>
-                <button id="btn-user-cancel" class="btn btn-ghost hidden" onclick="resetUserForm()">ANNULER</button>
-            </div>
-            <div id="users-list-container" style="margin-top:15px;"></div>
-            <button class="btn btn-ghost" onclick="document.getElementById('userModal').style.display='none'">FERMER</button>
+            <input type="hidden" id="edit-user-key">
+            <input type="text" id="new-user-name" placeholder="Matricule">
+            <input type="password" id="new-user-pass" placeholder="Password">
+            <select id="new-user-role"><option value="OPERATEUR">OPERATEUR</option><option value="MAINTENANCE">MAINTENANCE</option><option value="MANAGER">MANAGER</option></select>
+            <button class="btn btn-success" id="btn-user-action" onclick="saveUser()">ENREGISTRER</button>
+            <div id="users-list-container" style="margin-top:15px; overflow-y:auto; flex-grow:1;"></div>
         </div>
     </div>
 
-    <div id="viewStockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-        <div class="card" style="width:100%; max-width:450px;">
-            <h3 style="border-bottom:2px solid var(--accent); padding-bottom:5px;"><i class="fas fa-boxes-stacked"></i> État du Stock</h3>
-            <div id="stock-list"></div>
-            <button class="btn btn-ghost" onclick="document.getElementById('viewStockModal').style.display='none'">FERMER</button>
-        </div>
-    </div>
-
-    <div id="closeModal" class="modal">
-        <div class="card" style="width:100%; max-width:400px;">
-            <h3>Clôture d'intervention</h3>
-            <input type="hidden" id="modal-key">
-            <input type="text" id="modal-tech-id" placeholder="Matricule Tech">
-            <textarea id="modal-problem" placeholder="Problème"></textarea>
-            <textarea id="modal-solution" placeholder="Solution"></textarea>
-            <input list="spareparts" id="modal-piece" placeholder="Pièce">
-            <datalist id="spareparts"></datalist>
-            <input type="number" id="modal-qty" value="1">
-            <button class="btn btn-success" onclick="confirmClosing()">TERMINER</button>
-            <button class="btn btn-ghost" onclick="document.getElementById('closeModal').style.display='none'">ANNULER</button>
-        </div>
-    </div>
-
+    <div id="closeModal" class="modal"><div class="card" style="width:100%; max-width:400px;"><h3>Clôture d'intervention</h3><input type="hidden" id="modal-key"><input type="text" id="modal-tech-id" placeholder="Matricule Tech"><textarea id="modal-problem" placeholder="Problème"></textarea><textarea id="modal-solution" placeholder="Solution"></textarea><input list="spareparts" id="modal-piece" placeholder="Pièce (Optionnel)"><datalist id="spareparts"></datalist><input type="number" id="modal-qty" value="1"><button class="btn btn-success" onclick="confirmClosing()">TERMINER</button><button class="btn btn-ghost" onclick="document.getElementById('closeModal').style.display='none'">ANNULER</button></div></div>
+    <div id="viewStockModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:450px; max-height: 85vh; display: flex; flex-direction: column;"><h3>État du Stock</h3><input type="text" id="stockSearchInput" placeholder="🔍 Rechercher..." onkeyup="searchStock()"><div id="stock-list" style="overflow-y:auto; flex-grow: 1;"></div><button class="btn btn-ghost" onclick="document.getElementById('viewStockModal').style.display='none'">FERMER</button></div></div>
     <div id="archiveModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:600px;"><div id="archive-list" style="max-height:400px; overflow-y:auto;"></div></div></div>
-    <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:400px;"><h3>Ajouter Stock</h3><input type="text" id="new-p-name" placeholder="Nom"><input type="number" id="new-p-qty" placeholder="Quantité"><button class="btn btn-success" onclick="addNewStock()">VALIDER</button></div></div>
+    <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:400px;"><h3>Ajouter Catalogue</h3><input type="text" id="new-p-name" placeholder="Nom de la pièce"><input type="number" id="new-p-qty" placeholder="Quantité"><button class="btn btn-success" onclick="addNewStock()">VALIDER</button></div></div>
 
     <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
         const machineData = { "SKODA A8": ["80005631", "80007235", "80007236", "80007237", "80007238", "80007239", "80007240", "80007241", "80007242", "80007243", "80007244", "80007245", "80007246"], "CRAFTER": ["80003403", "80003857", "80006951", "80006953", "80007608", "80008117", "80008118", "80008119", "80008120", "80008121", "80008122", "80008125", "8000818431"], "G.CALIFORNIA": ["80006958"] };
         const firebaseConfig = { apiKey: "AIzaSyASQa5cLXFllnV6EmYp-ARZ9dndWSKha6c", authDomain: "cvgmaroc-gmao.firebaseapp.com", databaseURL: "https://cvgmaroc-gmao-default-rtdb.firebaseio.com", projectId: "cvgmaroc-gmao", storageBucket: "cvgmaroc-gmao.firebasestorage.app", messagingSenderId: "72908747564", appId: "1:72908747564:web:82f646ef5dd209d03b7289" };
-
+        
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         let currentUser = null, allData = [], myChart = null;
@@ -176,7 +151,7 @@
             database.ref('users/').once('value', snap => {
                 let found = false;
                 if(snap.val()) Object.values(snap.val()).forEach(usr => { if(usr.name.toLowerCase() === u && usr.pass === p) { found = true; startApp(usr.role); } });
-                if(!found) alert("Refusé");
+                if(!found) alert("Accès Refusé");
             });
         }
 
@@ -188,175 +163,96 @@
             listenFirebase(); listenStock(); listenUsers();
             if(role === "MANAGER" || role === "MAINTENANCE") document.getElementById('manager-panel').classList.remove('hidden');
             if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
+            setInterval(updateLiveTimers, 1000);
+        }
+
+        function listenFirebase() { database.ref('pannes/').on('value', snap => { allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : []; renderUI(); renderArchives(); updateStats(); if(currentUser !== "OPERATEUR") updateCharts(); }); }
+        
+        function renderUI() {
+            const container = document.getElementById('pannes-list'); container.innerHTML = "";
+            const actives = allData.filter(p => p.status !== 'CLOSED');
+            if(document.getElementById('m-charge')) document.getElementById('m-charge').innerText = actives.length;
+            actives.reverse().forEach(p => {
+                let isWaiting = p.status === 'OPEN';
+                let actionBtn = (currentUser === 'MAINTENANCE') ? (isWaiting ? `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">Reçu</button>` : `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">TERMINER</button>`) : "";
+                container.innerHTML += `<div class="card" style="border-left:5px solid ${isWaiting?'var(--danger)':'var(--warning)'}"><div style="display:flex; justify-content:space-between"><b>${p.mach}</b>${isWaiting?'<span class="status-tag tag-open">EN ARRÊT</span>':'<span class="status-tag tag-progress">RÉPARATION...</span>'}</div><small>${p.proj}</small><div style="margin:10px 0; padding:8px; background:#f1f5f9; border-radius:12px; text-align:center;"><b class="live-timer" data-start="${p.startTs}">00:00:00</b></div><div>${actionBtn}</div></div>`;
+            });
+            const sound = document.getElementById('alertSound');
+            if(actives.some(p => p.status === 'OPEN') && currentUser !== 'OPERATEUR') sound.play().catch(()=>{}); else { sound.pause(); sound.currentTime = 0; }
+        }
+
+        function takeCharge(key) { database.ref('pannes/'+key).update({ status: 'IN_PROGRESS', recuTime: new Date().toLocaleString() }); }
+        function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display='flex'; }
+        
+        function confirmClosing() {
+            const key = document.getElementById('modal-key').value, tech = document.getElementById('modal-tech-id').value, prob = document.getElementById('modal-problem').value, sol = document.getElementById('modal-solution').value, piece = document.getElementById('modal-piece').value.toUpperCase(), qty = parseInt(document.getElementById('modal-qty').value) || 0;
+            const item = allData.find(x => x.key === key), duration = Math.round((Date.now() - item.startTs) / 60000);
+            database.ref('pannes/'+key).update({ status: 'CLOSED', duration, techId: tech, problem: prob, solution: sol, piece, qty, doneTime: new Date().toLocaleString() }).then(() => {
+                if(piece) { const sRef = database.ref('stock/'+piece); sRef.once('value', s => { if(s.exists()) sRef.update({qty: Math.max(0, s.val().qty - qty)}); }); }
+                document.getElementById('closeModal').style.display='none';
+            });
+        }
+
+        function handlePanneSignal() { const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value; database.ref('pannes/').push({proj, mach, status:'OPEN', startTs:Date.now(), dateStr:new Date().toLocaleString()}); }
+        function updateMachineList() { const p = document.getElementById('in-proj').value, s = document.getElementById('in-mach'); s.innerHTML = ""; (machineData[p] || []).forEach(m => s.innerHTML += `<option value="${m}">${m}</option>`); }
+        function updateLiveTimers() { document.querySelectorAll('.live-timer').forEach(el => { const start = parseInt(el.getAttribute('data-start')), diff = Math.floor((Date.now() - start) / 1000), h = Math.floor(diff/3600), m = Math.floor((diff%3600)/60), s = diff%60; el.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }); }
+        function updateStats() { const closed = allData.filter(p => p.status === 'CLOSED'); let total = 0; closed.forEach(p => total += p.duration || 0); document.getElementById('m-count').innerText = closed.length; document.getElementById('m-mttr').innerText = closed.length > 0 ? Math.round(total/closed.length) : 0; }
+        function updateCharts() { const ctx = document.getElementById('downtimeChart').getContext('2d'), dataMap = {}; allData.filter(p => p.status === 'CLOSED').forEach(p => { const label = p.mach; dataMap[label] = (dataMap[label] || 0) + (p.duration || 0); }); if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type:'bar', data: { labels: Object.keys(dataMap), datasets:[{label:'Min', data:Object.values(dataMap), backgroundColor:'#00d4ff'}] }, options:{responsive:true, plugins:{legend:{display:false}}}}); }
+        
+        function listenStock() { 
+            database.ref('stock/').on('value', snap => { 
+                const list = document.getElementById('stock-list'); let html = '<table class="stock-table"><tbody>'; 
+                if(snap.val()) { Object.entries(snap.val()).forEach(([name, data]) => { const isLow = data.qty <= 4; html += `<tr class="${isLow?'low-stock-alert':''}"><td>${isLow?'⚠️ ':''}${name}</td><td style="text-align:right;"><b>${data.qty}</b></td></tr>`; }); }
+                list.innerHTML = html + '</tbody></table>'; 
+            }); 
+        }
+
+        // --- EXCEL CVG REPORT WITH MONTH FOR DASHBOARD ---
+        function exportToExcel() {
+            const closedData = allData.filter(p => p.status === 'CLOSED');
+            const formattedData = closedData.map(p => {
+                const dateObj = new Date(p.startTs);
+                return {
+                    "DATE": p.dateStr || '',
+                    "MOIS": dateObj.toLocaleString('fr-FR', { month: 'long' }).toUpperCase(),
+                    "PROJECT": p.proj || '',
+                    "MACHINE": p.mach || '',
+                    "RECU": p.recuTime || '',
+                    "DONE": p.doneTime || '',
+                    "TECH ID": p.techId || '',
+                    "PROBLEME": p.problem || '',
+                    "SOLUTION": p.solution || '',
+                    "DOWNTIME (Min)": p.duration || 0
+                };
+            });
+            const ws = XLSX.utils.json_to_sheet(formattedData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "DATA_GMAO");
+            XLSX.writeFile(wb, "GMAO_CVG_REPORT_ANALYTICS.xlsx");
         }
 
         function listenUsers() {
             database.ref('users/').on('value', snap => {
-                const container = document.getElementById('users-list-container'); container.innerHTML = "";
-                if(snap.val()) Object.entries(snap.val()).forEach(([key, usr]) => {
-                    container.innerHTML += `<div class="user-item"><div><b>${usr.name}</b> (${usr.role})</div>
-                    <div><button onclick="prepareEditUser('${key}','${usr.name}','${usr.pass}','${usr.role}')" style="color:var(--warning); border:none; background:none; margin-right:8px;"><i class="fas fa-edit"></i></button>
-                    <button onclick="deleteUser('${key}')" style="color:var(--danger); border:none; background:none;"><i class="fas fa-trash"></i></button></div></div>`;
-                });
+                const c = document.getElementById('users-list-container'); c.innerHTML = "";
+                if(snap.val()) Object.entries(snap.val()).forEach(([k, u]) => { c.innerHTML += `<div class="user-item"><span><b>${u.name}</b> (${u.role})</span><div class="user-actions"><i class="fas fa-edit" style="color:var(--primary)" onclick="editUser('${k}', '${u.name}', '${u.pass}', '${u.role}')"></i><i class="fas fa-trash" style="color:red" onclick="database.ref('users/${k}').remove()"></i></div></div>`; });
             });
         }
-
+        function editUser(key, name, pass, role) {
+            document.getElementById('edit-user-key').value = key; document.getElementById('new-user-name').value = name; document.getElementById('new-user-pass').value = pass; document.getElementById('new-user-role').value = role;
+            document.getElementById('btn-user-action').innerText = "MODIFIER"; document.getElementById('btn-user-action').style.background = "var(--primary)";
+        }
         function saveUser() {
-            const key = document.getElementById('edit-user-key').value, name = document.getElementById('new-user-name').value.trim(), pass = document.getElementById('new-user-pass').value.trim(), role = document.getElementById('new-user-role').value;
-            if(!name || !pass) return alert("Remplir tout");
-            if(key) database.ref('users/'+key).update({name, pass, role}).then(()=>resetUserForm());
-            else database.ref('users/').push({name, pass, role}).then(()=>resetUserForm());
+            const key = document.getElementById('edit-user-key').value, name = document.getElementById('new-user-name').value, pass = document.getElementById('new-user-pass').value, role = document.getElementById('new-user-role').value;
+            if(!name || !pass) return alert("Remplir tous les champs");
+            if(key) database.ref('users/' + key).update({ name, pass, role }).then(() => resetUserForm());
+            else database.ref('users/').push({ name, pass, role }).then(() => resetUserForm());
         }
-
-        function prepareEditUser(key, name, pass, role) {
-            document.getElementById('edit-user-key').value = key; document.getElementById('new-user-name').value = name;
-            document.getElementById('new-user-pass').value = pass; document.getElementById('new-user-role').value = role;
-            document.getElementById('btn-user-save').innerText = "MODIFIER"; document.getElementById('btn-user-cancel').classList.remove('hidden');
-        }
-
-        function resetUserForm() {
-            document.getElementById('edit-user-key').value = ""; document.getElementById('new-user-name').value = ""; document.getElementById('new-user-pass').value = "";
-            document.getElementById('btn-user-save').innerText = "ENREGISTRER"; document.getElementById('btn-user-cancel').classList.add('hidden');
-        }
-
-        function deleteUser(key) { if(confirm("Supprimer?")) database.ref('users/'+key).remove(); }
-
-        function listenStock() {
-            database.ref('stock/').on('value', snap => {
-                const list = document.getElementById('stock-list'); if(!list) return;
-                list.innerHTML = ""; const dl = document.getElementById('spareparts'); if(dl) dl.innerHTML = "";
-                if(snap.val()) Object.entries(snap.val()).forEach(([name, data]) => {
-                    const isLow = data.qty <= 4 ? 'low-stock-alert' : '';
-                    list.innerHTML += `<div class="${isLow}" style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;"><span>${data.qty<=4?'⚠️ ':''}${name}</span><b>${data.qty}</b></div>`;
-                    if(dl) dl.innerHTML += `<option value="${name}">`;
-                });
-            });
-        }
-
-        function listenFirebase() {
-            database.ref('pannes/').on('value', snap => {
-                allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
-                renderUI(); renderArchives(); updateStats(); if(currentUser !== "OPERATEUR") updateCharts();
-            });
-        }
-
-        function renderUI() {
-    const container = document.getElementById('pannes-list'); 
-    container.innerHTML = "";
-    
-    // 1. تحديد الأعطال النشطة
-    const actives = allData.filter(p => p.status === 'OPEN' || p.status === 'IN_PROGRESS');
-    
-    // تحديث رقم الشارج ف الواجهة
-    const mCharge = document.getElementById('m-charge');
-    if(mCharge) mCharge.innerText = actives.length;
-
-    // 2. الدوران على كل عطل (Loop) - هاد الجزء هو اللي كان ناقصك
-    actives.reverse().forEach(p => {
-        // تعريف المتغيرات اللي غانخدمو بيهم وسط الـ HTML
-        let statusHtml = p.status === 'OPEN' ? 
-            `<span class="status-tag tag-open">EN ARRÊT</span>` : 
-            `<span class="status-tag tag-progress"><i class="fas fa-tools"></i> RÉPARATION...</span>`;
-        
-        let actionBtn = "";
-        if(currentUser === 'MAINTENANCE') {
-            actionBtn = p.status === 'OPEN' ? 
-                `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">Reçu</button>` : 
-                `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">TERMINER</button>`;
-        }
-
-        // وضع الكود داخل الـ container
-        container.innerHTML += `
-            <div class="card" style="border-left:5px solid ${p.status === 'OPEN' ? 'var(--danger)' : 'var(--warning)'}">
-                <div style="display:flex; justify-content:space-between">
-                    <b>${p.mach}</b>
-                    ${statusHtml}
-                </div>
-                <small>${p.proj}</small><br>
-                <small style="color: #64748b; font-weight: 800;">
-                    <i class="far fa-clock"></i> Signale à: ${p.dateStr ? p.dateStr.split(' ')[1] : '--:--'}
-                </small>
-                <div style="margin-top:10px;">${actionBtn}</div>
-            </div>`;
-    }); // هنا كيتسد الـ forEach
-   // 3. التحكم ف الصوت
-    const alertSound = document.getElementById('alertSound');
-    if(alertSound) {
-        if(actives.some(p => p.status === 'OPEN') && currentUser !== 'OPERATEUR') {
-            alertSound.play().catch(()=>{});
-        } else {
-            alertSound.pause();
-        }
-    }
-}
-        function takeCharge(key) { database.ref('pannes/'+key).update({status:'IN_PROGRESS'}); }
-        function openRepriseModal(key) { document.getElementById('modal-key').value = key; document.getElementById('closeModal').style.display='flex'; }
-        function confirmClosing() {
-            const key = document.getElementById('modal-key').value, tech = document.getElementById('modal-tech-id').value, prob = document.getElementById('modal-problem').value, sol = document.getElementById('modal-solution').value, piece = document.getElementById('modal-piece').value.toUpperCase(), qty = parseInt(document.getElementById('modal-qty').value) || 0;
-            const item = allData.find(x => x.key === key), duration = Math.round((Date.now() - item.startTs) / 60000);
-            database.ref('pannes/'+key).update({status:'CLOSED', duration, techId:tech, problem:prob, solution:sol, piece, qty}).then(() => {
-                if(piece && piece !== 'N/A') { const sRef = database.ref('stock/'+piece); sRef.once('value', s => { if(s.exists()) sRef.set({qty: Math.max(0, s.val().qty - qty)}); }); }
-                document.getElementById('closeModal').style.display='none';
-            });
-        }
-        function handlePanneSignal() { const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value; database.ref('pannes/').push({proj, mach, status:'OPEN', startTs:Date.now(), dateStr:new Date().toLocaleString()}); }
-        function updateMachineList() { const p = document.getElementById('in-proj').value, s = document.getElementById('in-mach'); s.innerHTML = ""; (machineData[p] || []).forEach(m => s.innerHTML += `<option value="${m}">${m}</option>`); }
-        function addNewStock() { const n = document.getElementById('new-p-name').value.toUpperCase(), q = parseInt(document.getElementById('new-p-qty').value); if(n && !isNaN(q)) database.ref('stock/'+n).set({qty:q}).then(()=>document.getElementById('stockModal').style.display='none'); }
-        function updateStats() { const closed = allData.filter(p => p.status === 'CLOSED'); let total = 0; closed.forEach(p => total += p.duration || 0); document.getElementById('m-count').innerText = closed.length; document.getElementById('m-mttr').innerText = closed.length > 0 ? Math.round(total/closed.length) : 0; document.getElementById('m-mtbf').innerText = closed.length > 0 ? Math.round(720/closed.length) : 720; }
-        function updateCharts() { const ctx = document.getElementById('downtimeChart').getContext('2d'); const dataMap = {}; allData.filter(p => p.status === 'CLOSED').forEach(p => { const label = `${p.proj}-${p.mach}`; dataMap[label] = (dataMap[label] || 0) + (p.duration || 0); }); if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(dataMap), datasets: [{ label: 'Min', data: Object.values(dataMap), backgroundColor: '#00d4ff' }] }, options: { responsive: true, plugins: { legend: { display: false } } } }); }
-        function exportToExcel() { const closed = allData.filter(p => p.status === 'CLOSED'); const wsData = XLSX.utils.json_to_sheet(closed.map(p => ({ 'Date': p.dateStr, 'Tech': p.techId, 'Machine': p.mach, 'Downtime(m)': p.duration, 'Problème': p.problem, 'Solution': p.solution }))); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, wsData, "Logs"); XLSX.writeFile(wb, "GMAO_Report.xlsx"); }
-        function renderArchives() { const list = document.getElementById('archive-list'); if(!list) return; list.innerHTML = "<h3>Archives</h3>"; allData.filter(p => p.status === 'CLOSED').reverse().forEach(p => { list.innerHTML += `<div class="card" style="border-left:5px solid var(--success); font-size:0.8rem;"><b>${p.mach}</b> - ${p.duration}m<br><small>Tech: ${p.techId}</small></div>`; }); }
+        function resetUserForm() { document.getElementById('edit-user-key').value = ""; document.getElementById('new-user-name').value = ""; document.getElementById('new-user-pass').value = ""; document.getElementById('new-user-role').value = "OPERATEUR"; document.getElementById('btn-user-action').innerText = "ENREGISTRER"; document.getElementById('btn-user-action').style.background = "var(--success)"; }
+        function searchStock() { const f = document.getElementById('stockSearchInput').value.toUpperCase(), rows = document.querySelector(".stock-table tbody").rows; for(let r of rows) r.style.display = r.cells[0].innerText.toUpperCase().includes(f) ? "" : "none"; }
+        function addNewStock() { const n = document.getElementById('new-p-name').value.toUpperCase(), q = parseInt(document.getElementById('new-p-qty').value); if(n && !isNaN(q)) database.ref('stock/'+n).set({qty:q}); }
+        function renderArchives() { const l = document.getElementById('archive-list'); l.innerHTML = "<h3>Historique</h3>"; allData.filter(p => p.status === 'CLOSED').reverse().forEach(p => { l.innerHTML += `<div class="card" style="font-size:0.8rem;"><b>${p.mach}</b> - ${p.duration} min<br><small>${p.dateStr}</small></div>`; }); }
+        function startScanner() { const s = new Html5Qrcode("reader"); s.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (t) => { for(let [p, m] of Object.entries(machineData)) { if(m.includes(t.trim())) { document.getElementById('in-proj').value = p; updateMachineList(); document.getElementById('in-mach').value = t.trim(); s.stop(); break; } } }); }
         function enableAudio() { window.audioAllowed = true; }
-
-
-        function startScanner() {
-    const html5QrCode = new Html5Qrcode("reader");
-    
-    html5QrCode.start(
-        { facingMode: "environment" }, 
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
-            const scannedMachine = decodedText.trim();
-            let found = false;
-
-            // 1. كنقلبو ف كاع لبيانات ديال الماكينات
-            for (const [project, machines] of Object.entries(machineData)) {
-                if (machines.includes(scannedMachine)) {
-                    // 2. إذا لقيناها، كنختارو البروجي هو الأول
-                    document.getElementById('in-proj').value = project;
-                    
-                    // 3. كنعمروا لستة ديال الماكينات ديال هاد البروجي
-                    updateMachineList();
-                    
-                    // 4. كنختاروا الماكينة اللي تسكانات
-                    document.getElementById('in-mach').value = scannedMachine;
-                    
-                    found = true;
-                    break;
-                }
-            }
-
-            if(found) {
-                html5QrCode.stop(); // كنوقفو الكاميرا ملي كنلقاو الماكينة
-                // alert("✅ Machine détectée: " + scannedMachine);
-                // تفعيل هاد السطر إذا بغيتي يصيفط Signal Arrêt أوتوماتيكياً
-                // handlePanneSignal(); 
-            } else {
-                alert("❌ Code QR invalide ou machine non répertoriée");
-            }
-        }
-    ).catch(err => {
-        console.error("Erreur caméra:", err);
-        alert("Impossible d'accéder à la caméra");
-    });
-}
-    
     </script>
 </body>
 </html>
-
-
-
-
-
-
