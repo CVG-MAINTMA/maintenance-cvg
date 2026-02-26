@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CVG Connect | GMAO</title>
+    <title>CVG Connect | CMMS</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -14,40 +14,32 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
+        /* [Original styles maintained for UI consistency] */
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
         :root { --primary: #002b5c; --accent: #00d4ff; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --bg: #f8fafc; --purple: #8b5cf6; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg); padding: 10px; color: #1e293b; }
-        
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         @keyframes pulse-heart { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
         @keyframes stockBlink { 0% { background-color: #fee2e2; } 50% { background-color: transparent; } 100% { background-color: #fee2e2; } }
-        
         .heart-blink { color: #ff4d4d; display: inline-block; animation: pulse-heart 0.8s infinite; margin-left: 3px; }
-        
-        header { 
-            background: var(--primary); color: white; padding: 15px 20px; border-radius: 15px; margin-bottom: 15px; 
-            box-shadow: 0 4px 12px rgba(0, 43, 92, 0.2);
-        }
+        header { background: var(--primary); color: white; padding: 15px 20px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0, 43, 92, 0.2); }
         .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px; }
         .header-info h2 { font-size: 1.4rem; margin: 0; }
         .header-info small { color: var(--accent); font-weight: 800; text-transform: uppercase; font-size: 0.7rem; display: block; }
         .logout-btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px; }
         .slogan-container { width: 100%; display: flex; justify-content: center; align-items: center; padding-top: 5px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
         .slogan { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #ffffff; }
-
         .card { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
         .grid-kpi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
         .kpi-card { background: white; padding: 12px; border-radius: 15px; border-left: 5px solid var(--accent); position: relative; }
         .kpi-card span { display: block; font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
         .kpi-card b { font-size: 1.1rem; color: var(--primary); }
-        
         .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
         .btn-stop { background: var(--danger); color: white; }
         .btn-success { background: var(--success); color: white; }
         .btn-warning { background: var(--warning); color: white; }
         .btn-ghost { background: #f1f5f9; color: #64748b; margin-top: 8px; }
-        
         input, select, textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; margin-bottom: 10px; outline: none; background: #fff; font-size: 0.9rem; }
         .hidden { display: none !important; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; backdrop-filter: blur(5px); }
@@ -55,114 +47,114 @@
         .tag-open { background: #fee2e2; color: #ef4444; }
         .tag-progress { background: #fef3c7; color: #d97706; animation: blink 1s infinite; border: 1px solid #fcd34d; display: inline-flex; align-items: center; gap: 5px; }
         .low-stock-alert { animation: stockBlink 1.5s infinite; border: 1.5px solid #ef4444 !important; }
-        
         .stock-table { width: 100%; border-collapse: collapse; }
         .stock-table td { padding: 12px; border-bottom: 1px solid #eee; }
         .user-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; background: #fff; border-radius: 8px; margin-bottom: 5px; }
         .user-actions i { cursor: pointer; margin-left: 10px; padding: 5px; }
-		.archive-item {
-    border-left: 4px solid var(--primary);
-    padding: 12px;
-    margin-bottom: 12px;
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    position: relative;
-}
-.archive-item b { color: var(--primary); font-size: 1rem; display: block; margin-bottom: 4px; }
-.archive-item .meta { font-size: 0.75rem; color: #64748b; font-weight: 600; display: flex; justify-content: space-between; margin-top: 8px; border-top: 1px solid #f1f5f9; padding-top: 5px; }
-.archive-item .badge-proj { background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; }
-.archive-item .duration-tag { color: var(--success); font-weight: 800; }
-    /* الخلفية الكاملة للشاشة */
-#login-overlay {
-    position: fixed;
-    inset: 0;
-    background: linear-gradient(135deg, #001a3d 0%, #002b5c 100%); /* تدرج أزرق غامق */
-    z-index: 9999;
+        .archive-item { border-left: 4px solid var(--primary); padding: 12px; margin-bottom: 12px; background: #ffffff; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
+        .archive-item b { color: var(--primary); font-size: 1rem; display: block; margin-bottom: 4px; }
+        .archive-item .meta { font-size: 0.75rem; color: #64748b; font-weight: 600; display: flex; justify-content: space-between; margin-top: 8px; border-top: 1px solid #f1f5f9; padding-top: 5px; }
+        .archive-item .badge-proj { background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; }
+        .archive-item .duration-tag { color: var(--success); font-weight: 800; }
+        #login-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, #001a3d 0%, #002b5c 100%); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
+        #login-overlay .card { width: 360px; padding: 40px 30px; background: rgba(255, 255, 255, 0.95); border-radius: 28px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); text-align: center; border: 1px solid rgba(255, 255, 255, 0.3); }
+        #login-overlay h2 { color: #002b5c; font-size: 1.8rem; font-weight: 800; margin-bottom: 30px; letter-spacing: -1px; }
+        #login-overlay input { width: 100%; padding: 15px 20px; margin-bottom: 15px; border: 2px solid #e2e8f0; border-radius: 14px; background: #f8fafc; font-size: 1rem; transition: all 0.3s ease; }
+        #login-overlay input:focus { border-color: #00d4ff; background: #ffffff; outline: none; box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.15); }
+        #login-overlay .btn-warning { width: 100%; padding: 16px; background: #002b5c; color: white; border: none; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: transform 0.2s, background 0.3s; margin-top: 10px; }
+    
+	.logo-container {
     display: flex;
-    justify-content: center;
     align-items: center;
-    backdrop-filter: blur(10px);
-}
-
-/* الكارط ديال الدخول */
-#login-overlay .card {
-    width: 360px;
-    padding: 40px 30px;
-    background: rgba(255, 255, 255, 0.95); /* أبيض شفاف شوية */
-    border-radius: 28px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-/* العنوان (GMAO CVG) */
-#login-overlay h2 {
-    color: #002b5c;
-    font-size: 1.8rem;
+    gap: 10px;
+    font-size: 1.6rem;
     font-weight: 800;
-    margin-bottom: 30px;
-    letter-spacing: -1px;
 }
 
-/* الخانات (Inputs) */
-#login-overlay input {
-    width: 100%;
-    padding: 15px 20px;
-    margin-bottom: 15px;
-    border: 2px solid #e2e8f0;
-    border-radius: 14px;
-    background: #f8fafc;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-
-#login-overlay input:focus {
-    border-color: #00d4ff;
-    background: #ffffff;
-    outline: none;
-    box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.15);
-}
-
-/* زر الدخول (ACCÉDER) */
-#login-overlay .btn-warning {
-    width: 100%;
-    padding: 16px;
-    background: #002b5c;
+.brand {
     color: white;
-    border: none;
-    border-radius: 14px;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.2s, background 0.3s;
-    margin-top: 10px;
 }
 
-#login-overlay .btn-warning:hover {
-    background: #003d82;
-    transform: translateY(-2px);
+.connect {
+    color: var(--accent);
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
 }
 
-#login-overlay .btn-warning:active {
-    transform: translateY(0);
+/* الخيط اللي كيربط بيناتهم */
+.connection-line {
+    position: relative;
+    width: 30px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+/* السينيال اللي كيتحرك */
+.signal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 8px;
+    height: 100%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    border-radius: 2px;
+    animation: moveSignal 1.5s infinite linear;
+}
+
+@keyframes moveSignal {
+    0% { left: -10%; opacity: 0; }
+    50% { opacity: 1; }
+    100% { left: 110%; opacity: 0; }
+}
+/* Animation bach l-bouton y-klyonti */
+@keyframes blink-green { 0% { opacity: 1; color: #10b981; } 50% { opacity: 0.3; } 100% { opacity: 1; color: #10b981; } }
+@keyframes blink-red { 0% { opacity: 1; color: #ef4444; } 50% { opacity: 0.3; } 100% { opacity: 1; color: #ef4444; } }
+
+.online-status { animation: blink-green 1.5s infinite; color: #10b981 !important; }
+.offline-status { animation: blink-red 1s infinite; color: #ef4444 !important; }
+	
+	
+	
+	                               /* Animation dyal l-Blinking dyal Power Button */
+@keyframes blink-green { 0% { opacity: 1; color: #10b981; } 50% { opacity: 0.3; } 100% { opacity: 1; color: #10b981; } }
+@keyframes blink-red { 0% { opacity: 1; color: #ef4444; } 50% { opacity: 0.3; } 100% { opacity: 1; color: #ef4444; } }
+
+.online-status { animation: blink-green 1.5s infinite; color: #10b981 !important; }
+.offline-status { animation: blink-red 1s infinite; color: #ef4444 !important; }
+
+/* Banner dyal Offline Alert */
+#offline-banner {
+    display: none;
+    background: var(--danger);
+    color: white;
+    text-align: center;
+    padding: 5px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10001;
 }
 	</style>
 </head>
+
 <body onclick="enableAudio()">
 
    <div id="login-overlay">
     <div class="card">
         <h2 style="margin-bottom:15px; color:var(--primary)">
-    CVG-<span style="color:var(--accent)">Innovation</span>
-</h2>
+            CVG-<span style="color:var(--accent)">Innovation</span>
+        </h2>
         <div style="position:relative;">
-            <input type="text" id="login-user" placeholder="Matricule">
+            <input type="text" id="login-user" placeholder="Staff ID / Matricule">
         </div>
         <div style="position:relative;">
-            <input type="password" id="login-pass" placeholder="Mot de passe">
+            <input type="password" id="login-pass" placeholder="Password">
         </div>
-        <button class="btn btn-warning" onclick="handleLogin()">ACCÉDER</button>
+        <button class="btn btn-warning" onclick="handleLogin()">ACCESS SYSTEM</button>
         <p style="margin-top: 20px; font-size: 0.75rem; color: #64748b; font-weight: 600;">CVG CONNECT SYSTEM v2.0</p>
     </div>
 </div>
@@ -172,101 +164,134 @@
             <div class="header-top">
                 <div class="header-info">
                     <small id="roleText"></small>
-                    <h2>CVG Connect</h2>
+                    <h2 class="logo-container">
+    <span class="brand">CVG</span>
+    <div class="connection-line">
+        <div class="signal"></div>
+    </div>
+    <span class="connect">Connect</span>
+</h2>
                 </div>
-                <button class="logout-btn" onclick="location.reload()"><i class="fas fa-power-off"></i></button>
+    <div id="offline-banner">⚠️ NO INTERNET CONNECTION - DATA NOT SYNCED</div>
+
+<button class="logout-btn" id="connection-btn" onclick="location.reload()">
+    <i class="fas fa-power-off"></i>
+</button>
             </div>
             <div class="slogan-container">
-                <div class="slogan">Commercial Vehicle Group</div>
+                <div class="slogan">Commercial vehicle group </div>
             </div>
         </header>
 
         <div id="manager-panel" class="hidden">
             <div class="grid-kpi">
-                <div class="kpi-card"><span>Interventions</span><b id="m-count">0</b></div>
-                <div class="kpi-card"><span>Charge Actuelle</span><b id="m-charge">0</b></div>
-                <div class="kpi-card"><span>MTBF (H)</span><b id="m-mtbf">0</b></div>
-                <div class="kpi-card"><span>MTTR (Min)</span><b id="m-mttr">0</b></div>
+                <div class="kpi-card"><span>Total Interventions</span><b id="m-count">0</b></div>
+                <div class="kpi-card"><span>Active Workload</span><b id="m-charge">0</b></div>
+                <div class="kpi-card"><span>MTBF (Hours)</span><b id="m-mtbf">0</b></div>
+                <div class="kpi-card"><span>MTTR (Minutes)</span><b id="m-mttr">0</b></div>
             </div>
             <div class="card" style="padding:10px;"><canvas id="downtimeChart" style="width:100%; max-height:200px;"></canvas></div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button class="btn" style="background:#0ea5e9; color:white;" onclick="document.getElementById('viewStockModal').style.display='flex'"><i class="fas fa-boxes-stacked"></i> STOCK</button>
                 <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('archiveModal').style.display='flex'"><i class="fas fa-archive"></i> ARCHIVES</button>
-                <button class="btn" style="background:#16a34a; color:white;" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> EXCEL</button>
-                <button class="btn" style="background:#64748b; color:white;" onclick="document.getElementById('stockModal').style.display='flex'"><i class="fas fa-plus"></i> CATALOGUE</button>
-                <button class="btn" style="background:var(--primary); color:white; grid-column: span 2;" onclick="document.getElementById('userModal').style.display='flex'"><i class="fas fa-users-gear"></i> GESTION COMPTES</button>
+                <button class="btn" style="background:#16a34a; color:white;" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> EXCEL REPORT</button>
+                <button class="btn" style="background:#64748b; color:white;" onclick="document.getElementById('stockModal').style.display='flex'"><i class="fas fa-plus"></i> ADD TO CATALOG</button>
+                <button class="btn" style="background:var(--primary); color:white; grid-column: span 2;" onclick="document.getElementById('userModal').style.display='flex'"><i class="fas fa-users-gear"></i> USER MANAGEMENT</button>
             </div>
         </div>
 
         <div id="op-panel" class="card hidden">
-            <button class="btn btn-warning" style="background:var(--primary); color:white; margin-bottom:10px;" onclick="startScanner()"><i class="fas fa-qrcode"></i> SCANNER MACHINE</button>
+            <button class="btn btn-warning" style="background:var(--primary); color:white; margin-bottom:10px;" onclick="startScanner()"><i class="fas fa-qrcode"></i> SCAN MACHINE QR</button>
             <div id="reader"></div>
-            <select id="in-proj" onchange="updateMachineList()"><option value="SKODA A8">SKODA A8</option><option value="CRAFTER">CRAFTER</option><option value="G.CALIFORNIA">G.CALIFORNIA</option></select>
+            <select id="in-proj" onchange="updateMachineList()">
+                <option value="SKODA A8">SKODA A8</option>
+                <option value="CRAFTER">CRAFTER</option>
+                <option value="G.CALIFORNIA">G.CALIFORNIA</option>
+            </select>
             <select id="in-mach"></select>
-            <button class="btn btn-stop" onclick="handlePanneSignal()">SIGNALER ARRÊT</button>
+            <button class="btn btn-stop" onclick="handlePanneSignal()">SIGNAL DOWNTIME</button>
         </div>
 
         <div class="card">
-            <h4><i class="fas fa-bell"></i> ALERTES ACTIVES</h4>
+            <h4><i class="fas fa-bell"></i> ACTIVE ALERTS</h4>
             <div id="pannes-list" style="margin-top:10px;"></div>
         </div>
     </div>
 
     <div id="userModal" class="modal" onclick="if(event.target == this) { this.style.display='none'; resetUserForm(); }">
         <div class="card" style="width:100%; max-width:400px; max-height: 90vh; display:flex; flex-direction:column;">
-            <h3>Gestion Comptes</h3>
+            <h3>Manage Accounts</h3>
             <input type="hidden" id="edit-user-key">
-            <input type="text" id="new-user-name" placeholder="Matricule">
+            <input type="text" id="new-user-name" placeholder="Staff ID / Matricule">
             <input type="password" id="new-user-pass" placeholder="Password">
-            <select id="new-user-role"><option value="OPERATEUR">OPERATEUR</option><option value="MAINTENANCE">MAINTENANCE</option><option value="MANAGER">MANAGER</option></select>
-            <button class="btn btn-success" id="btn-user-action" onclick="saveUser()">ENREGISTRER</button>
+            <select id="new-user-role">
+                <option value="OPERATEUR">OPERATOR</option>
+                <option value="MAINTENANCE">MAINTENANCE</option>
+                <option value="MANAGER">MANAGER</option>
+            </select>
+            <button class="btn btn-success" id="btn-user-action" onclick="saveUser()">SAVE USER</button>
             <div id="users-list-container" style="margin-top:15px; overflow-y:auto; flex-grow:1;"></div>
         </div>
     </div>
 
-    <div id="closeModal" class="modal"><div class="card" style="width:100%; max-width:400px;"><h3>Clôture d'intervention</h3><input type="hidden" id="modal-key"><input type="text" id="modal-tech-id" placeholder="Matricule Tech"><textarea id="modal-problem" placeholder="Problème"></textarea><textarea id="modal-solution" placeholder="Solution"></textarea><input list="spareparts" id="modal-piece" placeholder="Pièce (Optionnel)"><datalist id="spareparts"></datalist><input type="number" id="modal-qty" value="1"><button class="btn btn-success" onclick="confirmClosing()">TERMINER</button><button class="btn btn-ghost" onclick="document.getElementById('closeModal').style.display='none'">ANNULER</button></div></div>
-    <div id="viewStockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-    <div class="card" style="width:100%; max-width:450px; max-height: 85vh; display: flex; flex-direction: column;">
-        <h3>État du Stock</h3>
-        
-        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-            <button class="btn" style="background:var(--primary); color:white; font-size:0.7rem; padding:8px;" onclick="filterStockDisplay('ALL')">TOUT</button>
-            <button class="btn" style="background:#64748b; color:white; font-size:0.7rem; padding:8px;" onclick="filterStockDisplay('PIECE')">PIÈCES</button>
-            <button class="btn" style="background:#8b5cf6; color:white; font-size:0.7rem; padding:8px;" onclick="filterStockDisplay('TOOL')">TOOLS</button>
+    <div id="closeModal" class="modal">
+        <div class="card" style="width:100%; max-width:400px;">
+            <h3>Close Intervention</h3>
+            <input type="hidden" id="modal-key">
+            <input type="text" id="modal-tech-id" placeholder="Technician ID">
+            <textarea id="modal-problem" placeholder="Problem Description"></textarea>
+            <textarea id="modal-solution" placeholder="Action Taken / Solution"></textarea>
+            <input list="spareparts" id="modal-piece" placeholder="Spare Part (Optional)">
+            <datalist id="spareparts"></datalist>
+            <input type="number" id="modal-qty" value="1" placeholder="Quantity">
+            <button class="btn btn-success" onclick="confirmClosing()">COMPLETE</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('closeModal').style.display='none'">CANCEL</button>
         </div>
-
-        <input type="text" id="stockSearchInput" placeholder="🔍 Rechercher..." onkeyup="searchStock()">
-        
-        <div id="stock-list" style="overflow-y:auto; flex-grow: 1;"></div>
-        
-        <button class="btn btn-ghost" onclick="document.getElementById('viewStockModal').style.display='none'">FERMER</button>
     </div>
-</div>
-    <div id="archiveModal" class="modal" onclick="if(event.target == this) this.style.display='none'"><div class="card" style="width:100%; max-width:600px;"><div id="archive-list" style="max-height:400px; overflow-y:auto;"></div></div></div>
-   <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
-    <div class="card" style="width:100%; max-width:400px;">
-        <h3>Ajouter Catalogue</h3>
-        
-        <label style="font-size: 0.8rem; font-weight: 800;">CATÉGORIE :</label>
-        <select id="cat-type" onchange="updateCatalogueList()">
-            <option value="PIECE">PIÈCES DE RECHANGE</option>
-            <option value="TOOL">TOOLS (OUTILLAGE)</option>
-        </select>
 
-        <label style="font-size: 0.8rem; font-weight: 800;">ARTICLE :</label>
-        <select id="new-p-name">
-            <option value="">-- Sélectionner --</option>
-        </select>
-
-        <input type="number" id="new-p-qty" placeholder="Quantité">
-        <button class="btn btn-success" onclick="addNewStock()">VALIDER</button>
+    <div id="viewStockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
+        <div class="card" style="width:100%; max-width:450px; max-height: 85vh; display: flex; flex-direction: column;">
+            <h3>Inventory Status</h3>
+            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                <button class="btn" style="background:var(--primary); color:white; font-size:0.7rem; padding:8px;" onclick="filterStockDisplay('ALL')">ALL</button>
+                <button class="btn" style="background:#64748b; color:white; font-size:0.7rem; padding:8px;" onclick="filterStockDisplay('PIECE')">PARTS</button>
+                <button class="btn" style="background:#8b5cf6; color:white; font-size:0.7rem; padding:8px;" onclick="filterStockDisplay('TOOL')">TOOLS</button>
+            </div>
+            <input type="text" id="stockSearchInput" placeholder="🔍 Search inventory..." onkeyup="searchStock()">
+            <div id="stock-list" style="overflow-y:auto; flex-grow: 1;"></div>
+            <button class="btn btn-ghost" onclick="document.getElementById('viewStockModal').style.display='none'">CLOSE</button>
+        </div>
     </div>
-</div>
+
+    <div id="archiveModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
+        <div class="card" style="width:100%; max-width:600px;">
+            <div id="archive-list" style="max-height:400px; overflow-y:auto;"></div>
+        </div>
+    </div>
+
+    <div id="stockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
+        <div class="card" style="width:100%; max-width:400px;">
+            <h3>Add to Catalogue</h3>
+            <label style="font-size: 0.8rem; font-weight: 800;">CATEGORY:</label>
+            <select id="cat-type" onchange="updateCatalogueList()">
+                <option value="PIECE">SPARE PARTS</option>
+                <option value="TOOL">TOOLS (EQUIPMENT)</option>
+            </select>
+            <label style="font-size: 0.8rem; font-weight: 800;">ITEM NAME:</label>
+            <select id="new-p-name">
+                <option value="">-- Select Item --</option>
+            </select>
+            <input type="number" id="new-p-qty" placeholder="Initial Quantity">
+            <button class="btn btn-success" onclick="addNewStock()">CONFIRM ADDITION</button>
+        </div>
+    </div>
 
     <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
         const machineData = { "SKODA A8": ["80005631", "80007235", "80007236", "80007237", "80007238", "80007239", "80007240", "80007241", "80007242", "80007243", "80007244", "80007245", "80007246"], "CRAFTER": ["80003403", "80003857", "80006951", "80006953", "80007608", "80008117", "80008118", "80008119", "80008120", "80008121", "80008122", "80008125", "8000818431"], "G.CALIFORNIA": ["80006958"] };
+        
+        // [REPLACE WITH YOUR ACTUAL FIREBASE CONFIG]
         const firebaseConfig = { apiKey: "AIzaSyASQa5cLXFllnV6EmYp-ARZ9dndWSKha6c", authDomain: "cvgmaroc-gmao.firebaseapp.com", databaseURL: "https://cvgmaroc-gmao-default-rtdb.firebaseio.com", projectId: "cvgmaroc-gmao", storageBucket: "cvgmaroc-gmao.firebasestorage.app", messagingSenderId: "72908747564", appId: "1:72908747564:web:82f646ef5dd209d03b7289" };
         
         firebase.initializeApp(firebaseConfig);
@@ -279,7 +304,7 @@
             database.ref('users/').once('value', snap => {
                 let found = false;
                 if(snap.val()) Object.values(snap.val()).forEach(usr => { if(usr.name.toLowerCase() === u && usr.pass === p) { found = true; startApp(usr.role); } });
-                if(!found) alert("Accès Refusé");
+                if(!found) alert("Access Denied: Invalid credentials");
             });
         }
 
@@ -302,8 +327,9 @@
             if(document.getElementById('m-charge')) document.getElementById('m-charge').innerText = actives.length;
             actives.reverse().forEach(p => {
                 let isWaiting = p.status === 'OPEN';
-                let actionBtn = (currentUser === 'MAINTENANCE') ? (isWaiting ? `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">Reçu</button>` : `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">TERMINER</button>`) : "";
-                container.innerHTML += `<div class="card" style="border-left:5px solid ${isWaiting?'var(--danger)':'var(--warning)'}"><div style="display:flex; justify-content:space-between"><b>${p.mach}</b>${isWaiting?'<span class="status-tag tag-open">EN ARRÊT</span>':'<span class="status-tag tag-progress">RÉPARATION...</span>'}</div><small>${p.proj}</small><div style="margin:10px 0; padding:8px; background:#f1f5f9; border-radius:12px; text-align:center;"><b class="live-timer" data-start="${p.startTs}">00:00:00</b></div><div>${actionBtn}</div></div>`;
+                let statusLabel = isWaiting ? 'DOWN' : 'FIXING...';
+                let actionBtn = (currentUser === 'MAINTENANCE') ? (isWaiting ? `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">Accept Request</button>` : `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">FINISH REPAIR</button>`) : "";
+                container.innerHTML += `<div class="card" style="border-left:5px solid ${isWaiting?'var(--danger)':'var(--warning)'}"><div style="display:flex; justify-content:space-between"><b>${p.mach}</b>${isWaiting?`<span class="status-tag tag-open">${statusLabel}</span>`:`<span class="status-tag tag-progress">${statusLabel}</span>`}</div><small>${p.proj}</small><div style="margin:10px 0; padding:8px; background:#f1f5f9; border-radius:12px; text-align:center;"><b class="live-timer" data-start="${p.startTs}">00:00:00</b></div><div>${actionBtn}</div></div>`;
             });
             const sound = document.getElementById('alertSound');
             if(actives.some(p => p.status === 'OPEN') && currentUser !== 'OPERATEUR') sound.play().catch(()=>{}); else { sound.pause(); sound.currentTime = 0; }
@@ -321,252 +347,253 @@
             });
         }
 
-        function handlePanneSignal() { const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value; database.ref('pannes/').push({proj, mach, status:'OPEN', startTs:Date.now(), dateStr:new Date().toLocaleString()}); }
+        function handlePanneSignal() { 
+            const proj = document.getElementById('in-proj').value, mach = document.getElementById('in-mach').value; 
+            database.ref('pannes/').push({proj, mach, status:'OPEN', startTs:Date.now(), dateStr:new Date().toLocaleString()}); 
+        }
+
         function updateMachineList() { const p = document.getElementById('in-proj').value, s = document.getElementById('in-mach'); s.innerHTML = ""; (machineData[p] || []).forEach(m => s.innerHTML += `<option value="${m}">${m}</option>`); }
+        
         function updateLiveTimers() { document.querySelectorAll('.live-timer').forEach(el => { const start = parseInt(el.getAttribute('data-start')), diff = Math.floor((Date.now() - start) / 1000), h = Math.floor(diff/3600), m = Math.floor((diff%3600)/60), s = diff%60; el.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }); }
-//MTTR-MTBF*****************************************************
 
-// MTTR:  (كيحسب المعدل بالدقائق).
+        function updateStats() {
+            const closed = allData.filter(p => p.status === 'CLOSED');
+            let totalRepairTime = 0;
+            closed.forEach(p => totalRepairTime += p.duration || 0);
+            document.getElementById('m-count').innerText = closed.length;
+            const mttr = closed.length > 0 ? Math.round(totalRepairTime / closed.length) : 0;
+            document.getElementById('m-mttr').innerText = mttr;
+            if (closed.length > 1) {
+                const timestamps = closed.map(p => p.startTs);
+                const firstFailure = Math.min(...timestamps);
+                const totalOperatingTimeHours = (Date.now() - firstFailure) / (1000 * 60 * 60);
+                const mtbf = Math.round(totalOperatingTimeHours / closed.length);
+                document.getElementById('m-mtbf').innerText = mtbf;
+            } else {
+                document.getElementById('m-mtbf').innerText = "N/A";
+            }
+        }
 
-//MTBF: زدت ليك منطق كيحسب الساعات الكلية اللي دازت من أول "Arrêt" تسجل فالسيستيم وقسمناها على عدد الأعطال. هادشي كيعطيك فكرة شحال من ساعة كتدوز الماكينة بلا مشاكل.
-
-//Protection: زدت شرط بلي الـ MTBF ميبدا يتحسب حتى يوقعو على الأقل 2 أعطال (حيت منطقياً ميمكنش تحسب "المسافة بين الأعطال" وأنت عندك غير عطل واحد)
-
-function updateStats() {
-    const closed = allData.filter(p => p.status === 'CLOSED');
-    let totalRepairTime = 0;
+        function updateCharts() { const ctx = document.getElementById('downtimeChart').getContext('2d'), dataMap = {}; allData.filter(p => p.status === 'CLOSED').forEach(p => { const label = p.mach; dataMap[label] = (dataMap[label] || 0) + (p.duration || 0); }); if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type:'bar', data: { labels: Object.keys(dataMap), datasets:[{label:'Downtime (Min)', data:Object.values(dataMap), backgroundColor:'#00d4ff'}] }, options:{responsive:true, plugins:{legend:{display:false}}}}); }
+        
+      function listenStock() {
+    // Fach kat-hl l-app, affichi "ALL" b-default
+    filterStockDisplay('ALL');
     
-    // حساب مجموع وقت الإصلاح
-    closed.forEach(p => totalRepairTime += p.duration || 0);
-
-    // 1. تحديث عدد التدخلات
-    document.getElementById('m-count').innerText = closed.length;
-
-    // 2. حساب MTTR (بالمينيت)
-    const mttr = closed.length > 0 ? Math.round(totalRepairTime / closed.length) : 0;
-    document.getElementById('m-mttr').innerText = mttr;
-
-    // 3. حساب MTBF (بالساعات)
-    if (closed.length > 1) {
-        // كنجيبو أوع فالتاريخ وآخر عطل
-        const timestamps = closed.map(p => p.startTs);
-        const firstFailure = Math.min(...timestamps);
-        const lastFailure = Math.max(...timestamps);
-        
-        // الوقت الكلي للتشغيل (بالساعات) من أول عطل حتى لدابا
-        const totalOperatingTimeHours = (Date.now() - firstFailure) / (1000 * 60 * 60);
-        
-        // MTBF = الوقت الكلي / عدد الأعطال
-        const mtbf = Math.round(totalOperatingTimeHours / closed.length);
-        document.getElementById('m-mtbf').innerText = mtbf;
-    } else {
-        document.getElementById('m-mtbf').innerText = "---"; // مازال خاص كتر من عطل واحد باش يتحسب
-    }
-}
-//***************************************************
-        function updateCharts() { const ctx = document.getElementById('downtimeChart').getContext('2d'), dataMap = {}; allData.filter(p => p.status === 'CLOSED').forEach(p => { const label = p.mach; dataMap[label] = (dataMap[label] || 0) + (p.duration || 0); }); if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type:'bar', data: { labels: Object.keys(dataMap), datasets:[{label:'Min', data:Object.values(dataMap), backgroundColor:'#00d4ff'}] }, options:{responsive:true, plugins:{legend:{display:false}}}}); }
-        
-       function listenStock() { 
-    database.ref('stock/').on('value', snap => { 
-        const list = document.getElementById('stock-list'); 
-        const selectCatalogue = document.getElementById('new-p-name'); // هاد السطر جديد
-        
-        let html = '<table class="stock-table"><tbody>'; 
-        let optionsHtml = '<option value="">-- Sélectionner la pièce --</option>'; // هاد السطر جديد
-
-        if(snap.val()) { 
-            Object.entries(snap.val()).forEach(([name, data]) => { 
-                const isLow = data.qty <= 4; 
-                html += `<tr class="${isLow ? 'low-stock-alert' : ''}"><td>${isLow ? '⚠️ ' : ''}${name}</td><td style="text-align:right;"><b>${data.qty}</b></td></tr>`; 
-                
-                // هنا كنزيدو القطعة للـ Select أوتوماتيكياً
-                optionsHtml += `<option value="${name}">${name}</option>`; 
-            }); 
-        } 
-        list.innerHTML = html + '</tbody></table>'; 
-        selectCatalogue.innerHTML = optionsHtml; // هنا كنحطو اللستة فالمودال
-    }); 
+    // Tbqa t-tsannat l-ay taghyir f l-base de données
+    database.ref('stock/').on('value', snap => {
+        // Hna n-3aytou l-filterStockDisplay bach t-ghayyar l-affichage automatique
+        // Ghadi n-st3mlou l-filter lli khaddam daba (optional logic)
+        filterStockDisplay('ALL'); 
+    });
 }
 
-        // --- EXCEL CVG REPORT WITH MONTH FOR DASHBOARD ---
         function exportToExcel() {
             const closedData = allData.filter(p => p.status === 'CLOSED');
             const formattedData = closedData.map(p => {
                 const dateObj = new Date(p.startTs);
                 return {
                     "DATE": p.dateStr || '',
-                    "MOIS": dateObj.toLocaleString('fr-FR', { month: 'long' }).toUpperCase(),
+                    "MONTH": dateObj.toLocaleString('en-US', { month: 'long' }).toUpperCase(),
                     "PROJECT": p.proj || '',
                     "MACHINE": p.mach || '',
-                    "RECU": p.recuTime || '',
-                    "DONE": p.doneTime || '',
+                    "REQUESTED": p.recuTime || '',
+                    "FINISHED": p.doneTime || '',
                     "TECH ID": p.techId || '',
-                    "PROBLEME": p.problem || '',
+                    "PROBLEM": p.problem || '',
                     "SOLUTION": p.solution || '',
                     "DOWNTIME (Min)": p.duration || 0
                 };
             });
             const ws = XLSX.utils.json_to_sheet(formattedData);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "DATA_GMAO");
-            XLSX.writeFile(wb, "GMAO_CVG_REPORT_ANALYTICS.xlsx");
+            XLSX.utils.book_append_sheet(wb, ws, "CMMS_DATA");
+            XLSX.writeFile(wb, "CVG_CMMS_ANALYTICS_REPORT.xlsx");
         }
 
         function listenUsers() {
             database.ref('users/').on('value', snap => {
                 const c = document.getElementById('users-list-container'); c.innerHTML = "";
-                if(snap.val()) Object.entries(snap.val()).forEach(([k, u]) => { c.innerHTML += `<div class="user-item"><span><b>${u.name}</b> (${u.role})</span><div class="user-actions"><i class="fas fa-edit" style="color:var(--primary)" onclick="editUser('${k}', '${u.name}', '${u.pass}', '${u.role}')"></i><i class="fas fa-trash" style="color:red" onclick="database.ref('users/${k}').remove()"></i></div></div>`; });
+                if(snap.val()) Object.entries(snap.val()).forEach(([k, u]) => { c.innerHTML += `<div class="user-item"><span><b>${u.name}</b> (${u.role})</span><div class="user-actions"><i class="fas fa-edit" style="color:var(--primary)" onclick="editUser('${k}', '${u.name}', '${u.pass}', '${u.role}')"></i><i class="fas fa-trash" style="color:red" onclick="if(confirm('Delete user?')) database.ref('users/${k}').remove()"></i></div></div>`; });
             });
         }
+
         function editUser(key, name, pass, role) {
             document.getElementById('edit-user-key').value = key; document.getElementById('new-user-name').value = name; document.getElementById('new-user-pass').value = pass; document.getElementById('new-user-role').value = role;
-            document.getElementById('btn-user-action').innerText = "MODIFIER"; document.getElementById('btn-user-action').style.background = "var(--primary)";
+            document.getElementById('btn-user-action').innerText = "UPDATE USER"; document.getElementById('btn-user-action').style.background = "var(--primary)";
         }
+
         function saveUser() {
             const key = document.getElementById('edit-user-key').value, name = document.getElementById('new-user-name').value, pass = document.getElementById('new-user-pass').value, role = document.getElementById('new-user-role').value;
-            if(!name || !pass) return alert("Remplir tous les champs");
+            if(!name || !pass) return alert("Please fill all fields");
             if(key) database.ref('users/' + key).update({ name, pass, role }).then(() => resetUserForm());
             else database.ref('users/').push({ name, pass, role }).then(() => resetUserForm());
         }
-        function resetUserForm() { document.getElementById('edit-user-key').value = ""; document.getElementById('new-user-name').value = ""; document.getElementById('new-user-pass').value = ""; document.getElementById('new-user-role').value = "OPERATEUR"; document.getElementById('btn-user-action').innerText = "ENREGISTRER"; document.getElementById('btn-user-action').style.background = "var(--success)"; }
+
+        function resetUserForm() { document.getElementById('edit-user-key').value = ""; document.getElementById('new-user-name').value = ""; document.getElementById('new-user-pass').value = ""; document.getElementById('new-user-role').value = "OPERATEUR"; document.getElementById('btn-user-action').innerText = "SAVE USER"; document.getElementById('btn-user-action').style.background = "var(--success)"; }
+        
         function searchStock() { const f = document.getElementById('stockSearchInput').value.toUpperCase(), rows = document.querySelector(".stock-table tbody").rows; for(let r of rows) r.style.display = r.cells[0].innerText.toUpperCase().includes(f) ? "" : "none"; }
-        function addNewStock() {
+        
+    function addNewStock() {
     const n = document.getElementById('new-p-name').value.toUpperCase();
     const q = parseInt(document.getElementById('new-p-qty').value);
+    const type = document.getElementById('cat-type').value; // جلب النوع من القائمة المنسدلة
 
     if (n && !isNaN(q)) {
-        database.ref('stock/' + n).set({ qty: q }).then(() => {
-            // هاد السطر هو اللي كيسد النافذة أوتوماتيكياً
+        database.ref('stock/' + n).set({ 
+            qty: q, 
+            type: type  // حفظ النوع هنا
+        }).then(() => {
             document.getElementById('stockModal').style.display = 'none';
-            
-            // اختياري: تنظيف الخانات باش المرة الجاية تلقاهم خاويين
             document.getElementById('new-p-qty').value = "";
-            alert("Pièce ajoutée avec succès !");
+            alert("Success: " + n + " added as " + type);
         });
     } else {
-        alert("Veuillez remplir tous les champs !");
+        alert("Please complete the form!");
     }
 }
+
         function renderArchives() {
-    const l = document.getElementById('archive-list');
-    l.innerHTML = "<h3 style='margin-bottom:15px; color:var(--primary)'><i class='fas fa-history'></i> Historique des Interventions</h3>";
-    
-    // كنجيبو غير التدخلات اللي مسدودة وكنرتبوهم من الأحدث للأقدم
-    const closedPannes = allData.filter(p => p.status === 'CLOSED').reverse();
-    
-    if (closedPannes.length === 0) {
-        l.innerHTML += "<p style='text-align:center; color:#94a3b8; margin-top:20px;'>Aucun historique disponible.</p>";
-        return;
-    }
+            const l = document.getElementById('archive-list');
+            l.innerHTML = "<h3 style='margin-bottom:15px; color:var(--primary)'><i class='fas fa-history'></i> Intervention History</h3>";
+            const closedPannes = allData.filter(p => p.status === 'CLOSED').reverse();
+            if (closedPannes.length === 0) {
+                l.innerHTML += "<p style='text-align:center; color:#94a3b8; margin-top:20px;'>No history found.</p>";
+                return;
+            }
+            closedPannes.forEach(p => {
+                l.innerHTML += `
+                    <div class="archive-item">
+                        <span class="badge-proj">${p.proj}</span>
+                        <b>Machine: ${p.mach}</b>
+                        <div style="font-size: 0.85rem; color: #475569; margin: 5px 0;">
+                            <i class="fas fa-wrench" style="font-size:0.7rem"></i> ${p.solution || 'No solution recorded'}
+                        </div>
+                        <div class="meta">
+                            <span><i class="far fa-calendar-alt"></i> ${p.dateStr.split(',')[0]}</span>
+                            <span class="duration-tag"><i class="far fa-clock"></i> ${p.duration} min</span>
+                        </div>
+                    </div>`;
+            });
+        }
 
-    closedPannes.forEach(p => {
-        l.innerHTML += `
-            <div class="archive-item">
-                <span class="badge-proj">${p.proj}</span>
-                <b>Machine: ${p.mach}</b>
-                <div style="font-size: 0.85rem; color: #475569; margin: 5px 0;">
-                    <i class="fas fa-wrench" style="font-size:0.7rem"></i> ${p.solution || 'Pas de solution renseignée'}
-                </div>
-                <div class="meta">
-                    <span><i class="far fa-calendar-alt"></i> ${p.dateStr.split(',')[0]}</span>
-                    <span class="duration-tag"><i class="far fa-clock"></i> ${p.duration} min</span>
-                </div>
-            </div>`;
-    });
-}
-        function startScanner() { const s = new Html5Qrcode("reader"); s.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (t) => { for(let [p, m] of Object.entries(machineData)) { if(m.includes(t.trim())) { document.getElementById('in-proj').value = p; updateMachineList(); document.getElementById('in-mach').value = t.trim(); s.stop(); break; } } }); }
+        function startScanner() { 
+            const s = new Html5Qrcode("reader"); 
+            s.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (t) => { 
+                for(let [p, m] of Object.entries(machineData)) { 
+                    if(m.includes(t.trim())) { 
+                        document.getElementById('in-proj').value = p; 
+                        updateMachineList(); 
+                        document.getElementById('in-mach').value = t.trim(); 
+                        s.stop(); 
+                        alert("Machine Identified: " + t.trim());
+                        break; 
+                    } 
+                } 
+            }); 
+        }
+
         function enableAudio() { window.audioAllowed = true; }
-		
-		
-		// لستة ديال الـ Tools (30 أرتيكل)
-const toolsList = Array.from({length: 30}, (_, i) => `TOOL-${i + 1}`);
 
-function updateCatalogueList() {
-    const type = document.getElementById('cat-type').value;
-    const selectArticle = document.getElementById('new-p-name');
-    let optionsHtml = '<option value="">-- Sélectionner l\'article --</option>';
+        const toolsList = Array.from({length: 30}, (_, i) => `TOOL-${i + 1}`);
 
-    if (type === "TOOL") {
-        // إذا اختار Tools، كنعطيوه اللستة من 1 لـ 30
-        toolsList.forEach(tool => {
-            optionsHtml += `<option value="${tool}">${tool}</option>`;
-        });
-        selectArticle.innerHTML = optionsHtml;
-    } else {
-        // إذا اختار PIECE، كنجيبو داكشي اللي ديجا كاين فـ Stock (A001...)
-        database.ref('stock/').once('value', snap => {
-            if (snap.val()) {
-                Object.keys(snap.val()).forEach(name => {
-                    // كنفلترو باش ما يطلعوش الـ Tools وسط الـ Pieces
-                    if(!name.startsWith('TOOL-')) {
-                        optionsHtml += `<option value="${name}">${name}</option>`;
+        function updateCatalogueList() {
+            const type = document.getElementById('cat-type').value;
+            const selectArticle = document.getElementById('new-p-name');
+            let optionsHtml = '<option value="">-- Select Article --</option>';
+            if (type === "TOOL") {
+                toolsList.forEach(tool => { optionsHtml += `<option value="${tool}">${tool}</option>`; });
+                selectArticle.innerHTML = optionsHtml;
+            } else {
+                database.ref('stock/').once('value', snap => {
+                    if (snap.val()) {
+                        Object.keys(snap.val()).forEach(name => {
+                            if(!name.startsWith('TOOL-')) { optionsHtml += `<option value="${name}">${name}</option>`; }
+                        });
                     }
+                    selectArticle.innerHTML = optionsHtml;
                 });
             }
-            selectArticle.innerHTML = optionsHtml;
-        });
+        }
+		
+		function filterStockDisplay(type) {
+    database.ref('stock/').once('value', snap => {
+        const list = document.getElementById('stock-list');
+        let html = '<table class="stock-table" style="width:100%"><tbody>';
+        
+        if (snap.val()) {
+            Object.entries(snap.val()).forEach(([name, data]) => {
+                const isLow = data.qty <= 4;
+                
+                // Logic dyal l-farz (Filtering Logic)
+                let showItem = false;
+                if (type === 'ALL') {
+                    showItem = true;
+                } else if (type === 'PIECE' && name.startsWith('A')) {
+                    showItem = true; // Kay-affichi ghir lli badyin b "A"
+                } else if (type === 'TOOL' && name.startsWith('TOOL-')) {
+                    showItem = true; // Kay-affichi ghir lli badyin b "TOOL-"
+                }
+
+                if (showItem) {
+                    html += `<tr class="${isLow ? 'low-stock-alert' : ''}">
+                                <td>${isLow ? '⚠️ ' : ''}${name}</td>
+                                <td style="text-align:right;"><b>${data.qty}</b></td>
+                             </tr>`;
+                }
+            });
+        }
+        list.innerHTML = html + '</tbody></table>';
+    });
+}
+
+
+function updateConnectionStatus() {
+    const btn = document.getElementById('connection-btn');
+    
+    if (navigator.onLine) {
+        // Ila kant l-connexion khdama (Green)
+        btn.classList.remove('offline-status');
+        btn.classList.add('online-status');
+    } else {
+        // Ila tqatt3at l-connexion (Red)
+        btn.classList.remove('online-status');
+        btn.classList.add('offline-status');
     }
 }
 
-// تعديل بسيط فـ listenStock باش يبقا يخدم مع النوعين
-function listenStock() { 
-    database.ref('stock/').on('value', snap => { 
-        const list = document.getElementById('stock-list'); 
-        let html = '<table class="stock-table"><tbody>'; 
-        if(snap.val()) { 
-            Object.entries(snap.val()).forEach(([name, data]) => { 
-                const isLow = data.qty <= 4; 
-                html += `<tr class="${isLow?'low-stock-alert':''}"><td>${isLow?'⚠️ ':''}${name}</td><td style="text-align:right;"><b>${data.qty}</b></td></tr>`; 
-            }); 
-        } 
-        list.innerHTML = html + '</tbody></table>'; 
-        updateCatalogueList(); // تحديث اللستة فالمودال
-    }); 
-}
+// T-tsanna l-connexion t-tghayyar (Online/Offline events)
+window.addEventListener('online', updateConnectionStatus);
+window.addEventListener('offline', updateConnectionStatus);
 
-let currentStockFilter = 'ALL'; // هادي كتعقل على الفلتر اللي اختاريتي
-
-function filterStockDisplay(type) {
-    currentStockFilter = type;
-    renderStockTable(); // كنقولو ليه عاود رسم الجدول بالفلتر الجديد
-}
-
-function listenStock() { 
-    database.ref('stock/').on('value', snap => { 
-        window.rawStockData = snap.val(); // كنخزنو الداتا الخام باش نستعملوها فالفلتر
-        renderStockTable();
-        updateCatalogueList(); // هادي ديجا صاوبناها للكاتالوج
-    }); 
-}
-
-function renderStockTable() {
-    const list = document.getElementById('stock-list');
-    if (!window.rawStockData) return;
-
-    let html = '<table class="stock-table"><tbody>';
+// T-tchecki l-connexion fach t-hl l-app
+updateConnectionStatus();
     
-    Object.entries(window.rawStockData).forEach(([name, data]) => {
-        const isTool = name.startsWith('TOOL-');
-        
-        // المنطق ديال الفلتر
-        let show = false;
-        if (currentStockFilter === 'ALL') show = true;
-        else if (currentStockFilter === 'TOOL' && isTool) show = true;
-        else if (currentStockFilter === 'PIECE' && !isTool) show = true;
-
-        if (show) {
-            const isLow = data.qty <= 4;
-            html += `<tr class="${isLow ? 'low-stock-alert' : ''}">
-                        <td>${isLow ? '⚠️ ' : ''}${name}</td>
-                        <td style="text-align:right;"><b>${data.qty}</b></td>
-                     </tr>`;
-        }
-    });
+	function updateConnectionStatus() {
+    const btn = document.getElementById('connection-btn');
+    const banner = document.getElementById('offline-banner');
     
-    list.innerHTML = html + '</tbody></table>';
+    if (navigator.onLine) {
+        // Online: Green Blinking + Hide Banner
+        btn.classList.remove('offline-status');
+        btn.classList.add('online-status');
+        banner.style.display = 'none';
+    } else {
+        // Offline: Red Blinking + Show Banner
+        btn.classList.remove('online-status');
+        btn.classList.add('offline-status');
+        banner.style.display = 'block';
+    }
 }
-    </script>
+
+// Events bach y-tsannat l-internet
+window.addEventListener('online', updateConnectionStatus);
+window.addEventListener('offline', updateConnectionStatus);
+
+// Initial check fach t-t-hla l-app
+updateConnectionStatus();
+	
+	
+	</script>
 </body>
 </html>
-
-
