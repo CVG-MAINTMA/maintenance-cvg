@@ -138,80 +138,24 @@
     right: 0;
     z-index: 10001;
 }
-		/* Container d-l-bab */
-#door-transition {
-    position: fixed; inset: 0; z-index: 20000; display: flex; overflow: hidden;
-}
-
-.door-leaf {
-    position: absolute; top: 0; width: 50%; height: 100%;
-    background: #002b5c; /* Primary CVG Color */
-    transition: transform 1.5s cubic-bezier(0.7, 0, 0.3, 1);
-    border: 4px solid #b8860b; /* Golden border b7al l-khchab */
-}
-
-/* L-9ous l-Mghribi (The Arch) */
-.moroccan-arch-left, .moroccan-arch-right {
-    position: absolute; top: 10%; width: 100%; height: 80%;
-    border: 15px solid rgba(184, 134, 11, 0.2);
-}
-.moroccan-arch-left { border-radius: 500px 0 0 0; right: 0; border-right: none; }
-.moroccan-arch-right { border-radius: 0 500px 0 0; left: 0; border-left: none; }
-
-/* Pattern dyal Zellige (Background subtle) */
-.zellige-pattern {
-    position: absolute; inset: 0; opacity: 0.1;
-    background-image: url('https://www.transparenttextures.com/patterns/arabesque.png');
-}
-
-/* L-wast (Khmissa & Text) */
-.door-center {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    z-index: 20001; text-align: center; transition: all 0.8s ease;
-}
-
-.khmissa-icon {
-    font-size: 4rem; color: #d4af37; /* Gold */
-    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
-    margin-bottom: 15px; animation: glow 2s infinite alternate;
-}
-
-.welcome-text h2 { color: white; font-weight: 800; font-size: 2.2rem; margin: 0; }
-.welcome-text p { color: #d4af37; font-weight: 600; font-size: 1.1rem; }
-
-/* Animation d-l-bab kat-7el */
-.open-doors .left-door { transform: translateX(-100%) rotateY(-10deg); }
-.open-doors .right-door { transform: translateX(100%) rotateY(10deg); }
-.open-doors .door-center { opacity: 0; transform: translate(-50%, -100%); }
-
-@keyframes glow { 
-    from { transform: scale(1); opacity: 0.8; } 
-    to { transform: scale(1.1); opacity: 1; } 
-}
 	</style>
 </head>
 
 <body onclick="enableAudio()">
 
- <div id="door-transition" class="hidden">
-    <div class="door-leaf left-door">
-        <div class="moroccan-arch-left"></div>
-        <div class="zellige-pattern"></div>
-    </div>
-    
-    <div class="door-leaf right-door">
-        <div class="moroccan-arch-right"></div>
-        <div class="zellige-pattern"></div>
-    </div>
-
-    <div class="door-center">
-        <div class="khmissa-icon">
-            <i class="fas fa-hand-holding-heart"></i>
+   <div id="login-overlay">
+    <div class="card">
+        <h2 style="margin-bottom:15px; color:var(--primary)">
+            CVG-<span style="color:var(--accent)">Innovation</span>
+        </h2>
+        <div style="position:relative;">
+            <input type="text" id="login-user" placeholder="Staff ID / Matricule">
         </div>
-        <div class="welcome-text">
-            <h2>CVG <span style="color:var(--accent)">Connect</span></h2>
-            <p>مرحباً بكم في نظام التدبير</p>
+        <div style="position:relative;">
+            <input type="password" id="login-pass" placeholder="Password">
         </div>
+        <button class="btn btn-warning" onclick="handleLogin()">ACCESS SYSTEM</button>
+        <p style="margin-top: 20px; font-size: 0.75rem; color: #64748b; font-weight: 600;">CVG CONNECT SYSTEM v2.0</p>
     </div>
 </div>
 
@@ -677,30 +621,7 @@ window.onload = function() {
         location.reload(); // Re-fresh bach i-ban l-login
     }
 }
-	function startApp(role) {
-    const transition = document.getElementById('door-transition');
-    transition.classList.remove('hidden'); // Ban l-bab m-sdouda
-    
-    // N-tsnnaw 800ms bach l-user i-chouf l-artisanat
-    setTimeout(() => {
-        transition.classList.add('open-doors'); // 7el l-bab!
-        
-        // Dkhal l-app derya
-        currentUser = role;
-        document.getElementById('login-overlay').style.display = 'none';
-        document.getElementById('app-content').classList.remove('hidden');
-        
-        // Trigger l-system analytics
-        listenFirebase(); 
-        
-        // Safi, msa7 l-transition mn l-ekran melli t-ssala
-        setTimeout(() => {
-            transition.classList.add('hidden');
-            transition.classList.remove('open-doors');
-        }, 1500);
-        
-    }, 800);
-}
+	
 	</script>
 </body>
 </html>
