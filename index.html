@@ -174,7 +174,7 @@
                 </div>
     <div id="offline-banner">⚠️ NO INTERNET CONNECTION - DATA NOT SYNCED</div>
 
-<button class="logout-btn" id="connection-btn" onclick="location.reload()">
+<button class="logout-btn" id="connection-btn" onclick="logoutSystem()">
     <i class="fas fa-power-off"></i>
 </button>
             </div>
@@ -298,15 +298,31 @@
         const database = firebase.database();
         let currentUser = null, allData = [], myChart = null;
 
-        function handleLogin() {
-            const u = document.getElementById('login-user').value.trim().toLowerCase(), p = document.getElementById('login-pass').value;
-            if(u === "admin" && p === "3333") return startApp("MANAGER");
-            database.ref('users/').once('value', snap => {
-                let found = false;
-                if(snap.val()) Object.values(snap.val()).forEach(usr => { if(usr.name.toLowerCase() === u && usr.pass === p) { found = true; startApp(usr.role); } });
-                if(!found) alert("Access Denied: Invalid credentials");
+       function handleLogin() {
+    const u = document.getElementById('login-user').value.trim().toLowerCase(), 
+          p = document.getElementById('login-pass').value;
+    
+    // Admin Check
+    if(u === "admin" && p === "3333") {
+        localStorage.setItem('cvg_user_role', 'MANAGER'); // <--- 3qal 3lih
+        return startApp("MANAGER");
+    }
+    
+    // Firebase Users Check
+    database.ref('users/').once('value', snap => {
+        let found = false;
+        if(snap.val()) {
+            Object.values(snap.val()).forEach(usr => { 
+                if(usr.name.toLowerCase() === u && usr.pass === p) { 
+                    found = true; 
+                    localStorage.setItem('cvg_user_role', usr.role); // <--- 3qal 3lih
+                    startApp(usr.role); 
+                } 
             });
         }
+        if(!found) alert("Access Denied: Invalid credentials");
+    });
+}
 
         function startApp(role) {
             currentUser = role;
@@ -592,8 +608,21 @@ window.addEventListener('offline', updateConnectionStatus);
 
 // Initial check fach t-t-hla l-app
 updateConnectionStatus();
-	
+	// Had l-code ghadi i-khdam ghir t-7al l-page
+window.onload = function() {
+    const savedRole = localStorage.getItem('cvg_user_role');
+    if (savedRole) {
+        startApp(savedRole); // Dkhal direkt bla password
+    }
+};
+		function logoutSystem() {
+    if(confirm("Do you want to logout?")) {
+        localStorage.removeItem('cvg_user_role'); // <--- Msa7 l-memory
+        location.reload(); // Re-fresh bach i-ban l-login
+    }
+}
 	
 	</script>
 </body>
 </html>
+
