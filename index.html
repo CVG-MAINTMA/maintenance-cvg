@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+x<!DOCTYPE html>
 <html lang="en">
 <head>
     <link rel="manifest" href="manifest.json">
@@ -174,7 +174,7 @@
                 </div>
     <div id="offline-banner">⚠️ NO INTERNET CONNECTION - DATA NOT SYNCED</div>
 
-<button class="logout-btn" id="connection-btn" onclick="logoutSystem()">
+<button class="logout-btn" id="connection-btn" onclick="location.reload()">
     <i class="fas fa-power-off"></i>
 </button>
             </div>
@@ -184,7 +184,15 @@
         </header>
 
         <div id="manager-panel" class="hidden">
-            <div class="grid-kpi">
+     <div class="card" style="margin-bottom:10px; border-left: 5px solid var(--purple);">
+    <label style="font-size: 0.75rem; font-weight: 800; color: var(--primary);">📊 INDIVIDUAL MACHINE ANALYTICS:</label>
+    <select id="stats-machine-select" onchange="updateStats()" style="margin-top:5px; background: #f1f5f9;">
+        <option value="ALL">-- ALL MACHINES (GLOBAL) --</option>
+        </select>
+</div>
+</div>
+			
+			<div class="grid-kpi">
                 <div class="kpi-card"><span>Total Interventions</span><b id="m-count">0</b></div>
                 <div class="kpi-card"><span>Active Workload</span><b id="m-charge">0</b></div>
                 <div class="kpi-card"><span>MTBF (Hours)</span><b id="m-mtbf">0</b></div>
@@ -298,31 +306,15 @@
         const database = firebase.database();
         let currentUser = null, allData = [], myChart = null;
 
-       function handleLogin() {
-    const u = document.getElementById('login-user').value.trim().toLowerCase(), 
-          p = document.getElementById('login-pass').value;
-    
-    // Admin Check
-    if(u === "admin" && p === "3333") {
-        localStorage.setItem('cvg_user_role', 'MANAGER'); // <--- 3qal 3lih
-        return startApp("MANAGER");
-    }
-    
-    // Firebase Users Check
-    database.ref('users/').once('value', snap => {
-        let found = false;
-        if(snap.val()) {
-            Object.values(snap.val()).forEach(usr => { 
-                if(usr.name.toLowerCase() === u && usr.pass === p) { 
-                    found = true; 
-                    localStorage.setItem('cvg_user_role', usr.role); // <--- 3qal 3lih
-                    startApp(usr.role); 
-                } 
+        function handleLogin() {
+            const u = document.getElementById('login-user').value.trim().toLowerCase(), p = document.getElementById('login-pass').value;
+            if(u === "admin" && p === "3333") return startApp("MANAGER");
+            database.ref('users/').once('value', snap => {
+                let found = false;
+                if(snap.val()) Object.values(snap.val()).forEach(usr => { if(usr.name.toLowerCase() === u && usr.pass === p) { found = true; startApp(usr.role); } });
+                if(!found) alert("Access Denied: Invalid credentials");
             });
         }
-        if(!found) alert("Access Denied: Invalid credentials");
-    });
-}
 
         function startApp(role) {
             currentUser = role;
@@ -333,6 +325,10 @@
             if(role === "MANAGER" || role === "MAINTENANCE") document.getElementById('manager-panel').classList.remove('hidden');
             if(role === "OPERATEUR") { document.getElementById('op-panel').classList.remove('hidden'); updateMachineList(); }
             setInterval(updateLiveTimers, 1000);
+			 if(role === "MANAGER" || role === "MAINTENANCE") {
+        document.getElementById('manager-panel').classList.remove('hidden');
+        populateMachineStatsSelect(); // <--- Zid hadi hna
+    }
         }
 
         function listenFirebase() { database.ref('pannes/').on('value', snap => { allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : []; renderUI(); renderArchives(); updateStats(); if(currentUser !== "OPERATEUR") updateCharts(); }); }
@@ -372,23 +368,50 @@
         
         function updateLiveTimers() { document.querySelectorAll('.live-timer').forEach(el => { const start = parseInt(el.getAttribute('data-start')), diff = Math.floor((Date.now() - start) / 1000), h = Math.floor(diff/3600), m = Math.floor((diff%3600)/60), s = diff%60; el.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }); }
 
-        function updateStats() {
-            const closed = allData.filter(p => p.status === 'CLOSED');
-            let totalRepairTime = 0;
-            closed.forEach(p => totalRepairTime += p.duration || 0);
-            document.getElementById('m-count').innerText = closed.length;
-            const mttr = closed.length > 0 ? Math.round(totalRepairTime / closed.length) : 0;
-            document.getElementById('m-mttr').innerText = mttr;
-            if (closed.length > 1) {
-                const timestamps = closed.map(p => p.startTs);
-                const firstFailure = Math.min(...timestamps);
-                const totalOperatingTimeHours = (Date.now() - firstFailure) / (1000 * 60 * 60);
-                const mtbf = Math.round(totalOperatingTimeHours / closed.length);
-                document.getElementById('m-mtbf').innerText = mtbf;
-            } else {
-                document.getElementById('m-mtbf').innerText = "N/A";
-            }
-        }
+      // Awwal 7aja, 3mmer l-Dropdown b ga3 l-machines lli 3ndek f l-list
+function populateMachineStatsSelect() {
+    const select = document.getElementById('stats-machine-select');
+    let allMachines = [];
+    Object.values(machineData).forEach(list => allMachines = allMachines.concat(list));
+    
+    allMachines.sort().forEach(m => {
+        select.innerHTML += `<option value="${m}">${m}</option>`;
+    });
+}
+
+// Modifi updateStats bach i-7seb per selection
+function updateStats() {
+    const selectedMach = document.getElementById('stats-machine-select').value;
+    
+    // Filter pannes l-khdamin (CLOSED) 3la 7ssab l-machine
+    const closed = allData.filter(p => {
+        const isClosed = p.status === 'CLOSED';
+        return selectedMach === "ALL" ? isClosed : (isClosed && p.mach === selectedMach);
+    });
+
+    let totalRepairTime = 0;
+    closed.forEach(p => totalRepairTime += p.duration || 0);
+
+    // 1. MTTR (Mean Time To Repair)
+    const mttr = closed.length > 0 ? Math.round(totalRepairTime / closed.length) : 0;
+    document.getElementById('m-mttr').innerText = mttr + " min";
+    document.getElementById('m-count').innerText = closed.length;
+
+    // 2. MTBF (Mean Time Between Failures)
+    // Formula: (Total Time - Downtime) / Number of Failures
+    if (closed.length > 1) {
+        const timestamps = closed.map(p => p.startTs).sort((a, b) => a - b);
+        const firstFailure = timestamps[0];
+        const lastFailure = Date.now();
+        
+        const totalPeriodHours = (lastFailure - firstFailure) / (1000 * 60 * 60);
+        // MTBF s7i7 khassu i-koun Period / Number of Failures
+        const mtbf = Math.round(totalPeriodHours / closed.length);
+        document.getElementById('m-mtbf').innerText = mtbf + " hrs";
+    } else {
+        document.getElementById('m-mtbf').innerText = "---";
+    }
+}
 
         function updateCharts() { const ctx = document.getElementById('downtimeChart').getContext('2d'), dataMap = {}; allData.filter(p => p.status === 'CLOSED').forEach(p => { const label = p.mach; dataMap[label] = (dataMap[label] || 0) + (p.duration || 0); }); if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type:'bar', data: { labels: Object.keys(dataMap), datasets:[{label:'Downtime (Min)', data:Object.values(dataMap), backgroundColor:'#00d4ff'}] }, options:{responsive:true, plugins:{legend:{display:false}}}}); }
         
@@ -608,22 +631,11 @@ window.addEventListener('offline', updateConnectionStatus);
 
 // Initial check fach t-t-hla l-app
 updateConnectionStatus();
-	// Had l-code ghadi i-khdam ghir t-7al l-page
-window.onload = function() {
-    const savedRole = localStorage.getItem('cvg_user_role');
-    if (savedRole) {
-        startApp(savedRole); // Dkhal direkt bla password
-    }
-};
-		function logoutSystem() {
-    if(confirm("Do you want to logout?")) {
-        localStorage.removeItem('cvg_user_role'); // <--- Msa7 l-memory
-        location.reload(); // Re-fresh bach i-ban l-login
-    }
-}
+
+
+	
 	
 	</script>
 </body>
 </html>
-
 
