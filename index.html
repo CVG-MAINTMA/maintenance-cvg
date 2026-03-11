@@ -1,4 +1,4 @@
-x<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <link rel="manifest" href="manifest.json">
@@ -138,6 +138,22 @@ x<!DOCTYPE html>
     right: 0;
     z-index: 10001;
 }
+
+.kpi-card.critical {
+    background: #fee2e2 !important; /* Red background */
+    border-left: 5px solid var(--danger) !important;
+    animation: shake 0.5s ease-in-out;
+}
+
+.kpi-card.critical b {
+    color: var(--danger) !important;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
 	</style>
 </head>
 
@@ -177,6 +193,9 @@ x<!DOCTYPE html>
 <button class="logout-btn" id="connection-btn" onclick="location.reload()">
     <i class="fas fa-power-off"></i>
 </button>
+<button class="logout-btn" onclick="updateAllDataManually()" title="Refresh Data">
+    <i class="fas fa-sync-alt"></i>
+</button>
             </div>
             <div class="slogan-container">
                 <div class="slogan">Commercial vehicle group </div>
@@ -190,6 +209,13 @@ x<!DOCTYPE html>
         <option value="ALL">-- ALL MACHINES (GLOBAL) --</option>
         </select>
 </div>
+</div>
+<div class="card" style="border-top: 5px solid var(--danger);">
+    <h4 style="color:var(--danger); margin-bottom:10px;">
+        <i class="fas fa-chart-line"></i> TOP 5 BAD ACTORS (DOWNTIME)
+    </h4>
+    <div id="top-bad-actors" style="font-size: 0.85rem;">
+        </div>
 </div>
 			
 			<div class="grid-kpi">
@@ -380,40 +406,160 @@ function populateMachineStatsSelect() {
 }
 
 // Modifi updateStats bach i-7seb per selection
+// 1. Function bach t-7seb l-KPIs (MTTR, MTBF, Count)
 function updateStats() {
     const selectedMach = document.getElementById('stats-machine-select').value;
+    const TARGET_MTTR = 30; // Objective: 30 minutes
     
-    // Filter pannes l-khdamin (CLOSED) 3la 7ssab l-machine
-    const closed = allData.filter(p => {
+    // Filter data 3la 7sab l-machine l-li khtari
+    const machinePannes = allData.filter(p => {
         const isClosed = p.status === 'CLOSED';
         return selectedMach === "ALL" ? isClosed : (isClosed && p.mach === selectedMach);
     });
 
     let totalRepairTime = 0;
-    closed.forEach(p => totalRepairTime += p.duration || 0);
+    machinePannes.forEach(p => totalRepairTime += p.duration || 0);
+    
+    // 7sab MTTR
+    const mttr = machinePannes.length > 0 ? Math.round(totalRepairTime / machinePannes.length) : 0;
+    
+    const mttrElement = document.getElementById('m-mttr');
+    const mttrCard = mttrElement.closest('.kpi-card');
+    
+    mttrElement.innerText = mttr + " min";
+    
+    // Alert ila fat 30 min
+    if (mttr > TARGET_MTTR) {
+        mttrCard.classList.add('critical');
+        mttrElement.innerHTML = `${mttr} min <i class="fas fa-exclamation-triangle" style="font-size:0.8rem"></i>`;
+    } else {
+        mttrCard.classList.remove('critical');
+    }
 
-    // 1. MTTR (Mean Time To Repair)
-    const mttr = closed.length > 0 ? Math.round(totalRepairTime / closed.length) : 0;
-    document.getElementById('m-mttr').innerText = mttr + " min";
-    document.getElementById('m-count').innerText = closed.length;
-
-    // 2. MTBF (Mean Time Between Failures)
-    // Formula: (Total Time - Downtime) / Number of Failures
-    if (closed.length > 1) {
-        const timestamps = closed.map(p => p.startTs).sort((a, b) => a - b);
-        const firstFailure = timestamps[0];
-        const lastFailure = Date.now();
-        
-        const totalPeriodHours = (lastFailure - firstFailure) / (1000 * 60 * 60);
-        // MTBF s7i7 khassu i-koun Period / Number of Failures
-        const mtbf = Math.round(totalPeriodHours / closed.length);
+    // Update Count
+    document.getElementById('m-count').innerText = machinePannes.length;
+    
+    // 7sab MTBF (Hours)
+    if (machinePannes.length > 1) {
+        const timestamps = machinePannes.map(p => p.startTs).sort((a, b) => a - b);
+        const totalPeriodHours = (Date.now() - timestamps[0]) / (1000 * 60 * 60);
+        const mtbf = Math.round(totalPeriodHours / machinePannes.length);
         document.getElementById('m-mtbf').innerText = mtbf + " hrs";
     } else {
-        document.getElementById('m-mtbf').innerText = "---";
+        document.getElementById('m-mtbf').innerText = "N/A";
     }
+
+    // Ghadi n-3aytou l-l-chart w l-bad actors 7ta homa
+    updateMachineChart(machinePannes, selectedMach);
+    updateBadActors(); 
 }
 
-        function updateCharts() { const ctx = document.getElementById('downtimeChart').getContext('2d'), dataMap = {}; allData.filter(p => p.status === 'CLOSED').forEach(p => { const label = p.mach; dataMap[label] = (dataMap[label] || 0) + (p.duration || 0); }); if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type:'bar', data: { labels: Object.keys(dataMap), datasets:[{label:'Downtime (Min)', data:Object.values(dataMap), backgroundColor:'#00d4ff'}] }, options:{responsive:true, plugins:{legend:{display:false}}}}); }
+// 2. Function bach t-affichi Top 5 Machines li fihom downtime kbir
+function updateBadActors() {
+    const actorContainer = document.getElementById('top-bad-actors');
+    if (!actorContainer) return;
+
+    // Group downtime by Machine
+    const machineDowntime = {};
+    allData.filter(p => p.status === 'CLOSED').forEach(p => {
+        machineDowntime[p.mach] = (machineDowntime[p.mach] || 0) + (p.duration || 0);
+    });
+
+    // Sorting Descending (mn l-kabir l-sghir)
+    const sortedMachines = Object.entries(machineDowntime)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5);
+
+    if (sortedMachines.length === 0) {
+        actorContainer.innerHTML = "<p style='color:#94a3b8; text-align:center;'>No data available yet.</p>";
+        return;
+    }
+
+    let html = "";
+    const maxVal = sortedMachines[0][1]; // Akbar downtime bach n-9addo l-bars
+    
+    sortedMachines.forEach(([name, total], index) => {
+        const percentage = (total / maxVal) * 100;
+        html += `
+            <div style="margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="font-weight:800;">#${index + 1} - ${name}</span>
+                    <b style="color:var(--danger);">${total} min</b>
+                </div>
+                <div style="width:100%; height:8px; background:#f1f5f9; border-radius:10px; overflow:hidden;">
+                    <div style="width:${percentage}%; height:100%; background:linear-gradient(90deg, #f59e0b, #ef4444);"></div>
+                </div>
+            </div>`;
+    });
+    actorContainer.innerHTML = html;
+}
+
+// 3. Manual Refresh bach t-force l-update d-l-data dima
+function updateAllDataManually() {
+    database.ref('pannes/').once('value', snap => {
+        allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
+        renderUI();
+        updateStats(); // Hadi ghadi t-khaddam ta badActors otomatikiyan
+        alert("System Analytics Refreshed! ✅");
+    });
+}
+
+function updateMachineChart(data, label) {
+    const ctx = document.getElementById('downtimeChart').getContext('2d');
+    const TARGET_MTTR = 30; // L-hadaf dyalna
+    
+    // 1. Group downtime by Date
+    const dateMap = {};
+    data.forEach(p => {
+        const date = p.dateStr.split(',')[0];
+        dateMap[date] = (dateMap[date] || 0) + (p.duration || 0);
+    });
+
+    const labels = Object.keys(dateMap);
+    const chartData = Object.values(dateMap);
+
+    if(myChart) myChart.destroy();
+    
+    myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: `Downtime ${label} (Min)`,
+                    data: chartData,
+                    borderColor: '#00d4ff',
+                    backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    order: 2
+                },
+                {
+                    label: 'TARGET (30 min)',
+                    data: new Array(labels.length).fill(TARGET_MTTR), // Khatt msqam
+                    borderColor: '#ef4444',
+                    borderDash: [5, 5], // Khatt m-9ta3
+                    borderWidth: 2,
+                    pointRadius: 0, // Bla nqat
+                    fill: false,
+                    order: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { 
+                legend: { display: true, position: 'top' } 
+            },
+            scales: { 
+                y: { 
+                    beginAtZero: true,
+                    title: { display: true, text: 'Minutes' }
+                } 
+            }
+        }
+    });
+}
         
       function listenStock() {
     // Fach kat-hl l-app, affichi "ALL" b-default
@@ -633,8 +779,62 @@ window.addEventListener('offline', updateConnectionStatus);
 updateConnectionStatus();
 
 
-	
-	
+function updateBadActors() {
+    const actorContainer = document.getElementById('top-bad-actors');
+    if (!actorContainer) return; // Ila mal9ach l-container may-dir walou
+
+    const machineDowntime = {};
+    // Filter ghir l-pannes lli CLOSED bach i-koun 3ndna l-duration
+    allData.filter(p => p.status === 'CLOSED').forEach(p => {
+        machineDowntime[p.mach] = (machineDowntime[p.mach] || 0) + (p.duration || 0);
+    });
+
+    const sortedMachines = Object.entries(machineDowntime)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5);
+
+    if (sortedMachines.length === 0) {
+        actorContainer.innerHTML = "<p style='color:#94a3b8; text-align:center;'>No data available yet.</p>";
+        return;
+    }
+
+    let html = "";
+    sortedMachines.forEach(([name, total], index) => {
+        // Hna l-bar ghadi i-t-7seb 3la 7ssab l-max downtime
+        const maxDowntime = sortedMachines[0][1]; 
+        const percentage = (total / maxDowntime) * 100;
+        
+        html += `
+            <div style="margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="font-weight:800;">#${index + 1} - ${name}</span>
+                    <b style="color:var(--danger);">${total} min</b>
+                </div>
+                <div style="width:100%; height:8px; background:#f1f5f9; border-radius:10px; overflow:hidden;">
+                    <div style="width:${percentage}%; height:100%; background:linear-gradient(90deg, #f59e0b, #ef4444);"></div>
+                </div>
+            </div>`;
+    });
+    actorContainer.innerHTML = html;
+}	
+	function updateAllDataManually() {
+    // 1. Re-fetch data from Firebase once
+    database.ref('pannes/').once('value', snap => {
+        allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
+        
+        // 2. Trigger all UI updates
+        renderUI();
+        updateStats();
+        
+        if(currentUser !== "OPERATEUR") {
+            updateCharts();
+            updateBadActors(); // Hna ghadi i-t-force l-affichage dyal Top 5
+        }
+        
+        // 3. Simple feedback l-user
+        console.log("Data Refreshed Manually!");
+    });
+}
 	</script>
 </body>
 </html>
