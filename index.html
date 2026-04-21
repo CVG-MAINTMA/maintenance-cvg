@@ -80,7 +80,7 @@
     text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
 }
 
-/* الخيط اللي كيربط بيناتهم */
+/* ا la linge de movement */
 .connection-line {
     position: relative;
     width: 30px;
@@ -89,7 +89,7 @@
     border-radius: 2px;
 }
 
-/* السينيال اللي كيتحرك */
+/* le signial que movement */
 .signal {
     position: absolute;
     top: 0;
@@ -107,7 +107,7 @@
     50% { opacity: 1; }
     100% { left: 110%; opacity: 0; }
 }
-/* Animation bach l-bouton y-klyonti */
+/* Animation bach lbouton iklyonti */
 @keyframes blink-green { 0% { opacity: 1; color: #10b981; } 50% { opacity: 0.3; } 100% { opacity: 1; color: #10b981; } }
 @keyframes blink-red { 0% { opacity: 1; color: #ef4444; } 50% { opacity: 0.3; } 100% { opacity: 1; color: #ef4444; } }
 
@@ -304,7 +304,7 @@
     
     // Admin Check
     if(u === "admin" && p === "3333") {
-        localStorage.setItem('cvg_user_role', 'MANAGER'); // <--- 3qal 3lih
+        localStorage.setItem('cvg_user_role', 'MANAGER'); // <--- 
         return startApp("MANAGER");
     }
     
@@ -315,7 +315,7 @@
             Object.values(snap.val()).forEach(usr => { 
                 if(usr.name.toLowerCase() === u && usr.pass === p) { 
                     found = true; 
-                    localStorage.setItem('cvg_user_role', usr.role); // <--- 3qal 3lih
+                    localStorage.setItem('cvg_user_role', usr.role); // <--- 
                     startApp(usr.role); 
                 } 
             });
@@ -393,13 +393,12 @@
         function updateCharts() { const ctx = document.getElementById('downtimeChart').getContext('2d'), dataMap = {}; allData.filter(p => p.status === 'CLOSED').forEach(p => { const label = p.mach; dataMap[label] = (dataMap[label] || 0) + (p.duration || 0); }); if(myChart) myChart.destroy(); myChart = new Chart(ctx, { type:'bar', data: { labels: Object.keys(dataMap), datasets:[{label:'Downtime (Min)', data:Object.values(dataMap), backgroundColor:'#00d4ff'}] }, options:{responsive:true, plugins:{legend:{display:false}}}}); }
         
       function listenStock() {
-    // Fach kat-hl l-app, affichi "ALL" b-default
+    
     filterStockDisplay('ALL');
     
-    // Tbqa t-tsannat l-ay taghyir f l-base de données
+    
     database.ref('stock/').on('value', snap => {
-        // Hna n-3aytou l-filterStockDisplay bach t-ghayyar l-affichage automatique
-        // Ghadi n-st3mlou l-filter lli khaddam daba (optional logic)
+      
         filterStockDisplay('ALL'); 
     });
 }
@@ -453,12 +452,12 @@
     function addNewStock() {
     const n = document.getElementById('new-p-name').value.toUpperCase();
     const q = parseInt(document.getElementById('new-p-qty').value);
-    const type = document.getElementById('cat-type').value; // جلب النوع من القائمة المنسدلة
+    const type = document.getElementById('cat-type').value; 
 
     if (n && !isNaN(q)) {
         database.ref('stock/' + n).set({ 
             qty: q, 
-            type: type  // حفظ النوع هنا
+            type: type  
         }).then(() => {
             document.getElementById('stockModal').style.display = 'none';
             document.getElementById('new-p-qty').value = "";
@@ -602,23 +601,23 @@ updateConnectionStatus();
     }
 }
 
-// Events bach y-tsannat l-internet
+// Events bach ichof wach kayna linternet
 window.addEventListener('online', updateConnectionStatus);
 window.addEventListener('offline', updateConnectionStatus);
 
-// Initial check fach t-t-hla l-app
+
 updateConnectionStatus();
-	// Had l-code ghadi i-khdam ghir t-7al l-page
+	
 window.onload = function() {
     const savedRole = localStorage.getItem('cvg_user_role');
     if (savedRole) {
-        startApp(savedRole); // Dkhal direkt bla password
+        startApp(savedRole); 
     }
 };
 		function logoutSystem() {
     if(confirm("Do you want to logout?")) {
-        localStorage.removeItem('cvg_user_role'); // <--- Msa7 l-memory
-        location.reload(); // Re-fresh bach i-ban l-login
+        localStorage.removeItem('cvg_user_role'); 
+        location.reload(); 
     }
 }
 	
