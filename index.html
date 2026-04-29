@@ -236,7 +236,7 @@
                     <div style="font-size:1.3rem;">🔄</div>
                     <div style="font-size:0.72rem; font-weight:800; color:#334155; margin-top:3px;">NEW RÉFÉRENCE</div>
                 </div>
-                <div class="arret-type-btn" data-value="PERIODICITE" onclick="selectArretType(this)" style="border:2px solid #e2e8f0; border-radius:12px; padding:10px; text-align:center; cursor:pointer; transition:0.2s;">
+                <div class="arret-type-btn" data-value="WEETECH" onclick="selectArretType(this)" style="border:2px solid #e2e8f0; border-radius:12px; padding:10px; text-align:center; cursor:pointer; transition:0.2s;">
                     <div style="font-size:1.3rem;">📅</div>
                     <div style="font-size:0.72rem; font-weight:800; color:#334155; margin-top:3px;">WEETECH</div>
                 </div>
@@ -541,7 +541,7 @@
                     : "";
                     
                 const niveauColors = { '1': { bg: '#fee2e2', color: '#dc2626', label: '🔴 CRITIQUE' }, '2': { bg: '#ffedd5', color: '#ea580c', label: '🟠 MAJEUR' }, '3': { bg: '#fefce8', color: '#ca8a04', label: '🟡 MINEUR' } };
-                const arretLabels = { 'ARRET_TECHNIQUE': '🔧 Arrêt Technique', 'ARRET_RESEAU': '📡 Arrêt Réseau', 'NEW_REFERENCE': '🔄 New Référence', 'PERIODICITE': '📅 Périodicité' };
+                const arretLabels = { 'ARRET_TECHNIQUE': '🔧 Arrêt Technique', 'ARRET_RESEAU': '📡 Arrêt Réseau', 'NEW_REFERENCE': '🔄 New Référence', 'WEETECH': '📅 WEETECH' };
                 const niv = niveauColors[p.niveau] || { bg: '#f1f5f9', color: '#64748b', label: '—' };
                 const arretLabel = arretLabels[p.arretType] || '—';
                 const borderColor = p.niveau === '1' ? 'var(--danger)' : p.niveau === '2' ? 'var(--warning)' : (isWaiting ? 'var(--danger)' : 'var(--warning)');
@@ -914,7 +914,7 @@
             const closedPannes = allData.filter(p => p.status === 'CLOSED').reverse();
             if (closedPannes.length === 0) { l.innerHTML += "<p style='text-align:center; color:#94a3b8; margin-top:20px;'>No history found.</p>"; return; }
             closedPannes.forEach(p => {
-                const arretLabels = { 'ARRET_TECHNIQUE': '🔧 Technique', 'ARRET_RESEAU': '📡 Réseau', 'NEW_REFERENCE': '🔄 New Réf.', 'PERIODICITE': '📅 Périodicité' };
+                const arretLabels = { 'ARRET_TECHNIQUE': '🔧 Technique', 'ARRET_RESEAU': '📡 Réseau', 'NEW_REFERENCE': '🔄 New Réf.', 'WEETECH': '📅 WEETECH' };
                 const niveauLabels = { '1': '🔴 N1-Critique', '2': '🟠 N2-Majeur', '3': '🟡 N3-Mineur' };
                 const arretLabel = arretLabels[p.arretType] || '';
                 const niveauLabel = niveauLabels[p.niveau] || '';
