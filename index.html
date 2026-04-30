@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CVG Connect | MOROCCO</title>
-    
+
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -85,7 +84,6 @@
             font-size: 0.85rem;
             font-weight: 700;
         }
-        /* ✅ NOUVEAU: Style dyal tech-id field (auto-filled) */
         .tech-id-auto {
             background: #f0fdf4 !important;
             border-color: var(--success) !important;
@@ -142,12 +140,11 @@
                         <span class="connect">Connect</span>
                     </h2>
                 </div>
-                <div id="offline-banner">⚠️ NO INTERNET CONNECTION - DATA NOT SYNCED</div>
+                <div id="offline-banner">NO INTERNET CONNECTION - DATA NOT SYNCED</div>
                 <button id="mute-btn" onclick="toggleMuteAlert()" title="Couper/Activer le son"><i class="fas fa-volume-up" id="mute-icon"></i></button>
                 <button class="logout-btn" id="connection-btn" onclick="location.reload()">
                     <i class="fas fa-power-off"></i>
                 </button>
-                
             </div>
             <div class="slogan-container">
                 <div class="slogan">Commercial vehicle group</div>
@@ -156,28 +153,30 @@
 
         <div id="manager-panel" class="hidden">
             <div class="card" style="margin-bottom:10px; border-left: 5px solid var(--purple);">
-                <label style="font-size: 0.75rem; font-weight: 800; color: var(--primary);">📊 INDIVIDUAL MACHINE ANALYTICS:</label>
+                <label style="font-size: 0.75rem; font-weight: 800; color: var(--primary);">INDIVIDUAL MACHINE ANALYTICS:</label>
                 <select id="stats-machine-select" onchange="updateStats()" style="margin-top:5px; background: #f1f5f9;">
                     <option value="ALL">-- ALL MACHINES (GLOBAL) --</option>
                 </select>
             </div>
-      
+
             <div class="card" style="border-top: 5px solid var(--danger);">
                 <h4 style="color:var(--danger); margin-bottom:10px;">
                     <i class="fas fa-chart-line"></i> TOP 5 CRITICAL MACHINE (DOWNTIME)
                 </h4>
                 <div id="top-bad-actors" style="font-size: 0.85rem;"></div>
             </div>
-			
+
             <div class="grid-kpi">
                 <div class="kpi-card"><span>Total Interventions</span><b id="m-count">0</b></div>
                 <div class="kpi-card"><span>Active Workload</span><b id="m-charge">0</b></div>
                 <div class="kpi-card"><span>MTBF (Hours)</span><b id="m-mtbf">0</b></div>
-                <div class="kpi-card"><span>MTTR (Minutes)</span><b id="m-mttr">0</b></div>
+                <div class="kpi-card"><span>Avg Waiting Time</span><b id="m-waiting">0 min</b></div>
+                <div class="kpi-card"><span>Avg Repair Time (MTTR)</span><b id="m-mttr">0 min</b></div>
+                <div class="kpi-card"><span>Avg Total Downtime</span><b id="m-total-downtime">0 min</b></div>
             </div>
-            <!-- ✅ DATE FILTER -->
+
             <div class="card" style="padding:12px; margin-bottom:10px; border-left: 5px solid var(--accent);">
-                <label style="font-size:0.75rem; font-weight:800; color:var(--primary);">📅 FILTER BY DATE:</label>
+                <label style="font-size:0.75rem; font-weight:800; color:var(--primary);">FILTER BY DATE:</label>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
                     <div>
                         <small style="font-size:0.7rem; color:#64748b; font-weight:700; display:block; margin-bottom:3px;">FROM</small>
@@ -201,12 +200,10 @@
                 <button class="btn" style="background:var(--purple); color:white;" onclick="document.getElementById('archiveModal').style.display='flex'"><i class="fas fa-archive"></i> ARCHIVES</button>
                 <button class="btn" style="background:#16a34a; color:white;" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> EXCEL REPORT</button>
                 <button class="btn" style="background:#64748b; color:white;" onclick="document.getElementById('stockModal').style.display='flex'"><i class="fas fa-plus"></i> ADD TO CATALOG</button>
-                <!-- ✅ IMPORT EXCEL STOCK -->
                 <button class="btn" style="background:#059669; color:white; grid-column: span 2;" onclick="document.getElementById('importStockModal').style.display='flex'"><i class="fas fa-file-import"></i> IMPORT STOCK FROM EXCEL</button>
                 <button class="btn" style="background:var(--primary); color:white; grid-column: span 2;" onclick="document.getElementById('userModal').style.display='flex'"><i class="fas fa-users-gear"></i> USER MANAGEMENT</button>
             </div>
         </div>
-
 
         <div id="op-only-wrapper" class="hidden">
         <div id="op-panel" class="card">
@@ -219,8 +216,7 @@
             </select>
             <select id="in-mach"></select>
 
-            <!-- ✅ TYPE D'ARRÊT -->
-            <label style="font-size:0.75rem; font-weight:800; color:var(--primary); display:block; margin-bottom:5px;">⚠️ TYPE D'ARRÊT:</label>
+            <label style="font-size:0.75rem; font-weight:800; color:var(--primary); display:block; margin-bottom:5px;">TYPE D'ARRÊT:</label>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
                 <div class="arret-type-btn" data-value="ARRET_TECHNIQUE" onclick="selectArretType(this)" style="border:2px solid #e2e8f0; border-radius:12px; padding:10px; text-align:center; cursor:pointer; transition:0.2s;">
                     <div style="font-size:1.3rem;">🔧</div>
@@ -241,8 +237,7 @@
             </div>
             <input type="hidden" id="in-arret-type" value="">
 
-            <!-- ✅ NIVEAU DE CRITICITÉ -->
-            <label style="font-size:0.75rem; font-weight:800; color:var(--primary); display:block; margin-bottom:5px;">🚨 NIVEAU DE CRITICITÉ:</label>
+            <label style="font-size:0.75rem; font-weight:800; color:var(--primary); display:block; margin-bottom:5px;">NIVEAU DE CRITICITÉ:</label>
             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
                 <div class="niveau-btn" data-value="1" onclick="selectNiveau(this)" style="border:2px solid #fecaca; border-radius:12px; padding:10px; text-align:center; cursor:pointer; transition:0.2s; background:#fff;">
                     <div style="font-size:1.2rem;">🔴</div>
@@ -264,9 +259,8 @@
 
             <button class="btn btn-stop" onclick="handlePanneSignal()">SIGNAL DOWNTIME</button>
         </div>
-		
-        </div><!-- /op-panel -->
-        </div><!-- /op-only-wrapper -->
+
+        </div>
         <div class="card">
             <h4><i class="fas fa-bell"></i> ACTIVE ALERTS</h4>
             <div id="pannes-list" style="margin-top:10px;"></div>
@@ -290,13 +284,10 @@
         </div>
     </div>
 
-    <!-- ✅ MODAL CLOSE INTERVENTION - Technician ID AUTO -->
     <div id="closeModal" class="modal">
         <div class="card" style="width:100%; max-width:400px;">
             <h3>Close Intervention</h3>
             <input type="hidden" id="modal-key">
-            
-            <!-- ✅ NOUVEAU: Badge auto dyal Tech ID - machi input manuel -->
             <div class="tech-id-badge">
                 <i class="fas fa-id-badge"></i>
                 <div>
@@ -304,7 +295,6 @@
                     <b id="modal-tech-display">—</b>
                 </div>
             </div>
-            
             <textarea id="modal-problem" placeholder="Problem Description"></textarea>
             <textarea id="modal-solution" placeholder="Action Taken / Solution"></textarea>
             <input list="spareparts" id="modal-piece" placeholder="Spare Part (Optional)">
@@ -318,8 +308,6 @@
     <div id="viewStockModal" class="modal" onclick="if(event.target == this) this.style.display='none'">
         <div class="card" style="width:100%; max-width:450px; max-height: 85vh; display: flex; flex-direction: column;">
             <h3>Inventory Status</h3>
-
-            <!-- ✅ LOW STOCK ALERT SECTION -->
             <div id="low-stock-alert-section" style="display:none; background:#fef2f2; border:2px solid #ef4444; border-radius:12px; padding:10px; margin-bottom:12px;">
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
                     <span style="font-size:1.1rem;">🚨</span>
@@ -328,7 +316,6 @@
                 </div>
                 <div id="low-stock-items" style="display:flex; flex-direction:column; gap:5px;"></div>
             </div>
-
             <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                 <button class="btn" style="background:var(--primary); color:white; font-size:0.7rem; padding:8px;" onclick="filterStockDisplay('ALL')">ALL</button>
                 <button class="btn" style="background:#64748b; color:white; font-size:0.7rem; padding:8px;" onclick="filterStockDisplay('PIECE')">PARTS</button>
@@ -356,8 +343,6 @@
             </select>
             <label style="font-size: 0.8rem; font-weight: 800;">ITEM NAME:</label>
             <select id="new-p-name" onchange="checkExistingStock()"><option value="">-- Select Item --</option></select>
-            
-            <!-- ✅ Current stock info -->
             <div id="current-stock-info" style="display:none; background:#f0fdf4; border:1.5px solid var(--success); border-radius:10px; padding:10px; margin-bottom:10px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <span style="font-size:0.75rem; font-weight:700; color:#166534;">📦 CURRENT STOCK:</span>
@@ -368,57 +353,44 @@
             <div id="new-item-info" style="display:none; background:#eff6ff; border:1.5px solid #3b82f6; border-radius:10px; padding:10px; margin-bottom:10px;">
                 <span style="font-size:0.75rem; font-weight:700; color:#1e40af;">🆕 NEW ITEM — will be created in catalogue</span>
             </div>
-
             <label style="font-size: 0.8rem; font-weight: 800;">QUANTITY TO ADD:</label>
             <input type="number" id="new-p-qty" placeholder="Quantity" min="1">
             <button class="btn btn-success" onclick="addNewStock()">CONFIRM ADDITION</button>
         </div>
     </div>
 
-    <!-- ✅ IMPORT STOCK MODAL -->
     <div id="importStockModal" class="modal" onclick="if(event.target==this) this.style.display='none'">
         <div class="card" style="width:100%; max-width:450px; max-height:90vh; display:flex; flex-direction:column;">
             <h3 style="color:var(--primary); margin-bottom:5px;"><i class="fas fa-file-import"></i> Import Stock from Excel</h3>
-            
-            <!-- Template info -->
             <div style="background:#eff6ff; border:1.5px solid #3b82f6; border-radius:10px; padding:10px; margin-bottom:12px;">
                 <p style="font-size:0.78rem; font-weight:700; color:#1e40af; margin-bottom:6px;">📋 Excel format requis — 2 colonnes:</p>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
                     <div style="background:white; border-radius:6px; padding:6px; text-align:center;">
                         <div style="font-size:0.65rem; color:#64748b; font-weight:700;">COLONNE A</div>
                         <div style="font-size:0.8rem; font-weight:800; color:var(--primary);">NOM / ARTICLE</div>
-                        <div style="font-size:0.65rem; color:#94a3b8;">ex: A017, TOOL-4</div>
                     </div>
                     <div style="background:white; border-radius:6px; padding:6px; text-align:center;">
                         <div style="font-size:0.65rem; color:#64748b; font-weight:700;">COLONNE B</div>
                         <div style="font-size:0.8rem; font-weight:800; color:var(--primary);">QUANTITÉ</div>
-                        <div style="font-size:0.65rem; color:#94a3b8;">ex: 10, 25, 3</div>
                     </div>
                 </div>
                 <p style="font-size:0.7rem; color:#64748b; margin-top:6px; font-weight:600;">⚠️ La 1ère ligne (header) sera ignorée automatiquement</p>
             </div>
-
-            <!-- Mode import -->
             <label style="font-size:0.75rem; font-weight:800; color:var(--primary); margin-bottom:5px;">MODE D'IMPORT:</label>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
-                <div class="import-mode-btn active-mode" data-mode="merge" onclick="selectImportMode(this)" 
-                     style="border:2px solid var(--primary); background:#e0f2fe; border-radius:10px; padding:10px; text-align:center; cursor:pointer;">
+                <div class="import-mode-btn active-mode" data-mode="merge" onclick="selectImportMode(this)" style="border:2px solid var(--primary); background:#e0f2fe; border-radius:10px; padding:10px; text-align:center; cursor:pointer;">
                     <div style="font-size:1rem;">🔄</div>
                     <div style="font-size:0.72rem; font-weight:800; color:var(--primary);">MERGE</div>
                     <div style="font-size:0.62rem; color:#64748b;">Ajouter/Mettre à jour</div>
                 </div>
-                <div class="import-mode-btn" data-mode="replace" onclick="selectImportMode(this)"
-                     style="border:2px solid #e2e8f0; background:#fff; border-radius:10px; padding:10px; text-align:center; cursor:pointer;">
+                <div class="import-mode-btn" data-mode="replace" onclick="selectImportMode(this)" style="border:2px solid #e2e8f0; background:#fff; border-radius:10px; padding:10px; text-align:center; cursor:pointer;">
                     <div style="font-size:1rem;">♻️</div>
                     <div style="font-size:0.72rem; font-weight:800; color:#dc2626;">REPLACE ALL</div>
                     <div style="font-size:0.62rem; color:#64748b;">Remplacer tout le stock</div>
                 </div>
             </div>
             <input type="hidden" id="import-mode" value="merge">
-
-            <!-- File input -->
-            <label for="excel-file-input" style="display:flex; align-items:center; justify-content:center; gap:10px; background:#f8fafc; border:2px dashed #cbd5e1; border-radius:12px; padding:20px; cursor:pointer; margin-bottom:10px; transition:0.2s;" 
-                   id="file-drop-zone">
+            <label for="excel-file-input" style="display:flex; align-items:center; justify-content:center; gap:10px; background:#f8fafc; border:2px dashed #cbd5e1; border-radius:12px; padding:20px; cursor:pointer; margin-bottom:10px; transition:0.2s;" id="file-drop-zone">
                 <i class="fas fa-cloud-upload-alt" style="font-size:1.5rem; color:#94a3b8;"></i>
                 <div>
                     <div style="font-size:0.85rem; font-weight:800; color:#334155;">Cliquer pour choisir le fichier</div>
@@ -426,8 +398,6 @@
                 </div>
             </label>
             <input type="file" id="excel-file-input" accept=".xlsx,.xls" style="display:none;" onchange="previewExcelImport(this)">
-
-            <!-- Preview -->
             <div id="import-preview" style="display:none; flex-grow:1; overflow-y:auto;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                     <span style="font-size:0.75rem; font-weight:800; color:var(--primary);">📦 APERÇU:</span>
@@ -438,7 +408,6 @@
                 </div>
                 <div id="preview-table" style="max-height:180px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;"></div>
             </div>
-
             <button class="btn btn-success" id="btn-confirm-import" style="display:none; margin-top:10px;" onclick="confirmImportStock()">
                 <i class="fas fa-check"></i> CONFIRMER L'IMPORT
             </button>
@@ -450,37 +419,32 @@
 
     <script>
         const machineData = { "SKODA A8": ["80005631", "80007235", "80007236", "80007237", "80007238", "80007239", "80007240", "80007241", "80007242", "80007243", "80007244", "80007245", "80007246"], "CRAFTER": ["80003403", "80003857", "80006951", "80006953", "80007608", "80008117", "80008118", "80008119", "80008120", "80008121", "80008122", "80008125", "80008184"], "G.CALIFORNIA": ["80006958"] };
-        
+
         const firebaseConfig = { apiKey: "AIzaSyASQa5cLXFllnV6EmYp-ARZ9dndWSKha6c", authDomain: "cvgmaroc-gmao.firebaseapp.com", databaseURL: "https://cvgmaroc-gmao-default-rtdb.firebaseio.com", projectId: "cvgmaroc-gmao", storageBucket: "cvgmaroc-gmao.firebasestorage.app", messagingSenderId: "72908747564", appId: "1:72908747564:web:82f646ef5dd209d03b7289" };
-        
+
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // ✅ MODIFIÉ: ADD currentUserName
         let currentUser = null, currentUserName = null, allData = [], myChart = null;
 
-        // ✅ MODIFIÉ: handleLogin - SAVE l'username
         function handleLogin() {
             const u = document.getElementById('login-user').value.trim().toLowerCase(), p = document.getElementById('login-pass').value;
-            // ✅ Admin: username = "ADMIN"
             if(u === "admin" && p === "3333") return startApp("MANAGER", "ADMIN");
             database.ref('users/').once('value', snap => {
                 let found = false;
-                if(snap.val()) Object.values(snap.val()).forEach(usr => { 
-                    if(usr.name.toLowerCase() === u && usr.pass === p) { 
-                        found = true; 
-                        // ✅ MODIFIÉ: ADD usr.name AS paramètre
-                        startApp(usr.role, usr.name.toUpperCase()); 
-                    } 
+                if(snap.val()) Object.values(snap.val()).forEach(usr => {
+                    if(usr.name.toLowerCase() === u && usr.pass === p) {
+                        found = true;
+                        startApp(usr.role, usr.name.toUpperCase());
+                    }
                 });
                 if(!found) alert("Access Denied: Invalid credentials");
             });
         }
 
-        // ✅ MODIFIÉ: startApp - ACCEPT username
         function startApp(role, username) {
             currentUser = role;
-            currentUserName = username; // ✅ save Staff ID user
+            currentUserName = username;
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('app-content').classList.remove('hidden');
             document.getElementById('roleText').innerText = role + " | " + username;
@@ -491,7 +455,6 @@
             }
             if(role === 'MAINTENANCE') {
                 document.getElementById('manager-panel').classList.remove('hidden');
-                document.getElementById('alerts-panel').classList.remove('hidden');
                 populateMachineStatsSelect();
             }
             if(role === 'OPERATEUR') {
@@ -501,55 +464,57 @@
             setInterval(updateLiveTimers, 1000);
         }
 
-        function listenFirebase() { 
-            database.ref('pannes/').on('value', snap => { 
-                allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : []; 
-                renderUI(); 
-                renderArchives(); 
-                updateStats(); 
-                if(currentUser !== "OPERATEUR") updateCharts(); 
-            }); 
+        function listenFirebase() {
+            database.ref('pannes/').on('value', snap => {
+                allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
+                renderUI();
+                renderArchives();
+                updateStats();
+                if(currentUser !== "OPERATEUR") updateCharts();
+            });
         }
-        
+
         function renderUI() {
-            const container = document.getElementById('pannes-list'); 
+            const container = document.getElementById('pannes-list');
             container.innerHTML = "";
             const actives = allData.filter(p => p.status !== 'CLOSED');
             if(document.getElementById('m-charge')) document.getElementById('m-charge').innerText = actives.length;
-            
+
             actives.reverse().forEach(p => {
                 let isWaiting = p.status === 'OPEN';
                 let statusLabel = isWaiting ? 'DOWN' : 'FIXING...';
-                
+
                 let timerSection = "";
                 if (isWaiting) {
-                    timerSection = `<div class="waiting-notify">
-                        ⏳ Waiting for Maintenance to accept...
+                    timerSection = `<div style="margin:10px 0; padding:10px; background:linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-radius:12px; text-align:center; border:1.5px solid #dc2626;">
+                        <small style="font-size:0.7rem; font-weight:800; color:#991b1b; text-transform:uppercase; display:block; margin-bottom:4px;">Waiting Time</small>
+                        <b class="live-waiting-timer" data-start="${p.startTs}" style="font-size:1.3rem; color:#dc2626; font-family:monospace;">00:00:00</b>
                     </div>`;
                 } else {
-                    timerSection = `<div style="margin:10px 0; padding:8px; background:#f1f5f9; border-radius:12px; text-align:center;">
-                        <b class="live-timer" data-start="${p.recuTs}">00:00:00</b>
+                    timerSection = `<div style="margin:10px 0; padding:10px; background:#f1f5f9; border-radius:12px; text-align:center;">
+                        <small style="font-size:0.7rem; font-weight:800; color:#64748b; text-transform:uppercase; display:block; margin-bottom:4px;">Repair Time</small>
+                        <b class="live-timer" data-start="${p.recuTs}" style="font-size:1.3rem; color:var(--primary); font-family:monospace;">00:00:00</b>
                     </div>`;
                 }
-                
-                let actionBtn = (currentUser === 'MAINTENANCE') 
-                    ? (isWaiting 
-                        ? `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">Accept Request</button>` 
-                        : `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">FINISH REPAIR</button>`) 
+
+                let actionBtn = (currentUser === 'MAINTENANCE')
+                    ? (isWaiting
+                        ? `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">Accept Request</button>`
+                        : `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">FINISH REPAIR</button>`)
                     : "";
-                    
+
                 const niveauColors = { '1': { bg: '#fee2e2', color: '#dc2626', label: '🔴 CRITIQUE' }, '2': { bg: '#ffedd5', color: '#ea580c', label: '🟠 MAJEUR' }, '3': { bg: '#fefce8', color: '#ca8a04', label: '🟡 MINEUR' } };
                 const arretLabels = { 'ARRET_TECHNIQUE': '🔧 Arrêt Technique', 'ARRET_RESEAU': '📡 Arrêt Réseau', 'NEW_REFERENCE': '🔄 New Référence', 'WEETECH': '📅 WEETECH' };
                 const niv = niveauColors[p.niveau] || { bg: '#f1f5f9', color: '#64748b', label: '—' };
                 const arretLabel = arretLabels[p.arretType] || '—';
                 const borderColor = p.niveau === '1' ? 'var(--danger)' : p.niveau === '2' ? 'var(--warning)' : (isWaiting ? 'var(--danger)' : 'var(--warning)');
-                    
+
                 container.innerHTML += `
                     <div class="card" style="border-left:5px solid ${borderColor}">
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
                             <b style="font-size:1rem;">${p.mach}</b>
-                            ${isWaiting 
-                                ? `<span class="status-tag tag-open">${statusLabel}</span>` 
+                            ${isWaiting
+                                ? `<span class="status-tag tag-open">${statusLabel}</span>`
                                 : `<span class="status-tag tag-progress">${statusLabel}</span>`}
                         </div>
                         <small style="color:#64748b;">${p.proj}</small>
@@ -561,7 +526,7 @@
                         <div>${actionBtn}</div>
                     </div>`;
             });
-            
+
             const sound = document.getElementById('alertSound');
             const hasOpen = actives.some(p => p.status === 'OPEN');
             const banner = document.getElementById('alert-sound-banner');
@@ -584,86 +549,72 @@
             }
         }
 
-        function takeCharge(key) { 
-            database.ref('pannes/'+key).update({ 
-                status: 'IN_PROGRESS', 
+        function takeCharge(key) {
+            database.ref('pannes/'+key).update({
+                status: 'IN_PROGRESS',
                 recuTime: new Date().toLocaleString(),
                 recuTs: Date.now(),
-                
                 techId: currentUserName
-            }); 
+            });
         }
-        
-       
-        function openRepriseModal(key) { 
+
+        function openRepriseModal(key) {
             document.getElementById('modal-key').value = key;
-            
             document.getElementById('modal-tech-display').innerText = currentUserName;
             document.getElementById('modal-problem').value = '';
             document.getElementById('modal-solution').value = '';
             document.getElementById('modal-piece').value = '';
             document.getElementById('modal-qty').value = 1;
-            document.getElementById('closeModal').style.display='flex'; 
+            document.getElementById('closeModal').style.display='flex';
         }
-        
-      
+
         function confirmClosing() {
             const key = document.getElementById('modal-key').value;
-            const tech = currentUserName; 
+            const tech = currentUserName;
             const prob = document.getElementById('modal-problem').value;
             const sol = document.getElementById('modal-solution').value;
             const piece = document.getElementById('modal-piece').value.toUpperCase();
             const qty = parseInt(document.getElementById('modal-qty').value) || 0;
-            
+
             const item = allData.find(x => x.key === key);
-            
             const repairStart = item.recuTs || item.startTs;
             const duration = Math.round((Date.now() - repairStart) / 60000);
-            
-            database.ref('pannes/'+key).update({ 
-                status: 'CLOSED', duration, 
-                techId: tech, 
-                problem: prob, 
-                solution: sol, piece, qty, doneTime: new Date().toLocaleString() 
+
+            database.ref('pannes/'+key).update({
+                status: 'CLOSED', duration,
+                techId: tech,
+                problem: prob,
+                solution: sol, piece, qty, doneTime: new Date().toLocaleString()
             }).then(() => {
-                if(piece) { 
-                    const sRef = database.ref('stock/'+piece); 
-                    sRef.once('value', s => { 
-                        if(s.exists()) sRef.update({qty: Math.max(0, s.val().qty - qty)}); 
-                    }); 
+                if(piece) {
+                    const sRef = database.ref('stock/'+piece);
+                    sRef.once('value', s => {
+                        if(s.exists()) sRef.update({qty: Math.max(0, s.val().qty - qty)});
+                    });
                 }
                 document.getElementById('closeModal').style.display='none';
             });
         }
 
         function selectArretType(el) {
-            document.querySelectorAll('.arret-type-btn').forEach(b => {
-                b.style.border = '2px solid #e2e8f0';
-                b.style.background = '#fff';
-            });
+            document.querySelectorAll('.arret-type-btn').forEach(b => { b.style.border = '2px solid #e2e8f0'; b.style.background = '#fff'; });
             el.style.border = '2px solid var(--primary)';
             el.style.background = '#e0f2fe';
             document.getElementById('in-arret-type').value = el.getAttribute('data-value');
         }
 
         function selectNiveau(el) {
-            document.querySelectorAll('.niveau-btn').forEach(b => {
-                b.style.opacity = '1';
-                b.style.transform = 'scale(1)';
-            });
+            document.querySelectorAll('.niveau-btn').forEach(b => { b.style.opacity = '1'; b.style.transform = 'scale(1)'; });
             const nv = el.getAttribute('data-value');
             const colors = { '1': '#fecaca', '2': '#fed7aa', '3': '#fef08a' };
-            document.querySelectorAll('.niveau-btn').forEach(b => {
-                b.style.border = `2px solid ${colors[b.getAttribute('data-value')]}`;
-                b.style.background = '#fff';
-            });
+            document.querySelectorAll('.niveau-btn').forEach(b => { b.style.border = `2px solid ${colors[b.getAttribute('data-value')]}`; b.style.background = '#fff'; });
             el.style.border = `2px solid ${colors[nv]}`;
             el.style.background = nv === '1' ? '#fee2e2' : nv === '2' ? '#ffedd5' : '#fefce8';
             el.style.transform = 'scale(1.05)';
             document.getElementById('in-niveau').value = nv;
         }
 
-        function handlePanneSignal() { 
+        function handlePanneSignal() {
             const proj = document.getElementById('in-proj').value;
             const mach = document.getElementById('in-mach').value;
             const arretType = document.getElementById('in-arret-type').value;
@@ -679,27 +630,34 @@
                 dateStr: new Date().toLocaleString()
             });
 
-            // Reset selections
             document.querySelectorAll('.arret-type-btn').forEach(b => { b.style.border='2px solid #e2e8f0'; b.style.background='#fff'; });
             document.querySelectorAll('.niveau-btn').forEach(b => { b.style.transform='scale(1)'; const c={'1':'#fecaca','2':'#fed7aa','3':'#fef08a'}; b.style.border=`2px solid ${c[b.getAttribute('data-value')]}`; b.style.background='#fff'; });
             document.getElementById('in-arret-type').value = '';
             document.getElementById('in-niveau').value = '';
         }
 
-        function updateMachineList() { 
-            const p = document.getElementById('in-proj').value, s = document.getElementById('in-mach'); 
-            s.innerHTML = ""; 
-            (machineData[p] || []).forEach(m => s.innerHTML += `<option value="${m}">${m}</option>`); 
+        function updateMachineList() {
+            const p = document.getElementById('in-proj').value, s = document.getElementById('in-mach');
+            s.innerHTML = "";
+            (machineData[p] || []).forEach(m => s.innerHTML += `<option value="${m}">${m}</option>`);
         }
-        
-        function updateLiveTimers() { 
-            document.querySelectorAll('.live-timer').forEach(el => { 
+
+        function updateLiveTimers() {
+            document.querySelectorAll('.live-timer').forEach(el => {
                 const start = parseInt(el.getAttribute('data-start'));
                 if (!start) return;
                 const diff = Math.floor((Date.now() - start) / 1000);
-                const h = Math.floor(diff/3600), m = Math.floor((diff%3600)/60), s = diff%60; 
-                el.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; 
-            }); 
+                const h = Math.floor(diff/3600), m = Math.floor((diff%3600)/60), s = diff%60;
+                el.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            });
+
+            document.querySelectorAll('.live-waiting-timer').forEach(el => {
+                const start = parseInt(el.getAttribute('data-start'));
+                if (!start) return;
+                const diff = Math.floor((Date.now() - start) / 1000);
+                const h = Math.floor(diff/3600), m = Math.floor((diff%3600)/60), s = diff%60;
+                el.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            });
         }
 
         function populateMachineStatsSelect() {
@@ -736,14 +694,27 @@
                 return true;
             });
 
-            let totalRepairTime = 0;
-            machinePannes.forEach(p => totalRepairTime += p.duration || 0);
-            const mttr = machinePannes.length > 0 ? Math.round(totalRepairTime / machinePannes.length) : 0;
-            
+            let totalWaitingTime = 0, totalRepairTime = 0, totalDowntime = 0;
+            machinePannes.forEach(p => {
+                const waitingTime = (p.recuTs || p.startTs) - p.startTs;
+                const repairTime = (p.duration || 0) * 60 * 1000;
+                const downtime = (p.duration || 0) * 60 * 1000;
+                totalWaitingTime += waitingTime;
+                totalRepairTime += repairTime;
+                totalDowntime += downtime;
+            });
+
+            const avgWaitingTime = machinePannes.length > 0 ? Math.round(totalWaitingTime / machinePannes.length / 60000) : 0;
+            const avgRepairTime = machinePannes.length > 0 ? Math.round(totalRepairTime / machinePannes.length / 60000) : 0;
+            const avgTotalDowntime = machinePannes.length > 0 ? Math.round(totalDowntime / machinePannes.length / 60000) : 0;
+            const mttr = avgRepairTime;
+
+            document.getElementById('m-waiting').innerText = avgWaitingTime + " min";
+
             const mttrElement = document.getElementById('m-mttr');
             const mttrCard = mttrElement.closest('.kpi-card');
             mttrElement.innerText = mttr + " min";
-            
+
             if (mttr > TARGET_MTTR) {
                 mttrCard.classList.add('critical');
                 mttrElement.innerHTML = `${mttr} min <i class="fas fa-exclamation-triangle" style="font-size:0.8rem"></i>`;
@@ -751,8 +722,10 @@
                 mttrCard.classList.remove('critical');
             }
 
+            document.getElementById('m-total-downtime').innerText = avgTotalDowntime + " min";
+
             document.getElementById('m-count').innerText = machinePannes.length;
-            
+
             if (machinePannes.length > 1) {
                 const timestamps = machinePannes.map(p => p.startTs).sort((a, b) => a - b);
                 const totalPeriodHours = (timestamps[timestamps.length - 1] - timestamps[0]) / (1000 * 60 * 60);
@@ -763,14 +736,31 @@
             }
 
             updateMachineChart(machinePannes, selectedMach);
-            updateBadActors(); 
+            updateBadActors();
         }
 
         function updateBadActors() {
             const actorContainer = document.getElementById('top-bad-actors');
             if (!actorContainer) return;
+            const dateFrom = document.getElementById('filter-date-from')?.value;
+            const dateTo = document.getElementById('filter-date-to')?.value;
+
+            const filteredData = allData.filter(p => {
+                if (p.status !== 'CLOSED') return false;
+                if (dateFrom || dateTo) {
+                    const panneDate = new Date(p.startTs);
+                    if (dateFrom && panneDate < new Date(dateFrom)) return false;
+                    if (dateTo) {
+                        const toDate = new Date(dateTo);
+                        toDate.setHours(23, 59, 59, 999);
+                        if (panneDate > toDate) return false;
+                    }
+                }
+                return true;
+            });
+
             const machineDowntime = {};
-            allData.filter(p => p.status === 'CLOSED').forEach(p => {
+            filteredData.forEach(p => {
                 machineDowntime[p.mach] = (machineDowntime[p.mach] || 0) + (p.duration || 0);
             });
             const sortedMachines = Object.entries(machineDowntime).sort(([, a], [, b]) => b - a).slice(0, 5);
@@ -784,46 +774,50 @@
             actorContainer.innerHTML = html;
         }
 
-        function updateAllDataManually() {
-            database.ref('pannes/').once('value', snap => {
-                allData = snap.val() ? Object.entries(snap.val()).map(([key, val]) => ({key, ...val})) : [];
-                renderUI();
-                updateStats();
-                if(currentUser !== "OPERATEUR") { updateCharts(); updateBadActors(); }
-                alert("System Analytics Refreshed! ✅");
-            });
-        }
-
         function updateMachineChart(data, label) {
             const ctx = document.getElementById('downtimeChart').getContext('2d');
             const TARGET_MTTR = 30;
-            const dateMap = {};
-            data.forEach(p => { const date = p.dateStr.split(',')[0]; dateMap[date] = (dateMap[date] || 0) + (p.duration || 0); });
-            const labels = Object.keys(dateMap);
-            const chartData = Object.values(dateMap);
+            const dateMap = { totalDowntime: {}, waitingTime: {}, repairTime: {} };
+            data.forEach(p => {
+                const date = p.dateStr.split(',')[0];
+                const waiting = (p.recuTs || p.startTs) - p.startTs;
+                const repair = (p.duration || 0) * 60 * 1000;
+                dateMap.totalDowntime[date] = (dateMap.totalDowntime[date] || 0) + (p.duration || 0);
+                dateMap.waitingTime[date] = (dateMap.waitingTime[date] || 0) + Math.round(waiting / 60000);
+                dateMap.repairTime[date] = (dateMap.repairTime[date] || 0) + Math.round(repair / 60000);
+            });
+            const labels = Object.keys(dateMap.totalDowntime);
+            const totalData = Object.values(dateMap.totalDowntime);
+            const waitingData = Object.values(dateMap.waitingTime);
+            const repairData = Object.values(dateMap.repairTime);
             if(myChart) myChart.destroy();
             myChart = new Chart(ctx, {
                 type: 'line',
-                data: { labels, datasets: [{ label: `Downtime ${label} (Min)`, data: chartData, borderColor: '#00d4ff', backgroundColor: 'rgba(0, 212, 255, 0.1)', fill: true, tension: 0.4, order: 2 }, { label: 'TARGET (30 min)', data: new Array(labels.length).fill(TARGET_MTTR), borderColor: '#ef4444', borderDash: [5, 5], borderWidth: 2, pointRadius: 0, fill: false, order: 1 }] },
+                data: {
+                    labels,
+                    datasets: [
+                        { label: `Total Downtime ${label} (Min)`, data: totalData, borderColor: '#00d4ff', backgroundColor: 'rgba(0, 212, 255, 0.1)', fill: true, tension: 0.4, order: 2 },
+                        { label: 'Waiting Time (Min)', data: waitingData, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: false, tension: 0.4, borderWidth: 2 },
+                        { label: 'Repair Time (Min)', data: repairData, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: false, tension: 0.4, borderWidth: 2 },
+                        { label: 'TARGET MTTR (30 min)', data: new Array(labels.length).fill(TARGET_MTTR), borderColor: '#ef4444', borderDash: [5, 5], borderWidth: 2, pointRadius: 0, fill: false, order: 1 }
+                    ]
+                },
                 options: { responsive: true, plugins: { legend: { display: true, position: 'top' } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Minutes' } } } }
             });
         }
 
         function updateCharts() { updateStats(); }
-        
-        function listenStock() { 
-            filterStockDisplay('ALL'); 
-            database.ref('stock/').on('value', snap => { 
+
+        function listenStock() {
+            filterStockDisplay('ALL');
+            database.ref('stock/').on('value', snap => {
                 filterStockDisplay('ALL');
-               
                 let lowCount = 0;
-                if (snap.val()) {
-                    Object.values(snap.val()).forEach(d => { if (d.qty <= 4) lowCount++; });
-                }
+                if (snap.val()) { Object.values(snap.val()).forEach(d => { if (d.qty <= 4) lowCount++; }); }
                 const stockBtn = document.getElementById('stock-alert-badge');
                 if (stockBtn) stockBtn.innerText = lowCount > 0 ? lowCount : '';
                 if (stockBtn) stockBtn.style.display = lowCount > 0 ? 'flex' : 'none';
-            }); 
+            });
         }
 
         function exportToExcel() {
@@ -875,9 +869,9 @@
                 }
             });
         }
-        
+
         function searchStock() { const f = document.getElementById('stockSearchInput').value.toUpperCase(), rows = document.querySelector(".stock-table tbody").rows; for(let r of rows) r.style.display = r.cells[0].innerText.toUpperCase().includes(f) ? "" : "none"; }
-        
+
         function addNewStock() {
             const n = document.getElementById('new-p-name').value.toUpperCase();
             const q = parseInt(document.getElementById('new-p-qty').value);
@@ -887,7 +881,6 @@
             const ref = database.ref('stock/' + n);
             ref.once('value', snap => {
                 if (snap.exists()) {
-                   
                     const oldQty = snap.val().qty || 0;
                     const newQty = oldQty + q;
                     ref.update({ qty: newQty }).then(() => {
@@ -896,7 +889,6 @@
                         alert(`✅ RESTOCK SUCCESS!\n${n}: ${oldQty} ➜ ${newQty} units (+${q})`);
                     });
                 } else {
-                    
                     ref.set({ qty: q, type: type }).then(() => {
                         document.getElementById('stockModal').style.display = 'none';
                         document.getElementById('new-p-qty').value = "";
@@ -925,29 +917,25 @@
             });
         }
 
-        function startScanner() { 
-            const s = new Html5Qrcode("reader"); 
-            s.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (t) => { 
-                for(let [p, m] of Object.entries(machineData)) { 
-                    if(m.includes(t.trim())) { 
-                        document.getElementById('in-proj').value = p; 
-                        updateMachineList(); 
-                        document.getElementById('in-mach').value = t.trim(); 
-                        s.stop(); 
-                        alert("Machine Identified: " + t.trim()); break; 
-                    } 
-                } 
-            }); 
+        function startScanner() {
+            const s = new Html5Qrcode("reader");
+            s.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (t) => {
+                for(let [p, m] of Object.entries(machineData)) {
+                    if(m.includes(t.trim())) {
+                        document.getElementById('in-proj').value = p;
+                        updateMachineList();
+                        document.getElementById('in-mach').value = t.trim();
+                        s.stop();
+                        alert("Machine Identified: " + t.trim()); break;
+                    }
+                }
+            });
         }
 
-        // ✅ IMPORT STOCK FUNCTIONS
         let importedStockData = [];
 
         function selectImportMode(el) {
-            document.querySelectorAll('.import-mode-btn').forEach(b => {
-                b.style.border = '2px solid #e2e8f0';
-                b.style.background = '#fff';
-            });
+            document.querySelectorAll('.import-mode-btn').forEach(b => { b.style.border = '2px solid #e2e8f0'; b.style.background = '#fff'; });
             el.style.border = '2px solid var(--primary)';
             el.style.background = '#e0f2fe';
             document.getElementById('import-mode').value = el.getAttribute('data-mode');
@@ -956,8 +944,6 @@
         function previewExcelImport(input) {
             const file = input.files[0];
             if (!file) return;
-
-            // Update drop zone label
             document.getElementById('file-drop-zone').innerHTML = `
                 <i class="fas fa-file-excel" style="font-size:1.5rem; color:#16a34a;"></i>
                 <div>
@@ -975,11 +961,10 @@
 
                     importedStockData = [];
                     let validCount = 0, warnCount = 0;
-                    let tableHtml = '<table style="width:100%; border-collapse:collapse; font-size:0.78rem;">';
-                    tableHtml += '<thead><tr style="background:#f1f5f9;"><th style="padding:6px 8px; text-align:left;">Article</th><th style="padding:6px 8px; text-align:right;">Qty</th><th style="padding:6px 8px; text-align:center;">Type</th><th style="padding:6px 8px; text-align:center;">Statut</th></tr></thead><tbody>';
+                    let tableHtml = '<table style="width:100%; border-collapse:collapse; font-size:0.78rem;"><thead><tr style="background:#f1f5f9;"><th style="padding:6px 8px; text-align:left;">Article</th><th style="padding:6px 8px; text-align:right;">Qty</th><th style="padding:6px 8px; text-align:center;">Type</th><th style="padding:6px 8px; text-align:center;">Statut</th></tr></thead><tbody>';
 
                     rows.forEach((row, i) => {
-                        if (i === 0) return; // Skip header
+                        if (i === 0) return;
                         const name = String(row[0] || '').trim().toUpperCase();
                         const qty = parseInt(row[1]);
                         if (!name || isNaN(qty)) return;
@@ -1062,7 +1047,6 @@
                     <div style="font-size:0.85rem; font-weight:800; color:#334155;">Cliquer pour choisir le fichier</div>
                     <div style="font-size:0.7rem; color:#94a3b8;">.xlsx, .xls acceptés</div>
                 </div>`;
-            // Reset mode to merge
             document.querySelectorAll('.import-mode-btn').forEach(b => { b.style.border='2px solid #e2e8f0'; b.style.background='#fff'; });
             document.querySelector('[data-mode="merge"]').style.border = '2px solid var(--primary)';
             document.querySelector('[data-mode="merge"]').style.background = '#e0f2fe';
@@ -1106,7 +1090,7 @@
                 });
             }
         }
-		
+
         function filterStockDisplay(type) {
             database.ref('stock/').once('value', snap => {
                 const list = document.getElementById('stock-list');
@@ -1119,7 +1103,6 @@
                 let lowTotal = 0;
 
                 if (snap.val()) {
-                    // ✅ Low stock items 
                     Object.entries(snap.val()).forEach(([name, data]) => {
                         if (data.qty <= 4) {
                             lowTotal++;
@@ -1138,7 +1121,6 @@
                         }
                     });
 
-                    // ✅ Full inventory table
                     Object.entries(snap.val()).forEach(([name, data]) => {
                         const isLow = data.qty <= 4;
                         let showItem = false;
@@ -1149,7 +1131,6 @@
                     });
                 }
 
-                // ✅ Show/hide low stock section
                 if (lowTotal > 0) {
                     lowSection.style.display = 'block';
                     lowItems.innerHTML = lowHtml;
