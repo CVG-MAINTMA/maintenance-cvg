@@ -108,85 +108,6 @@
         #mute-btn.muted { background:#475569; animation:none; }
         @keyframes pulse-mute { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.5)} 50%{box-shadow:0 0 0 6px rgba(239,68,68,0)} }
         #alert-sound-banner { display:none; background:linear-gradient(90deg,#dc2626,#b91c1c); color:white; text-align:center; padding:8px 15px; font-size:0.82rem; font-weight:800; border-radius:12px; margin-bottom:10px; animation:blink 1s infinite; cursor:pointer; }
-
-        @media (max-width: 768px) {
-            body { padding: 8px; }
-            header { padding: 12px 15px; margin-bottom: 12px; }
-            .header-top { flex-direction: column; gap: 10px; }
-            .header-info h2 { font-size: 1.1rem; }
-            .logo-container { font-size: 1.3rem; }
-            .slogan { font-size: 0.75rem; letter-spacing: 0.5px; }
-            .card { padding: 12px; margin-bottom: 12px; border-radius: 15px; }
-            .grid-kpi { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-            .kpi-card { padding: 10px; border-radius: 12px; }
-            .kpi-card span { font-size: 0.6rem; margin-bottom: 4px; }
-            .kpi-card b { font-size: 0.95rem; }
-            .btn { padding: 10px; font-size: 0.85rem; border-radius: 10px; }
-            input, select, textarea { padding: 10px; font-size: 0.85rem; margin-bottom: 8px; }
-            .modal { padding: 15px; }
-            .modal .card { width: 100%; max-width: 95vw !important; max-height: 85vh; border-radius: 18px; }
-            .status-tag { font-size: 0.65rem; padding: 3px 6px; }
-            .archive-item { padding: 10px; margin-bottom: 10px; border-radius: 10px; }
-            .archive-item b { font-size: 0.95rem; margin-bottom: 3px; }
-            .archive-item .meta { font-size: 0.7rem; gap: 8px; flex-direction: column; }
-            #login-overlay .card { width: 90vw; max-width: 100%; padding: 30px 20px; }
-            #login-overlay h2 { font-size: 1.5rem; margin-bottom: 20px; }
-            #login-overlay input { padding: 12px 15px; font-size: 0.9rem; }
-            .waiting-notify { font-size: 0.75rem; padding: 8px; }
-            .tech-id-badge { gap: 6px; padding: 8px 10px; }
-            .tech-id-badge i { font-size: 0.8rem; }
-            .tech-id-badge span { font-size: 0.7rem; }
-            .tech-id-badge b { font-size: 0.9rem; }
-        }
-
-        @media (max-width: 480px) {
-            body { padding: 6px; }
-            header { padding: 10px 12px; margin-bottom: 10px; border-radius: 12px; }
-            .header-top { gap: 8px; }
-            .header-info h2 { font-size: 0.95rem; }
-            .header-info small { font-size: 0.65rem; }
-            .logo-container { font-size: 1rem; gap: 6px; }
-            .slogan { font-size: 0.65rem; letter-spacing: 0.3px; }
-            .card { padding: 10px; margin-bottom: 10px; border-radius: 12px; }
-            .card h4 { font-size: 0.95rem; margin-bottom: 8px; }
-            .card h3 { font-size: 0.9rem; }
-            .grid-kpi { grid-template-columns: 1fr; gap: 6px; }
-            .kpi-card { padding: 8px; border-radius: 10px; border-left: 3px solid var(--accent); }
-            .kpi-card span { font-size: 0.55rem; margin-bottom: 3px; }
-            .kpi-card b { font-size: 0.85rem; word-break: break-word; }
-            .btn { padding: 9px; font-size: 0.75rem; border-radius: 8px; width: 100%; }
-            input, select, textarea { padding: 9px; font-size: 0.8rem; margin-bottom: 6px; border-radius: 8px; }
-            .modal { padding: 10px; }
-            .modal .card { border-radius: 15px; padding: 10px; }
-            .modal .card h3 { font-size: 1rem; margin-bottom: 10px; }
-            .status-tag { font-size: 0.6rem; padding: 2px 5px; border-radius: 4px; }
-            .archive-item { padding: 8px; margin-bottom: 8px; border-radius: 8px; border-left: 3px solid var(--primary); }
-            .archive-item b { font-size: 0.9rem; }
-            .archive-item .meta { font-size: 0.65rem; gap: 4px; }
-            .archive-item .duration-tag { font-size: 0.65rem; }
-            #login-overlay .card { width: 95vw; max-width: 100%; padding: 25px 15px; }
-            #login-overlay h2 { font-size: 1.3rem; margin-bottom: 15px; }
-            #login-overlay input { padding: 11px 12px; font-size: 0.85rem; }
-            #login-overlay .btn-warning { padding: 13px; font-size: 0.85rem; }
-            .waiting-notify { font-size: 0.7rem; padding: 6px; margin-bottom: 8px; }
-            .tech-id-badge { gap: 5px; padding: 6px 8px; border-radius: 8px; }
-            .tech-id-badge i { font-size: 0.7rem; }
-            .tech-id-badge span { font-size: 0.65rem; }
-            .tech-id-badge b { font-size: 0.8rem; }
-            #pannes-list .card { margin-bottom: 8px; padding: 10px; }
-            .live-timer, .live-waiting-timer { font-size: 1.1rem; }
-            #manager-panel .card { margin-bottom: 8px; }
-            #manager-panel select { margin-top: 4px; }
-        }
-
-        @media (max-width: 360px) {
-            .grid-kpi { grid-template-columns: 1fr; }
-            .kpi-card b { font-size: 0.75rem; }
-            .btn { font-size: 0.7rem; padding: 8px; }
-            input, select, textarea { font-size: 0.75rem; padding: 8px; }
-            #login-overlay h2 { font-size: 1.1rem; }
-            .logo-container { font-size: 0.9rem; }
-        }
     </style>
 </head>
 
@@ -270,11 +191,7 @@
                     <i class="fas fa-times"></i> CLEAR FILTER
                 </button>
             </div>
-            <div class="card" style="padding:10px; overflow-x:auto;">
-                <div style="min-width:300px;">
-                    <canvas id="downtimeChart" style="width:100% !important; height:200px !important;"></canvas>
-                </div>
-            </div>
+            <div class="card" style="padding:10px;"><canvas id="downtimeChart" style="width:100%; max-height:200px;"></canvas></div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button class="btn" style="background:#0ea5e9; color:white; position:relative;" onclick="document.getElementById('viewStockModal').style.display='flex'">
                     <i class="fas fa-boxes-stacked"></i> STOCK
@@ -582,8 +499,8 @@
 
                 let actionBtn = (currentUser === 'MAINTENANCE')
                     ? (isWaiting
-                        ? `<button class="btn btn-warning" onclick="takeCharge('${p.key}')" style="margin-top:8px;">Accept Request</button>`
-                        : `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')" style="margin-top:8px;">FINISH REPAIR</button>`)
+                        ? `<button class="btn btn-warning" onclick="takeCharge('${p.key}')">Accept Request</button>`
+                        : `<button class="btn btn-success" onclick="openRepriseModal('${p.key}')">FINISH REPAIR</button>`)
                     : "";
 
                 const niveauColors = { '1': { bg: '#fee2e2', color: '#dc2626', label: '🔴 CRITIQUE' }, '2': { bg: '#ffedd5', color: '#ea580c', label: '🟠 MAJEUR' }, '3': { bg: '#fefce8', color: '#ca8a04', label: '🟡 MINEUR' } };
