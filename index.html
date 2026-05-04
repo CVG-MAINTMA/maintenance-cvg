@@ -427,7 +427,7 @@
                 </button>
             </div>
             <div class="card" style="padding:12px;">
-                <canvas id="downtimeChart" style="width:100%; max-height:260px;"></canvas>
+                <div style="position:relative; height:280px; width:100%;"><canvas id="downtimeChart"></canvas></div>
             </div>
         </div>
     </div>
@@ -796,34 +796,108 @@
         }
 
         function updateMachineChart(data, label) {
-            const ctx = document.getElementById('downtimeChart').getContext('2d');
+            const ctx = document.getElementById('downtimeChart');
+            if(!ctx) return;
             const TARGET_MTTR = 30;
-            const dateMap = { totalDowntime: {}, waitingTime: {}, repairTime: {} };
+
+            // Group by MACHINE
+            const machMap = {};
             data.forEach(p => {
-                const date = p.dateStr.split(',')[0];
-                const waiting = (p.recuTs || p.startTs) - p.startTs;
-                const repair = (p.duration || 0) * 60 * 1000;
-                dateMap.totalDowntime[date] = (dateMap.totalDowntime[date] || 0) + (p.duration || 0);
-                dateMap.waitingTime[date] = (dateMap.waitingTime[date] || 0) + Math.round(waiting / 60000);
-                dateMap.repairTime[date] = (dateMap.repairTime[date] || 0) + Math.round(repair / 60000);
+                const mach = p.mach;
+                if(!mach) return;
+                const waiting = Math.max(0, Math.round(((p.recuTs || p.startTs) - p.startTs) / 60000));
+                const repair = p.duration || 0;
+                if(!machMap[mach]) machMap[mach] = { waiting: 0, repair: 0, count: 0 };
+                machMap[mach].waiting += waiting;
+                machMap[mach].repair += repair;
+                machMap[mach].count++;
             });
-            const labels = Object.keys(dateMap.totalDowntime);
-            const totalData = Object.values(dateMap.totalDowntime);
-            const waitingData = Object.values(dateMap.waitingTime);
-            const repairData = Object.values(dateMap.repairTime);
+
+            // Sort by total downtime desc, take top 12
+            const sorted = Object.entries(machMap)
+                .map(([mach, v]) => ({
+                    mach,
+                    avgWaiting: Math.round(v.waiting / v.count),
+                    avgRepair: Math.round(v.repair / v.count),
+                    total: v.waiting + v.repair,
+                    count: v.count
+                }))
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 12);
+
+            const labels = sorted.map(d => d.mach);
+            const waitingData = sorted.map(d => d.avgWaiting);
+            const repairData = sorted.map(d => d.avgRepair);
+
             if(myChart) myChart.destroy();
             myChart = new Chart(ctx, {
-                type: 'line',
+                type: 'bar',
                 data: {
                     labels,
                     datasets: [
-                        { label: `Total Downtime ${label} (Min)`, data: totalData, borderColor: '#00d4ff', backgroundColor: 'rgba(0, 212, 255, 0.1)', fill: true, tension: 0.4, order: 2 },
-                        { label: 'Waiting Time (Min)', data: waitingData, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: false, tension: 0.4, borderWidth: 2 },
-                        { label: 'Repair Time (Min)', data: repairData, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: false, tension: 0.4, borderWidth: 2 },
-                        { label: 'TARGET MTTR (30 min)', data: new Array(labels.length).fill(TARGET_MTTR), borderColor: '#ef4444', borderDash: [5, 5], borderWidth: 2, pointRadius: 0, fill: false, order: 1 }
+                        {
+                            label: 'Avg Waiting Time (Min)',
+                            data: waitingData,
+                            backgroundColor: 'rgba(245,158,11,0.85)',
+                            borderColor: '#f59e0b',
+                            borderWidth: 1,
+                            borderRadius: 5
+                        },
+                        {
+                            label: 'Avg Repair Time (Min)',
+                            data: repairData,
+                            backgroundColor: 'rgba(16,185,129,0.85)',
+                            borderColor: '#10b981',
+                            borderWidth: 1,
+                            borderRadius: 5
+                        },
+                        {
+                            label: 'TARGET MTTR (30 min)',
+                            data: new Array(labels.length).fill(TARGET_MTTR),
+                            type: 'line',
+                            borderColor: '#ef4444',
+                            borderDash: [6, 4],
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            fill: false
+                        }
                     ]
                 },
-                options: { responsive: true, plugins: { legend: { display: true, position: 'top' } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Minutes' } } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { font: { size: 10 }, boxWidth: 12, padding: 8 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: (ctx) => {
+                                    const d = sorted[ctx.dataIndex];
+                                    return 'Interventions: ' + d.count;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { size: 9 },
+                                maxRotation: 60,
+                                minRotation: 45
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            title: { display: true, text: 'Minutes (Avg)', font: { size: 10 } },
+                            ticks: { font: { size: 9 } }
+                        }
+                    }
+                }
             });
         }
 
