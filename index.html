@@ -108,6 +108,10 @@
         #mute-btn.muted { background:#475569; animation:none; }
         @keyframes pulse-mute { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.5)} 50%{box-shadow:0 0 0 6px rgba(239,68,68,0)} }
         #alert-sound-banner { display:none; background:linear-gradient(90deg,#dc2626,#b91c1c); color:white; text-align:center; padding:8px 15px; font-size:0.82rem; font-weight:800; border-radius:12px; margin-bottom:10px; animation:blink 1s infinite; cursor:pointer; }
+        /* DASHBOARD MODAL */
+        #dashboardModal { position:fixed; inset:0; background:rgba(0,0,0,0.85); display:none; justify-content:center; align-items:flex-start; z-index:10000; padding:10px; backdrop-filter:blur(5px); overflow-y:auto; }
+        #dashboardModal .dash-inner { background:var(--bg); width:100%; max-width:500px; border-radius:20px; padding:15px; margin:auto; }
+        .dash-close-btn { background:var(--primary); color:white; border:none; border-radius:10px; padding:10px 18px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:0.85rem; margin-bottom:15px; width:100%; justify-content:center; }
     </style>
 </head>
 
@@ -159,13 +163,14 @@
                 </select>
             </div>
 
-            <div class="card" style="border-top: 5px solid var(--danger);">
-                <h4 style="color:var(--danger); margin-bottom:10px;">
-                    <i class="fas fa-chart-line"></i> TOP 5 CRITICAL MACHINE (DOWNTIME)
-                </h4>
-                <div id="top-bad-actors" style="font-size: 0.85rem;"></div>
+            <!-- DASHBOARD BTN -->
+            <button class="btn" style="background:linear-gradient(135deg,#002b5c,#0ea5e9);color:white;margin-bottom:15px;font-size:1rem;padding:14px;border-radius:14px;" onclick="openDashboardModal()">
+                <i class="fas fa-chart-pie"></i> DASHBOARDS &amp; ANALYTICS
+            </button>
+            <div class="card" style="border-top:5px solid var(--danger);">
+                <h4 style="color:var(--danger); margin-bottom:10px;"><i class="fas fa-chart-line"></i> TOP 5 CRITICAL MACHINE (DOWNTIME)</h4>
+                <div id="top-bad-actors" style="font-size:0.85rem;"></div>
             </div>
-
             <div class="grid-kpi">
                 <div class="kpi-card"><span>Total Interventions</span><b id="m-count">0</b></div>
                 <div class="kpi-card"><span>Active Workload</span><b id="m-charge">0</b></div>
@@ -175,23 +180,6 @@
                 <div class="kpi-card"><span>Avg Total Downtime</span><b id="m-total-downtime">0 min</b></div>
             </div>
 
-            <div class="card" style="padding:12px; margin-bottom:10px; border-left: 5px solid var(--accent);">
-                <label style="font-size:0.75rem; font-weight:800; color:var(--primary);">FILTER BY DATE:</label>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
-                    <div>
-                        <small style="font-size:0.7rem; color:#64748b; font-weight:700; display:block; margin-bottom:3px;">FROM</small>
-                        <input type="date" id="filter-date-from" onchange="updateStats()" style="margin-bottom:0; font-size:0.8rem; padding:8px;">
-                    </div>
-                    <div>
-                        <small style="font-size:0.7rem; color:#64748b; font-weight:700; display:block; margin-bottom:3px;">TO</small>
-                        <input type="date" id="filter-date-to" onchange="updateStats()" style="margin-bottom:0; font-size:0.8rem; padding:8px;">
-                    </div>
-                </div>
-                <button class="btn btn-ghost" style="margin-top:8px; padding:8px; font-size:0.75rem;" onclick="clearDateFilter()">
-                    <i class="fas fa-times"></i> CLEAR FILTER
-                </button>
-            </div>
-            <div class="card" style="padding:10px;"><canvas id="downtimeChart" style="width:100%; max-height:200px;"></canvas></div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button class="btn" style="background:#0ea5e9; color:white; position:relative;" onclick="document.getElementById('viewStockModal').style.display='flex'">
                     <i class="fas fa-boxes-stacked"></i> STOCK
@@ -413,6 +401,36 @@
             </button>
             <button class="btn btn-ghost" onclick="document.getElementById('importStockModal').style.display='none'; resetImportModal()">ANNULER</button>
         </div>
+    </div>
+
+    <!-- DASHBOARD MODAL: Chart only -->
+    <div id="dashboardModal" onclick="if(event.target.id==='dashboardModal')closeDashboardModal()">
+        <div class="dash-inner">
+            <button class="dash-close-btn" onclick="closeDashboardModal()">
+                <i class="fas fa-arrow-left"></i> RETOUR
+            </button>
+            
+            <div class="card" style="padding:12px; margin-bottom:10px; border-left:5px solid var(--accent);">
+                <label style="font-size:0.75rem; font-weight:800; color:var(--primary);">FILTER BY DATE:</label>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
+                    <div>
+                        <small style="font-size:0.7rem; color:#64748b; font-weight:700; display:block; margin-bottom:3px;">FROM</small>
+                        <input type="date" id="filter-date-from" onchange="updateStats()" style="margin-bottom:0; font-size:0.8rem; padding:8px;">
+                    </div>
+                    <div>
+                        <small style="font-size:0.7rem; color:#64748b; font-weight:700; display:block; margin-bottom:3px;">TO</small>
+                        <input type="date" id="filter-date-to" onchange="updateStats()" style="margin-bottom:0; font-size:0.8rem; padding:8px;">
+                    </div>
+                </div>
+                <button class="btn btn-ghost" style="margin-top:8px; padding:8px; font-size:0.75rem;" onclick="clearDateFilter()">
+                    <i class="fas fa-times"></i> CLEAR FILTER
+                </button>
+            </div>
+            <div class="card" style="padding:12px;">
+                <canvas id="downtimeChart" style="width:100%; max-height:260px;"></canvas>
+            </div>
+        </div>
+    </div>
     </div>
 
     <audio id="alertSound" loop src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
@@ -661,7 +679,10 @@
         }
 
         function populateMachineStatsSelect() {
-            const select = document.getElementById('stats-machine-select');
+            const select = document.getElementById("stats-machine-select");
+            if(!select) return;
+            // avoid duplicates
+            if(select.options.length > 1) return;
             let allMachines = [];
             Object.values(machineData).forEach(list => allMachines = allMachines.concat(list));
             allMachines.sort().forEach(m => { select.innerHTML += `<option value="${m}">${m}</option>`; });
@@ -1051,6 +1072,15 @@
             document.querySelector('[data-mode="merge"]').style.border = '2px solid var(--primary)';
             document.querySelector('[data-mode="merge"]').style.background = '#e0f2fe';
             document.getElementById('import-mode').value = 'merge';
+        }
+
+        function openDashboardModal() {
+            document.getElementById("dashboardModal").style.display = "flex";
+            updateStats();
+            updateBadActors();
+        }
+        function closeDashboardModal() {
+            document.getElementById("dashboardModal").style.display = "none";
         }
 
         function enableAudio() { window.audioAllowed = true; }
